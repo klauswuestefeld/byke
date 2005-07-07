@@ -11,9 +11,6 @@
       <library name="byecycle.jar">
          <export name="*"/>
       </library>
-      <library name="lib/draw2d/draw2d.jar">
-         <export name="*"/>
-      </library>
    </runtime>
 
 
