@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.0"?>
+<plugin
+   id="byecycle"
+   name="Byecycle Plug-in"
+   version="0.0.3"
+   provider-name="Klaus Wuestefeld and Rodrigo B. de Oliveira"
+   class="byecycle.ByecyclePlugin">
+
+   <runtime>
+      <library name="byecycle.jar">
+         <export name="*"/>
+      </library>
+      <library name="lib/draw2d/draw2d.jar">
+         <export name="*"/>
+      </library>
+   </runtime>
+
+
+   <requires>
+      <import plugin="org.eclipse.ui"/>
+      <import plugin="org.eclipse.jdt"/>
+      <import plugin="org.eclipse.jdt.core"/>
+      <import plugin="org.eclipse.core.runtime"/>
+   </requires>
+
+   <extension
+         point="org.eclipse.ui.views">
+      <category
+            name="Byecycle"
+            id="byecycle">
+      </category>
+      <view
+            name="Dependencies"
+            icon="icons/sample.gif"
+            category="byecycle"
+            class="byecycle.views.ByecycleView"
+            id="byecycle.views.ByecycleView">
+      </view>
+   </extension>
+
+</plugin>
