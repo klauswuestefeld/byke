@@ -8,6 +8,7 @@ import org.osgi.framework.BundleContext;
 import java.util.*;
 
 /**
+ * TODO: Contribute ByecycleView to the 'Java Perspective'
  * The main plugin class to be used in the desktop.
  */
 public class ByecyclePlugin extends AbstractUIPlugin {
