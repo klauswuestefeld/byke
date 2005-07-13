@@ -18,8 +18,8 @@ public class Node<PayloadType> {
     public static <PayloadType> Collection<Node<PayloadType> > createGraph(String[] names) {
 		
 		List<Node<PayloadType> > result = new ArrayList<Node<PayloadType>>(); 
-        Node previous = null;
-        for (int i = 0; i < names.length; i++) {
+
+		for (int i = 0; i < names.length; i++) {
             result.add(new Node<PayloadType>(names[i], "package"));
         }
 
@@ -51,14 +51,12 @@ public class Node<PayloadType> {
     public Node(String name, String kind) {
         _name = name;
         _kind = kind;
-		_visited = false;
     }
 
     private final String _name;
     private final String _kind;
     private final Set<Node> _providers = new HashSet<Node>();
 	private PayloadType _payload;
-	private boolean _visited;
 
     public String name() {
         return _name;

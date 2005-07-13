@@ -3,7 +3,7 @@
 <plugin
    id="byecycle"
    name="Byecycle Plug-in"
-   version="0.0.3"
+   version="0.0.4"
    provider-name="Klaus Wuestefeld and Rodrigo B. de Oliveira"
    class="byecycle.ByecyclePlugin">
 
