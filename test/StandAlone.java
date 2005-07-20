@@ -126,10 +126,11 @@ public class StandAlone {
 	}
 
 
+	/*
 	private void createDependency(String dependent, String provider) {
 		produceNode(dependent).addProvider(produceNode(provider));
 		
-	}
+	}*/
 
 
 	private Node<Object> produceNode(String name) {

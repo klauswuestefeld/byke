@@ -23,6 +23,7 @@
       <import plugin="org.eclipse.jdt.core"/>
       <import plugin="org.eclipse.core.runtime"/>
       <import plugin="org.eclipse.ui.ide"/>
+      <import plugin="org.eclipse.jdt.ui"/>
    </requires>
 
    <extension
@@ -47,5 +48,16 @@
                     relationship="stack"/>
    </perspectiveExtension>
 </extension>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            class="byecycle.preferences.ByecyclePreferencePage"
+            id="byecycle.preferences.ByecyclePreferencePage"
+            name="Byecycle"/>
+   </extension>
+   <extension
+         point="org.eclipse.core.runtime.preferences">
+      <initializer class="byecycle.preferences.PreferenceInitializer"/>
+   </extension>
 
 </plugin>
