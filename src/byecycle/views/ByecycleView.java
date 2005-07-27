@@ -36,10 +36,13 @@ import byecycle.views.layout.GraphCanvas;
 
 public class ByecycleView extends ViewPart implements ISelectionListener, ISelectionProvider {
 
+	private static final int TEN_SECONDS = 10 * 1000000000;
 	private GraphCanvas _canvas;
 	private IViewSite _site;
 	private Set<ISelectionChangedListener> _selectionListeners = new HashSet<ISelectionChangedListener>();
 	private ISelection _selection;
+	private long _timePackageWasSelected;
+	private long _timeLastLayoutJobStarted;
 	
 	/**
 	 * The constructor.
@@ -75,20 +78,40 @@ public class ByecycleView extends ViewPart implements ISelectionListener, ISelec
 	private void scheduleImproveLayoutJob() {
 		UIJob job = new UIJob("package analysis display") {
 			public IStatus runInUIThread(IProgressMonitor monitor) {
+				if (_canvas.isDisposed() || monitor.isCanceled())
+					return Status.OK_STATUS;
+
 				try {
-					if (!_canvas.isDisposed() && !monitor.isCanceled()) {
-						_canvas.tryToImproveLayout();
-						Thread.sleep(100);
-						scheduleImproveLayoutJob();
+					if (_canvas.tryToImproveLayout()) {
+						Thread.sleep(1);
+					} else {
+						Thread.sleep(nanosecondsToSleep() / 1000000);
 					}
-				} catch (Exception x) {
-					x.printStackTrace();
+				} catch (Exception rx) {
+					rx.printStackTrace(); //Eclipse does not print the stack trace.
 				}
+
+				scheduleImproveLayoutJob();
 				return Status.OK_STATUS;
 			}
+
 		};
 		job.setSystem(true);
 		job.schedule();
+	}
+	
+	private long nanosecondsToSleep() {
+		long currentTime = System.nanoTime();
+		
+		long timeSincePackageWasSelected = currentTime - _timePackageWasSelected; 
+		if (timeSincePackageWasSelected < TEN_SECONDS) return 0;  //Go fast in the first ten seconds.
+		
+		long timeLastLayoutJobTook = currentTime - _timeLastLayoutJobStarted;
+		long timeToSleep = timeLastLayoutJobTook * 2;  //The more things run in parallel with byecycle, the less greedy byecycle will be. Byecycle is proud to be a very good citizen.  :)
+		if (timeToSleep > TEN_SECONDS) timeToSleep = TEN_SECONDS;
+
+		_timeLastLayoutJobStarted = currentTime + timeToSleep;
+		return timeToSleep;
 	}
 	
 	/**
@@ -137,6 +160,7 @@ public class ByecycleView extends ViewPart implements ISelectionListener, ISelec
 							public IStatus runInUIThread(IProgressMonitor monitor) {
 								try {
 									_canvas.setGraph((Collection<Node>)nodes);
+									_timePackageWasSelected = System.nanoTime();
 								} catch (Exception x) {
 									x.printStackTrace();
 								}

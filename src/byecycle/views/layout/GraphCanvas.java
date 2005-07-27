@@ -1,7 +1,6 @@
 //Copyright (C) 2004 Klaus Wuestefeld and Rodrigo B de Oliveira.
 //This is free software. See the license distributed along with this file.
 
-
 package byecycle.views.layout;
 
 import java.util.ArrayList;
@@ -90,18 +89,24 @@ public class GraphCanvas extends Canvas implements StressMeter {
 		});
 	}
 	
-	public void tryToImproveLayout() {
-		if (_nodeFigures == null || 0 == _nodeFigures.length) return;
+	public boolean tryToImproveLayout() {
+		if (_nodeFigures == null || 0 == _nodeFigures.length) return false;
 
-		int guiRelief = 0;
+		seekBetterTargetForAWhile();
+		if (betterTargetFound())  //TODO Comment this line to see the animation.
+			lockOnNewTarget();
 
+		if (_nodesInPursuit.isEmpty()) return false;
+
+		pursueTargetStep();
+		return true;
+	}
+
+	private void seekBetterTargetForAWhile() {
+		long start = System.nanoTime();
 		do {
 			seekBetterTargetStep();
-			if (betterTargetFound())  //TODO Comment this line to see the animation.
-				lockOnNewTarget();
-		} while (_nodesInPursuit.isEmpty() && guiRelief++ < 150);
-		
-		pursueTargetStep();
+		} while (System.nanoTime() - start < 1000000); //One millisecond.
 	}
 
 	private void lockOnNewTarget() {
