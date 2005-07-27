@@ -179,11 +179,11 @@ public class PackageDependencyAnalysis {
 				return; // TODO: Check why this happens.
 
 			String packageName = type.getPackage().getName();
-			if (ignorePackage(_currentPackageName)) {
+			if (packageName.equals(_currentPackageName)) {
 				_currentNode.addProvider(getNode2(type));
 				return;
 			}
-			if (packageName.equals("java.lang"))
+			if (ignorePackage(packageName))
 				return;
 			_currentNode.addProvider(getNode(type.getPackage(), packageName,
 					PACKAGE));
