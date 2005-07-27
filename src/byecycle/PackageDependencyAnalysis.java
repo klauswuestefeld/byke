@@ -97,7 +97,7 @@ public class PackageDependencyAnalysis {
 		if (_excludedPackages == null) {
 			_excludedPackages = Arrays.asList(ByecyclePlugin.getDefault()
 					.getPreferenceStore().getString(
-							PreferenceConstants.P_PACKAGE_EXCLUDES).split(""));
+							PreferenceConstants.P_PACKAGE_EXCLUDES).split(" "));
 		}
 		return _excludedPackages;
 	}
