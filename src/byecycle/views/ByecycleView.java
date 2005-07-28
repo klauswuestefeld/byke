@@ -36,6 +36,7 @@ import byecycle.views.layout.GraphCanvas;
 
 public class ByecycleView extends ViewPart implements ISelectionListener, ISelectionProvider {
 
+	private static final int ONE_MILLISECOND = 1000000;
 	private static final int TEN_SECONDS = 10 * 1000000000;
 	
 	private GraphCanvas _canvas;
@@ -83,11 +84,8 @@ public class ByecycleView extends ViewPart implements ISelectionListener, ISelec
 					return Status.OK_STATUS;
 
 				try {
-					if (_canvas.tryToImproveLayout()) {
-						Thread.sleep(1);
-					} else {
-						Thread.sleep(nanosecondsToSleep() / 1000000);
-					}
+					_canvas.tryToImproveLayout();
+					Thread.sleep(nanosecondsToSleep() / 1000000);
 				} catch (Exception rx) {
 					rx.printStackTrace(); //Eclipse does not print the stack trace.
 				}
@@ -112,6 +110,7 @@ public class ByecycleView extends ViewPart implements ISelectionListener, ISelec
 		
 		long timeToSleep = timeLastLayoutJobTook * 2;  //The more things run in parallel with byecycle, the less greedy byecycle will be. Byecycle is proud to be a very good citizen.  :)
 		if (timeToSleep > TEN_SECONDS) timeToSleep = TEN_SECONDS;
+		if (timeToSleep < ONE_MILLISECOND) timeToSleep = ONE_MILLISECOND;
 
 		_timeLastLayoutJobStarted = currentTime + timeToSleep;
 		return timeToSleep;

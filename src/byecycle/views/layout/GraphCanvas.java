@@ -89,17 +89,14 @@ public class GraphCanvas extends Canvas implements StressMeter {
 		});
 	}
 	
-	public boolean tryToImproveLayout() {
-		if (_nodeFigures == null || 0 == _nodeFigures.length) return false;
+	public void tryToImproveLayout() {
+		if (_nodeFigures == null || 0 == _nodeFigures.length) return;
 
 		seekBetterTargetForAWhile();
 		if (betterTargetFound())  //TODO Comment this line to see the animation.
 			lockOnNewTarget();
 
-		if (_nodesInPursuit.isEmpty()) return false;
-
 		pursueTargetStep();
-		return true;
 	}
 
 	private void seekBetterTargetForAWhile() {
@@ -120,6 +117,8 @@ public class GraphCanvas extends Canvas implements StressMeter {
 	}
 
 	private void pursueTargetStep() {
+		if (_nodesInPursuit.isEmpty()) return;
+
 		Iterator<NodeFigure> it = _nodesInPursuit.iterator();
 		while (it.hasNext()) {
 			NodeFigure node = it.next();
