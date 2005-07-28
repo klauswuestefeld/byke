@@ -163,7 +163,6 @@ public class NodeFigure extends GraphElement {
 
     void nudgeNudge() {
         addForceComponents(nudge(), nudge());
-        System.out.println("Nudge: " + nudge());
     }
 
     private float nudge() {
