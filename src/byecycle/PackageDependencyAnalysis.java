@@ -6,24 +6,30 @@ package byecycle;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IPackageDeclaration;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.EnumDeclaration;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.QualifiedType;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 
@@ -31,163 +37,223 @@ import byecycle.dependencygraph.Node;
 import byecycle.preferences.PreferenceConstants;
 
 public class PackageDependencyAnalysis {
+    @Deprecated
+    public static final String PACKAGE = "package";
 
-	public static final String PACKAGE = "package";
+    @Deprecated
+    public static final String CLASS = "class";
 
-	public static final String CLASS = "class";
+    @Deprecated
+    public static final String INTERFACE = "interface";
 
-	public static final String INTERFACE = "interface";
+    private final Map<String, Node<IBinding>> _nodes = new HashMap<String, Node<IBinding>>();
 
-	private final Map<String, Node<IBinding>> _nodes = new HashMap<String, Node<IBinding>>();
-	
-	private List<String> _excludedPackages;
+    private List<String> _excludedPackages;
 
-	public PackageDependencyAnalysis(ICompilationUnit[] compilationUnits,
-			IProgressMonitor monitor) throws JavaModelException {
+    // private Set<String> _currentPackages = new HashSet<String>();
 
-		if (null == monitor) {
-			monitor = new NullProgressMonitor();
-		}
+    public PackageDependencyAnalysis(ICompilationUnit[] compilationUnits,
+            IProgressMonitor monitor) throws JavaModelException {
 
-		ASTParser parser = ASTParser.newParser(AST.JLS3);
+        if (null == monitor) {
+            monitor = new NullProgressMonitor();
+        }
 
-		DependencyVisitor visitor = new DependencyVisitor();
+        ASTParser parser = ASTParser.newParser(AST.JLS3);
 
-		monitor.beginTask("dependency analysis", compilationUnits.length);
-		for (int i = 0; i < compilationUnits.length; i++) {
-			ICompilationUnit each = compilationUnits[i];
-			parser.setResolveBindings(true);
-			parser.setSource(each);
+        DependencyVisitor visitor = new DependencyVisitor();
 
-			monitor.subTask(each.getElementName());
+        monitor.beginTask("dependency analysis", compilationUnits.length);
 
-			CompilationUnit node = (CompilationUnit) parser.createAST(monitor);
-			node.accept(visitor);
+        /*
+         * for (ICompilationUnit each : compilationUnits) { // READ ALL SELECTED
+         * PACKAGE FIRST~! IPackageDeclaration[] packages =
+         * each.getPackageDeclarations(); if (packages != null) { for
+         * (IPackageDeclaration unit : packages) {
+         * _currentPackages.add(unit.getElementName()); } } }
+         */
 
-			monitor.worked(1);
-			if (monitor.isCanceled()) {
-				break;
-			}
-		}
-	}
+        for (ICompilationUnit each : compilationUnits) {
+            parser.setResolveBindings(true);
+            parser.setSource(each);
 
-	public Collection<Node<IBinding>> dependencyGraph() {
-		return _nodes.values();
-	}
+            monitor.subTask(each.getElementName());
 
-	private Node getNode(IBinding binding, String nodeName, String kind) {
-		Node<IBinding> node = _nodes.get(getBindingKey(binding));
-		if (null == node) {
-			node = new Node<IBinding>(nodeName, kind);
-			node.payload(binding);
-			_nodes.put(getBindingKey(binding), node);
-		}
-		return node;
-	}
+            CompilationUnit node = (CompilationUnit) parser.createAST(monitor);
+            node.accept(visitor);
 
-	private String getBindingKey(IBinding binding) {
-		return binding.getKey();
-	}
+            monitor.worked(1);
+            if (monitor.isCanceled()) {
+                break;
+            }
+        }
+    }
 
-	private boolean ignorePackage(String packageName) {
-		return getExcludedPackages().contains(packageName);
-	}
+    public Collection<Node<IBinding>> dependencyGraph() {
+        return _nodes.values();
+    }
 
-	private List<String> getExcludedPackages() {
-		if (_excludedPackages == null) {
-			_excludedPackages = Arrays.asList(ByecyclePlugin.getDefault()
-					.getPreferenceStore().getString(
-							PreferenceConstants.P_PACKAGE_EXCLUDES).split(" "));
-		}
-		return _excludedPackages;
-	}
+    private Node getNode(IBinding binding, String nodeName, String kind) {
+        String key = getBindingKey(binding);
+        Node<IBinding> node = _nodes.get(key);
+        if (null == node) {
+            node = new Node<IBinding>(nodeName, kind);
+            node.payload(binding);
+            _nodes.put(key, node);
+        }
+        return node;
+    }
 
-	class DependencyVisitor extends ASTVisitor {
+    private Node getNode(IBinding binding, String nodeName, JavaType kind) {
+        String key = getBindingKey(binding);
+        Node<IBinding> node = _nodes.get(key);
+        if (null == node) {
+            node = new Node<IBinding>(nodeName, kind);
+            node.payload(binding);
+            _nodes.put(key, node);
+        }
+        return node;
+    }
 
-		Node _currentNode;
+    private String getBindingKey(IBinding binding) {
+        return binding.getKey();
+    }
 
-		private String _currentPackageName;
+    private boolean ignorePackage(String packageName) {
+        return "java.lang".equals(packageName)
+                || getExcludedPackages().contains(packageName);
+    }
 
-		public boolean visit(TypeDeclaration node) {
-			Node saved = _currentNode;
-			String savedPackage = _currentPackageName;
+    // private boolean selectedPackage(ITypeBinding type) {
+    // return _currentPackages.contains(type.getPackage().getName());
+    // }
 
-			ITypeBinding binding = node.resolveBinding();
-			_currentNode = getNode2(binding);
-			_currentPackageName = binding.getPackage().getName();
+    private List<String> getExcludedPackages() {
+        if (_excludedPackages == null) {
+            _excludedPackages = Arrays.asList(ByecyclePlugin.getDefault()
+                    .getPreferenceStore().getString(
+                            PreferenceConstants.P_PACKAGE_EXCLUDES).split(
+                            "\\s+"));
+        }
+        return _excludedPackages;
+    }
 
-			// SpreadingOut -extends-> DistanceBasedForce -implements-> Force
+    class DependencyVisitor extends ASTVisitor {
 
-			System.out.println(binding.getSuperclass());
-			addProvider(binding.getSuperclass());
-			for (ITypeBinding superItf : binding.getInterfaces()) {
-				addProvider(superItf);
-			}
+        private Node _currentNode;
 
-			visitList(node.bodyDeclarations());
+        private String _currentPackageName;
 
-			_currentNode = saved;
-			_currentPackageName = savedPackage;
-			return false;
-		}
+        private boolean visit0(AbstractTypeDeclaration node) {
+            Node saved = _currentNode;
+            String savedPackage = _currentPackageName;
 
-		private Node getNode2(ITypeBinding binding) {
-			return getNode(binding, binding.getQualifiedName(), binding
-					.isInterface() ? INTERFACE : CLASS);
-		}
+            ITypeBinding binding = node.resolveBinding();
+            _currentNode = getNode2(binding);
+            _currentPackageName = binding.getPackage().getName();
 
-		private void visitList(List l) {
-			for (Iterator iter = l.iterator(); iter.hasNext();) {
-				ASTNode child = (ASTNode) iter.next();
-				child.accept(this);
-			}
-		}
+            // SpreadingOut -extends-> DistanceBasedForce -implements-> Force
 
-		public boolean visit(org.eclipse.jdt.core.dom.QualifiedType node) {
-			addProvider(node.resolveBinding());
-			return true;
-		}
+            // System.out.println(binding.getSuperclass());
+            addProvider(binding.getSuperclass());
+            for (ITypeBinding superItf : binding.getInterfaces()) {
+                addProvider(superItf);
+            }
 
-		public boolean visit(SimpleType node) {
-			addProvider(node.resolveBinding());
-			return true;
-		}
+            visitList(node.bodyDeclarations());
 
-		public boolean visit(Expression node) {
-			addProvider(node.resolveTypeBinding());
-			return true;
-		}
+            _currentNode = saved;
+            _currentPackageName = savedPackage;
+            return false;
 
-		public boolean visit(MethodInvocation node) {
-			addProvider(node.resolveTypeBinding());
-			return true;
-		}
+        }
 
-		public boolean visit(ClassInstanceCreation node) {
-			addProvider(node.resolveTypeBinding());
-			return true;
-		}
+        public boolean visit(EnumDeclaration node) {
+            return visit0(node);
+        }
 
-		private void addProvider(ITypeBinding type) {
-			if (null == type)
-				return;
-			if (type.isArray())
-				type = type.getElementType();
-			if (type.isPrimitive())
-				return;
-			if (type.getQualifiedName().equals(""))
-				return; // TODO: Check why this happens.
+        public boolean visit(TypeDeclaration node) {
+            return visit0(node);
+        }
 
-			String packageName = type.getPackage().getName();
-			if (packageName.equals(_currentPackageName)) {
-				_currentNode.addProvider(getNode2(type));
-				return;
-			}
-			if (ignorePackage(packageName))
-				return;
-			_currentNode.addProvider(getNode(type.getPackage(), packageName,
-					PACKAGE));
-		}
+        private Node getNode2(ITypeBinding binding) {
+            JavaType type = JavaType.valueOf(binding);
+            return getNode(binding, binding.getQualifiedName(), type);
+            // return getNode(binding, binding.getQualifiedName(), binding
+            // .isInterface() ? INTERFACE : CLASS);
+        }
 
-	}
+        private void visitList(List l) {
+            for (Iterator iter = l.iterator(); iter.hasNext();) {
+                ASTNode child = (ASTNode) iter.next();
+                child.accept(this);
+            }
+        }
+
+        public boolean visit(org.eclipse.jdt.core.dom.QualifiedType node) {
+            addProvider(node.resolveBinding());
+            return true;
+        }
+
+        public boolean visit(SimpleType node) {
+            addProvider(node.resolveBinding());
+            return true;
+        }
+
+        public boolean visit(Expression node) {
+            addProvider(node.resolveTypeBinding());
+            return true;
+        }
+
+        public boolean visit(MethodInvocation node) {
+            addProvider(node.resolveTypeBinding());
+            return true;
+        }
+
+        public boolean visit(ClassInstanceCreation node) {
+            addProvider(node.resolveTypeBinding());
+            return true;
+        }
+
+        private boolean isSelectedPackage(String packageName) {
+            return packageName.equals(_currentPackageName);
+        }
+
+        private void addProvider(ITypeBinding type) {
+            if (null == type)
+                return;
+            if (type.isArray())
+                type = type.getElementType();
+            if (type.isPrimitive() || type.isWildcardType())
+                return;
+            if (type.isTypeVariable()) {
+                for (ITypeBinding subType : type.getTypeBounds()) {
+                    addProvider(subType);
+                }
+                return;
+            }
+            if (type.getQualifiedName().equals(""))
+                return; // TODO: Check why this happens.
+
+            String packageName = type.getPackage().getName();
+
+            if (isSelectedPackage(packageName)) {
+                if (type.isParameterizedType()) { // if Map<K,V>
+                    for (ITypeBinding subtype : type.getTypeArguments()) { // <K,V>
+                        addProvider(subtype);
+                    }
+                    final ITypeBinding erasure = type.getErasure();
+                    _currentNode.addProvider(getNode2(erasure));
+                } else {
+                    _currentNode.addProvider(getNode2(type));
+                }
+                return;
+            }
+            if (ignorePackage(packageName))
+                return;
+            _currentNode.addProvider(getNode(type.getPackage(), packageName,
+                    JavaType.PACKAGE));
+        }
+
+    }
 }
