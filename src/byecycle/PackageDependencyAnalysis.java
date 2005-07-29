@@ -116,7 +116,8 @@ public class PackageDependencyAnalysis {
     }
 
     private String getBindingKey(IBinding binding) {
-        return binding.getKey();
+        // return binding.getKey();
+        return binding.getJavaElement().getElementName();
     }
 
     private boolean ignorePackage(String packageName) {
@@ -237,6 +238,9 @@ public class PackageDependencyAnalysis {
 
             String packageName = type.getPackage().getName();
 
+            if (ignorePackage(packageName))
+                return;
+
             if (isSelectedPackage(packageName)) {
                 if (type.isParameterizedType()) { // if Map<K,V>
                     for (ITypeBinding subtype : type.getTypeArguments()) { // <K,V>
@@ -249,8 +253,6 @@ public class PackageDependencyAnalysis {
                 }
                 return;
             }
-            if (ignorePackage(packageName))
-                return;
             _currentNode.addProvider(getNode(type.getPackage(), packageName,
                     JavaType.PACKAGE));
         }
