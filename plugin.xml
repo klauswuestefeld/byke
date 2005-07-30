@@ -24,6 +24,7 @@
       <import plugin="org.eclipse.core.runtime"/>
       <import plugin="org.eclipse.ui.ide"/>
       <import plugin="org.eclipse.jdt.ui"/>
+      <!-- import plugin="org.eclipse.draw2d" / -->
    </requires>
 
    <extension
@@ -33,6 +34,7 @@
             id="byecycle">
       </category>
       <view
+            allowMultiple="false"
             name="Dependencies"
             icon="icons/sample.gif"
             category="byecycle"
@@ -58,6 +60,40 @@
    <extension
          point="org.eclipse.core.runtime.preferences">
       <initializer class="byecycle.preferences.PreferenceInitializer"/>
+   </extension>
+   <extension point="org.eclipse.ui.popupMenus">
+   <objectContribution objectClass="org.eclipse.jdt.core.IOpenable" id="byecycle.SelectElement">
+	<action label="Show in Byecycle" icon="icons/sample.gif" class="byecycle.views.SelectElementAction" menubarPath="additions" id="byecycle.showElementAction">
+	
+            <enablement>
+               <or>
+                  <objectClass name="org.eclipse.jdt.core.IPackageFragment"/>
+                  <!-- objectClass name="org.eclipse.jdt.core.IPackageFragmentRoot"/ -->
+                  <objectClass name="org.eclipse.jdt.core.ICompilationUnit"/>
+                  <objectClass name="org.eclipse.jdt.core.IType"/>
+               </or>
+            </enablement>
+</action>
+</objectContribution>
+   </extension>
+   <extension
+         point="org.eclipse.ui.viewActions">
+      <viewContribution
+            id="byecycle.toggleActive"
+            targetID="byecycle.views.ByecycleView">
+         <menu
+               id="byecycle.toggleActiveMenu"
+               label="Toggle"/>
+         <action
+               class="byecycle.views.ToggleActiveAction"
+               icon="icons/sample.gif"
+               id="byecycle.toggleActiveAction"
+               label="Toggle Active"
+               style="toggle"
+               toolbarPath="Toggle"
+               tooltip="Toggle Active">
+         </action>
+      </viewContribution>
    </extension>
 
 </plugin>
