@@ -182,7 +182,7 @@ public class NodeFigure extends GraphElement {
     public void addForceComponents(float x, float y) {
         _forceComponentX += x * IMPETUS;
         _forceComponentY += y * IMPETUS;
-        _stressMeter.addStress((float) Math.sqrt((x * x) + (y * y)));
+        _stressMeter.addStress((float) Math.hypot(x, y));
     }
 
     private static float dampen(float value) {
