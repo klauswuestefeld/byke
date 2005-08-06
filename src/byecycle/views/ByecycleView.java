@@ -21,9 +21,11 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.ui.IPartListener2;
 import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.IWorkbenchPartReference;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.progress.UIJob;
@@ -51,6 +53,51 @@ public class ByecycleView extends ViewPart implements ISelectionListener, IByecy
 	private UIJob _job;
 
 	private boolean _pause;
+
+	// TODO: Debug me
+	final IPartListener2 partListener = new IPartListener2() {
+		private byte state = 0; // 0 = visible , 1= was active & hidden, 2=was paused & hidden
+
+		public void partActivated(IWorkbenchPartReference partRef) {
+		}
+
+		public void partBroughtToTop(IWorkbenchPartReference partRef) {
+		}
+
+		public void partClosed(IWorkbenchPartReference partRef) {
+		}
+
+		public void partDeactivated(IWorkbenchPartReference partRef) {
+		}
+
+		public void partOpened(IWorkbenchPartReference partRef) {
+		}
+
+		public void partHidden(IWorkbenchPartReference partRef) {
+			if (partRef.getPart(false) == ByecycleView.this) {
+				if (state == 0) {
+					if (_pause) {
+						state = 2;
+					} else {
+						state = 1;
+						_pause = true; // pause redraw, but keep toolbar icon
+					}
+				}
+			}
+		}
+
+		public void partVisible(IWorkbenchPartReference partRef) {
+			if (partRef.getPart(false) == ByecycleView.this) {
+				if (state == 1) {
+					toggleActive(false); // resume
+				}
+				state = 0;
+			}
+		}
+
+		public void partInputChanged(IWorkbenchPartReference partRef) {
+		}
+	};
 
 	/**
 	 * The constructor.
@@ -89,11 +136,13 @@ public class ByecycleView extends ViewPart implements ISelectionListener, IByecy
 			}
 		};
 		_job.setSystem(true);
+		_site.getWorkbenchWindow().getPartService().addPartListener(partListener);
 	}
 
 	@Override
 	public void dispose() {
 		_site.getPage().removeSelectionListener(this);
+		_site.getWorkbenchWindow().getPartService().removePartListener(partListener);
 		super.dispose();
 	}
 
