@@ -9,7 +9,6 @@ import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
-import byecycle.views.ByecycleView;
 import byecycle.views.IByecycleView;
 
 public class SelectElementAction implements IViewActionDelegate {
