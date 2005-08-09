@@ -18,6 +18,7 @@ import org.eclipse.draw2d.XYLayout;
 import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.jdt.ui.JavaUI;
+import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.RGB;
@@ -42,9 +43,13 @@ public class NodeFigure extends GraphElement {
     }
 
     private Label label(String text, Image icon) {
-		return icon == null
+		Label result = icon == null
 			? new Label(" " + text, icon)
 			: new Label(      text, icon);
+		
+		result.setFont(JFaceResources.getTextFont());
+			
+		return result;
     }
 
     IFigure produceFigure() {
@@ -100,28 +105,25 @@ public class NodeFigure extends GraphElement {
         }
     }
 
-    @Deprecated
-    private Color randomPastelColor() {
-        int r = 210 + RANDOM.nextInt(46);
-        int g = 210 + RANDOM.nextInt(46);
-        int b = 210 + RANDOM.nextInt(46);
+    // TODO: Should it move inside JavaType, or make it configable??
+//    static Map<JavaType, RGB> COLORS = new HashMap<JavaType, RGB>();
+//    static {
+//        // TODO: fix the colors
+//        COLORS.put(JavaType.ANNOTATION, new RGB(240, 180, 150));
+//        COLORS.put(JavaType.CLASS, new RGB(150, 240, 150));
+//        COLORS.put(JavaType.ENUM, new RGB(180, 180, 180));
+//        COLORS.put(JavaType.INTERFACE, new RGB(180, 180, 240));
+//        COLORS.put(JavaType.PACKAGE, new RGB(180, 150, 150));
+//    }
+
+    private Color getPastelColor(Node<?> node) { // TODO: Rename
+    	Random random = new Random(node.name().hashCode() * 713);
+        int r = 210 + random.nextInt(46);
+        int g = 210 + random.nextInt(46);
+        int b = 210 + random.nextInt(46);
         return new Color(null, r, g, b);
     }
 
-    // TODO: Should it move inside JavaType, or make it configable??
-    static Map<JavaType, RGB> COLORS = new HashMap<JavaType, RGB>();
-    static {
-        // TODO: fix the colors
-        COLORS.put(JavaType.ANNOTATION, new RGB(240, 180, 150));
-        COLORS.put(JavaType.CLASS, new RGB(150, 240, 150));
-        COLORS.put(JavaType.ENUM, new RGB(180, 180, 180));
-        COLORS.put(JavaType.INTERFACE, new RGB(180, 180, 240));
-        COLORS.put(JavaType.PACKAGE, new RGB(180, 150, 150));
-    }
-
-    private Color getPastelColor(Node<?> node) { // TODO: Rename
-        return new Color(null, COLORS.get(node.kind2()));
-    }
 
     private final Node _node;
 
