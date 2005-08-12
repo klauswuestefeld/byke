@@ -5,10 +5,11 @@ package byecycle.views.layout;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import org.eclipse.draw2d.Figure;
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.LightweightSystem;
@@ -45,20 +46,22 @@ public class GraphCanvas extends Canvas implements StressMeter {
 		new LightweightSystem(this).setContents(_graphFigure);
 		_graphFigure.setLayoutManager(_contentsLayout);
 		_listener = listener;
+		_mouseListener = new MouseListener.Stub() {
+			public void mouseDoubleClicked(MouseEvent e) {
+				Node node = _nodesByIFigure.get(e.getSource());
+				_listener.nodeSelected(node);
+				e.consume();
+			}
+		};
 		_graphFigure.addMouseListener(new MouseListener.Stub() {
 			public void mouseDoubleClicked(MouseEvent e) {
-				System.out.println("mouseDoubleClicked");
-				IFigure target = _graphFigure.findFigureAt(e.x, e.y);
-				Node node = null;
-				do {
-					node = _nodesByIFigure.get(target);
-					target = target.getParent();
-				} while (node == null && target != null);
-				if (node != null)
-					_listener.nodeSelected(node);
+				_listener.nodeSelected(null);
+				e.consume();
 			}
 		});
 	}
+
+	private final MouseListener _mouseListener;
 
 	private final List<GraphElement> _graphElements = new ArrayList<GraphElement>();
 
@@ -76,7 +79,8 @@ public class GraphCanvas extends Canvas implements StressMeter {
 
 	private float _smallestStressEver;
 
-	private final List<NodeFigure> _nodesInPursuit = new LinkedList<NodeFigure>();
+	// It should be Set rather then List
+	private final Set<NodeFigure> _nodesInPursuit = new LinkedHashSet<NodeFigure>();
 
 	private final Listener _listener;
 
@@ -123,7 +127,7 @@ public class GraphCanvas extends Canvas implements StressMeter {
 		Iterator<NodeFigure> it = _nodesInPursuit.iterator();
 		while (it.hasNext()) {
 			NodeFigure node = it.next();
-			node.pursueTarget(_contentsLayout);
+			node.pursueTarget();
 			if (node.onTarget())
 				it.remove();
 		}
@@ -138,6 +142,13 @@ public class GraphCanvas extends Canvas implements StressMeter {
 			for (int j = i + 1; j < _graphElements.size(); j++) {
 				GraphElement element2 = _graphElements.get(j);
 				SPREADING_OUT.actUpon(element1, element2);
+			}
+		}
+		// Split into two loop, reduce useless function call 
+		for (int i = 0; i < _nodeFigures.length; i++) {
+			GraphElement element1 = _nodeFigures[i];
+			for (int j = i + 1; j < _nodeFigures.length; j++) {
+				GraphElement element2 = _nodeFigures[j];
 				ATTRACTION.actUpon(element1, element2);
 				PROVIDER_GRAVITY.actUpon(element1, element2);
 				AVERSION.actUpon(element1, element2);
@@ -220,6 +231,7 @@ public class GraphCanvas extends Canvas implements StressMeter {
 		result = new NodeFigure(node, this);
 		nodeFiguresByNode.put(node, result);
 		_nodesByIFigure.put(result.figure(), node);
+		result.figure().addMouseListener(_mouseListener);
 		return result;
 	}
 
