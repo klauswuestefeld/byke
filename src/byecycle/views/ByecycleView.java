@@ -291,8 +291,9 @@ public class ByecycleView extends ViewPart implements ISelectionListener, IByecy
 	void setSelection(Node selection) {
 		if (null == selection) {
 			// drill up
-			IStructuredSelection structured = (IStructuredSelection) selection;
+			IStructuredSelection structured = (IStructuredSelection) _selection; // Fix incorrect reference
 			IJavaElement element = (IJavaElement) structured.getFirstElement();
+			setPaused(false);
 			setSelection(new StructuredSelection(element.getParent()));
 		} else {
 			// drill down
@@ -300,6 +301,7 @@ public class ByecycleView extends ViewPart implements ISelectionListener, IByecy
 			IBinding binding = typedNode.payload();
 			IJavaElement element = binding.getJavaElement();
 			if (null != element) {
+				setPaused(false);
 				setSelection(new StructuredSelection(element));
 			}
 		}
