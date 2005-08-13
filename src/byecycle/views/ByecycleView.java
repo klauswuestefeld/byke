@@ -15,6 +15,7 @@ import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.dom.IBinding;
+import org.eclipse.jdt.internal.core.PackageFragment;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -293,8 +294,11 @@ public class ByecycleView extends ViewPart implements ISelectionListener, IByecy
 			// drill up
 			IStructuredSelection structured = (IStructuredSelection) _selection; // Fix incorrect reference
 			IJavaElement element = (IJavaElement) structured.getFirstElement();
-			setPaused(false);
-			setSelection(new StructuredSelection(element.getParent()));
+			final IJavaElement parent = element.getParent();
+			if (parent instanceof PackageFragment) {
+				setPaused(false);
+				setSelection(new StructuredSelection(parent));
+			}
 		} else {
 			// drill down
 			Node<IBinding> typedNode = (Node<IBinding>) selection;
