@@ -15,6 +15,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
                                .getPreferenceStore();
                store.setDefault(PreferenceConstants.P_PACKAGE_EXCLUDES,
                                "java.lang java.util");
+               store.setDefault(PreferenceConstants.P_PATTERN_EXCLUDES,"");
        }
 
 }
