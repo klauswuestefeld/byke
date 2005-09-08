@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -34,14 +35,6 @@ import byecycle.dependencygraph.Node;
 import byecycle.preferences.PreferenceConstants;
 
 public class PackageDependencyAnalysis {
-	@Deprecated
-	public static final String PACKAGE = "package";
-
-	@Deprecated
-	public static final String CLASS = "class";
-
-	@Deprecated
-	public static final String INTERFACE = "interface";
 
 	private final Map<String, Node<IBinding>> _nodes = new HashMap<String, Node<IBinding>>();
 
@@ -170,6 +163,7 @@ public class PackageDependencyAnalysis {
 			_currentNode = saved;
 			_currentPackageName = savedPackage;
 			return false;
+
 		}
 
 		@Override
@@ -246,8 +240,10 @@ public class PackageDependencyAnalysis {
 			if (type.getQualifiedName().equals(""))
 				return; // TODO: Check why this happens.
 			String packageName = type.getPackage().getName();
-			if (ignorePackage(packageName))
-				return;
+
+            if (ignorePackage(packageName))
+                return;
+
 			if (isSelectedPackage(packageName)) {
 				if (type.isParameterizedType()) { // if Map<K,V>
 					for (ITypeBinding subtype : type.getTypeArguments()) { // <K,V>
