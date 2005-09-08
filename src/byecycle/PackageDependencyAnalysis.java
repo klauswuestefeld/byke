@@ -2,12 +2,15 @@
 //This is free software. See the license distributed along with this file.
 package byecycle;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -44,7 +47,7 @@ public class PackageDependencyAnalysis {
 
 	private List<String> _excludedPackages;
 
-	// private Set<String> _currentPackages = new HashSet<String>();
+	private List<Pattern> _excludedClassPattern;
 
     public PackageDependencyAnalysis(ICompilationUnit[] compilationUnits,
             IProgressMonitor monitor) throws JavaModelException {
@@ -111,10 +114,9 @@ public class PackageDependencyAnalysis {
                 || getExcludedPackages().contains(packageName);
 	}
 
-    // private boolean selectedPackage(ITypeBinding type) {
-    // return _currentPackages.contains(type.getPackage().getName());
-    // }
-
+	// private boolean selectedPackage(ITypeBinding type) {
+	// return _currentPackages.contains(type.getPackage().getName());
+	// }
 	private List<String> getExcludedPackages() {
 		if (_excludedPackages == null) {
             _excludedPackages = Arrays.asList(ByecyclePlugin.getDefault()
@@ -123,6 +125,26 @@ public class PackageDependencyAnalysis {
                             "\\s+"));
 		}
 		return _excludedPackages;
+	}
+
+	private List<Pattern> getClassExcludePattern() {
+		if (_excludedClassPattern == null) {
+			_excludedClassPattern = new ArrayList<Pattern>();
+			for (String str : ByecyclePlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.P_PATTERN_EXCLUDES)
+					.split("\\s+")) {
+				_excludedClassPattern.add(Pattern.compile(str));
+			}
+		}
+		return _excludedClassPattern;
+	}
+
+	private boolean ignoreClass(String qualifiedClassName) {
+		for (Pattern pattern : getClassExcludePattern()) {
+			if (pattern.matcher(qualifiedClassName).matches()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	class DependencyVisitor extends ASTVisitor {
@@ -134,8 +156,10 @@ public class PackageDependencyAnalysis {
 			Node saved = _currentNode;
 			String savedPackage = _currentPackageName;
 			ITypeBinding binding = node.resolveBinding();
+			if (ignoreClass(binding.getQualifiedName()))
+				return false;
 			_currentNode = getNode2(binding);
-			_currentPackageName = binding.getPackage().getName();
+			_currentPackageName = binding.getPackage().getName();	
 			// SpreadingOut -extends-> DistanceBasedForce -implements-> Force
 			// System.out.println(binding.getSuperclass());
 			addProvider(binding.getSuperclass());
@@ -146,7 +170,6 @@ public class PackageDependencyAnalysis {
 			_currentNode = saved;
 			_currentPackageName = savedPackage;
 			return false;
-			
 		}
 
 		@Override
@@ -228,11 +251,17 @@ public class PackageDependencyAnalysis {
 			if (isSelectedPackage(packageName)) {
 				if (type.isParameterizedType()) { // if Map<K,V>
 					for (ITypeBinding subtype : type.getTypeArguments()) { // <K,V>
+						if (ignoreClass(subtype.getQualifiedName()))
+							continue;
 						addProvider(subtype);
 					}
 					final ITypeBinding erasure = type.getErasure();
+					if (ignoreClass(erasure.getQualifiedName()))
+						return;
 					_currentNode.addProvider(getNode2(erasure));
 				} else {
+					if (ignoreClass(type.getQualifiedName()))
+						return;
 					_currentNode.addProvider(getNode2(type));
 				}
 				return;
