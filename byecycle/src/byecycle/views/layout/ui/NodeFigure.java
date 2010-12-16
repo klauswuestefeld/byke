@@ -89,7 +89,8 @@ public class NodeFigure<T> extends GraphFigure {
 		int r = 210 + random.nextInt(46);
 		int g = 210 + random.nextInt(46);
 		int b = 210 + random.nextInt(46);
-		return new Color(null, r, g, b);
+		//return new Color(null, r, g, b);
+		return new Color(null, 200, 200, 10); 
 	}
 
 	Node<?> node() {
