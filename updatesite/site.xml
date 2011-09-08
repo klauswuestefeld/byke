@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <feature url="features/byke_feature_0.2.0.jar" id="byke_feature" version="0.2.0">
+      <category name="byke_category"/>
+   </feature>
+   <category-def name="byke_category" label="Byke Category"/>
+</site>
