@@ -3,49 +3,13 @@
 
 package byke.dependencygraph;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
 import java.util.Set;
 
 import byke.JavaType;
 
 
 public class Node<PayloadType> {
-
-	private final static Random RANDOM = new Random(0);
-
-
-	public static Collection<Node<String>> createGraph(String[] names) {
-
-		List<Node<String>> result = new ArrayList<Node<String>>();
-
-		for (String element : names) {
-			result.add(new Node<String>(element, JavaType.PACKAGE));
-		}
-
-		produceRandomDependencies(result);
-
-		return result;
-	}
-
-	private static <PayloadType> void produceRandomDependencies(List<Node<PayloadType>> graph) {
-		int dependenciesToCreate = (int)(graph.size() * 1.1);
-
-		while (dependenciesToCreate-- > 0) {
-			Node<PayloadType> node1 = drawOneFrom(graph);
-			Node<PayloadType> node2 = drawOneFrom(graph);
-			if (node1 == node2) continue;
-
-			node1.addProvider(node2);
-		}
-	}
-
-	public static <PayloadType> Node<PayloadType> drawOneFrom(List<Node<PayloadType>> hat) {
-		return hat.get(RANDOM.nextInt(hat.size()));
-	}
 
 	public Node(String name) {
 		this(name, JavaType.CLASS);
@@ -70,13 +34,8 @@ public class Node<PayloadType> {
 		return _name;
 	}
 
-	public JavaType kind2() {
+	public JavaType kind() {
 		return _kind;
-	}
-
-	@Deprecated
-	public String kind() {
-		return _kind.toString().toLowerCase();
 	}
 
 	public Iterable<Node<PayloadType>> providers() {

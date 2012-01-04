@@ -58,7 +58,7 @@ public class NodeFigure<T> extends GraphFigure {
 
 	private String simplifiedName() {
 		String result = _node.name();
-		if (_node.kind2() == JavaType.PACKAGE) return result;
+		if (_node.kind() == JavaType.PACKAGE) return result;
 		return result.substring(result.lastIndexOf('.') + 1);
 	}
 

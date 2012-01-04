@@ -10,12 +10,13 @@ import byke.views.layout.CartesianLayout;
 import byke.views.layout.Coordinates;
 
 
-public class GraphMorpher {
+/** Smoothly transitions one layout to another to avoid violent jumps. */
+public class LayoutMorpher {
 
 	private final List<NodeMorpher> _nodeMorphers = new LinkedList<NodeMorpher>();
 
 
-	public <T> GraphMorpher(Collection<NodeFigure<T>> nodes, CartesianLayout targets) {
+	public <T> LayoutMorpher(Collection<NodeFigure<T>> nodes, CartesianLayout targets) {
 		for (NodeFigure<T> node : nodes)
 			addNodeMorpherFor(node, targets);
 	}

@@ -12,21 +12,19 @@ public class DependencySpring extends DistanceDefinedForce {
 
 
 	@Override
-	public float intensityGiven(float distance) {
-		return (distance - IDEAL_SIZE) * SPRING_FORCE; // TODO Play with this formula.
+	protected float intensityGiven(float nonZeroDistance) {
+		return (nonZeroDistance - IDEAL_SIZE) * SPRING_FORCE;
 	}
 
 	@Override
 	public void applyTo(GraphElement element1, GraphElement element2) {
+		if (!(element1 instanceof NodeElement)) return;
+		if (!(element2 instanceof NodeElement)) return;
 
-		if (element1 instanceof NodeElement && element2 instanceof NodeElement) {
-
-			NodeElement Element1 = (NodeElement)element1;
-			NodeElement Element2 = (NodeElement)element2;
-			if (Element1.dependsDirectlyOn(Element2) || Element2.dependsDirectlyOn(Element1)) {
-				super.applyTo(element1, element2);
-			}
-		}
+		NodeElement n1 = (NodeElement)element1;
+		NodeElement n2 = (NodeElement)element2;
+		if (n1.dependsDirectlyOn(n2) || n2.dependsDirectlyOn(n1))
+			super.applyTo(n1, n2);
 	}
 
 }

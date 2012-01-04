@@ -5,6 +5,7 @@ package byke.views.layout.criteria;
 
 import java.util.List;
 
+import byke.views.layout.criteria.forces.AlphabeticalOrder;
 import byke.views.layout.criteria.forces.DependencySpring;
 import byke.views.layout.criteria.forces.Force;
 import byke.views.layout.criteria.forces.Gravity;
@@ -16,7 +17,7 @@ import byke.views.layout.criteria.forces.SuperiorityComplex;
 public class StressMeter {
 
 	private static final Force SUPERIORITY_COMPLEX = new SuperiorityComplex();
-//	private static final Force ALPHABETICAL_ORDER = new AlphabeticalOrder();
+	private static final Force ALPHABETICAL_ORDER = new AlphabeticalOrder();
 	private static final Force DEPENDENCY_SPRING = new DependencySpring();
 	private static final Force GRAVITY = new Gravity();
 	private static final Force STATIC_ELECTRICITY = new StaticElectricity();
@@ -48,7 +49,7 @@ public class StressMeter {
 
 				// Symmetry breakers: (important for RandomAverage algorithm)
 				SUPERIORITY_COMPLEX.applyTo(element1, element2);
-//				ALPHABETICAL_ORDER.applyTo(element1, element2);
+				ALPHABETICAL_ORDER.applyTo(element1, element2);
 
 				// Converging:
 				DEPENDENCY_SPRING.applyTo(element1, element2);

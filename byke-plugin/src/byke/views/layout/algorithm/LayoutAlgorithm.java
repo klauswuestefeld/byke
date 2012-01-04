@@ -34,11 +34,9 @@ public abstract class LayoutAlgorithm<T> {
 	}
 
 
-	public abstract void improveLayoutStep();
-
 	public boolean improveLayoutForAWhile() {
 		if (_nodeElements.size() <= 1) return false;
-
+		
 		long start = System.nanoTime();
 		do {
 			improveLayoutStep();
@@ -49,10 +47,13 @@ public abstract class LayoutAlgorithm<T> {
 				return true;
 			}
 		} while (System.nanoTime() - start < 1000000); // One millisecond at least.
-
+		
 		adaptToFailure();
 		return false;
 	}
+
+	
+	public abstract void improveLayoutStep();
 
 	protected void adaptToFailure() {}
 	protected void adaptToSuccess() {}
@@ -68,7 +69,7 @@ public abstract class LayoutAlgorithm<T> {
 		return result;
 	}
 
-	protected void layout(CartesianLayout layout) {
+	private void layout(CartesianLayout layout) {
 		for (NodeElement node : _nodeElements)
 			node.position(layout.coordinatesFor(node.name()));
 	}
