@@ -82,7 +82,7 @@ public class PackageLayoutMap {
 		for (Map.Entry<Object, Object> e : properties.entrySet()) {
 			String name = (String)e.getKey();
 			String[] valueStr = ((String)e.getValue()).split(",", 2);
-			Coordinates coordinates = new Coordinates(Float.parseFloat(valueStr[0]), Float.parseFloat(valueStr[1]));
+			Coordinates coordinates = new Coordinates(Integer.parseInt(valueStr[0]), Integer.parseInt(valueStr[1]));
 			_cartesianLayout.keep(name, coordinates);
 		}
 		return _cartesianLayout;

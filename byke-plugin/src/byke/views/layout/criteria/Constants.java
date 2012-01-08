@@ -2,13 +2,12 @@ package byke.views.layout.criteria;
 
 public class Constants {
 
-	public static float ALPHABETICAL_ORDER_THRUST = 0.001f;
+	public static final float ALPHABETICAL_ORDER_THRUST = 10f;
 
-	public static final float AURA_THICKNESS = 20;
+	public static final int AURA_THICKNESS = 5;
 
-	public static final int DEPENDENCY_SPRING_PREFERRED_SIZE = 25;
-	public static final float DEPENDENCY_SPRING_FORCE = 0.00006f;
+	public static final float DEPENDENCY_PREFERRED_SIZE = 55;
 
-	public static final float SUPERIORITY_COMPLEX_FORCE = -0.001f;
+	public static final float NON_CLUTTERING = 300f;
 
 }

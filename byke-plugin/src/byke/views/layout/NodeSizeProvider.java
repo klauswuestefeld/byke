@@ -1,10 +1,12 @@
 package byke.views.layout;
 
+import org.eclipse.draw2d.geometry.Rectangle;
+
 import byke.dependencygraph.Node;
 
 
 public interface NodeSizeProvider {
 
-	public FloatRectangle sizeGiven(Node<?> node);
+	public Rectangle sizeGiven(Node<?> node);
 
 }

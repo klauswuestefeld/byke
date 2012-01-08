@@ -3,11 +3,11 @@
 
 package byke.views.layout.criteria.forces;
 
-import byke.views.layout.criteria.GraphElement;
+import byke.views.layout.criteria.NodeElement;
 
 
 public interface Force {
 
-	void applyTo(GraphElement element1, GraphElement element2);
+	void applyTo(NodeElement n1, NodeElement n2);
 
 }

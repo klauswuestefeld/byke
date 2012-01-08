@@ -20,8 +20,8 @@ public class FloatRectangle {
 
 		result._x = left;
 		result._y = top;
-		result._width = (right - left);
-		result._height = (bottom - top);
+		result._width = right - left;
+		result._height = bottom - top;
 		
 		return result;
 	}

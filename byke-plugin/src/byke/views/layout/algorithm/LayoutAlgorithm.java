@@ -1,9 +1,12 @@
 package byke.views.layout.algorithm;
 
+import static java.lang.Math.signum;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import byke.dependencygraph.Node;
 import byke.views.layout.CartesianLayout;
@@ -14,8 +17,11 @@ import byke.views.layout.criteria.NodeElement;
 import byke.views.layout.criteria.StressMeter;
 
 
-public abstract class LayoutAlgorithm<T> {
+public class LayoutAlgorithm<T> {
 
+	private static final int ONE_TENTH_OF_A_SECOND = 100;
+	private static final Random RANDOM = new Random(0);
+	
 	protected final List<NodeElement> _nodeElements = new ArrayList<NodeElement>();
 	protected final List<DependencyElement> _dependencyElements = new ArrayList<DependencyElement>();
 	protected final ArrayList<GraphElement> _allElements = new ArrayList<GraphElement>();
@@ -23,12 +29,14 @@ public abstract class LayoutAlgorithm<T> {
 	protected final StressMeter _stressMeter = new StressMeter();
 	protected float _lowestStressEver;
 
+	private final NodeSizeProvider _sizeProvider;
 
-	protected LayoutAlgorithm(Iterable<Node<T>> graph, CartesianLayout initialLayout, NodeSizeProvider sizeProvider) {
+
+	public LayoutAlgorithm(Iterable<Node<T>> graph, CartesianLayout initialLayout, NodeSizeProvider sizeProvider) {
+		_sizeProvider = sizeProvider;
 		initGraphElements(graph);
 
-		if (initialLayout == null) initialLayout = new CartesianLayout();
-		layout(initialLayout);
+		applyLayout(initialLayout == null ? new CartesianLayout() : initialLayout);
 
 		_lowestStressEver = measureStress();
 	}
@@ -37,31 +45,49 @@ public abstract class LayoutAlgorithm<T> {
 	public boolean improveLayoutForAWhile() {
 		if (_nodeElements.size() <= 1) return false;
 		
-		long start = System.nanoTime();
+		long start = System.currentTimeMillis();
 		do {
-			improveLayoutStep();
-			float stress = measureStress();
-			if (stress < _lowestStressEver) {
-				adaptToSuccess();
-				_lowestStressEver = stress;
-				return true;
-			}
-		} while (System.nanoTime() - start < 1000000); // One millisecond at least.
+			if (	improveLayoutStep()) return true;
+		} while (System.currentTimeMillis() - start < ONE_TENTH_OF_A_SECOND);
 		
-		adaptToFailure();
 		return false;
 	}
 
-	
-	public abstract void improveLayoutStep();
+	int i;
+	public boolean improveLayoutStep() {
+		if (_nodeElements.size() <= 1) return false;
+		
+		if (i++ % 400 == 0)
+			_nodeElements.get(RANDOM.nextInt(_nodeElements.size())).move(RANDOM.nextInt(400), RANDOM.nextInt(400));
 
-	protected void adaptToFailure() {}
-	protected void adaptToSuccess() {}
+		//relaxByOnePixel(mostStressedNode());
+		for (NodeElement node : _nodeElements)
+			relaxByOnePixel(node);
 
-	protected float measureStress() {
-		return _stressMeter.applyForcesTo(_nodeElements, _allElements);
+		return hasImproved();
 	}
 
+
+	private boolean hasImproved() {
+		float stress = measureStress();
+		if (stress < _lowestStressEver) {
+			_lowestStressEver = stress;
+			return true;
+		}
+		return false;
+	}
+
+
+	private void relaxByOnePixel(NodeElement node) {
+		node.move((int)signum(node.pendingForceX()), (int)signum(node.pendingForceY()));
+	}
+
+
+	private float measureStress() {
+		return _stressMeter.applyForcesTo(_nodeElements);
+	}
+
+	
 	public CartesianLayout layoutMemento() {
 		CartesianLayout result = new CartesianLayout();
 		for (NodeElement node : _nodeElements)
@@ -69,12 +95,14 @@ public abstract class LayoutAlgorithm<T> {
 		return result;
 	}
 
-	private void layout(CartesianLayout layout) {
+	
+	private void applyLayout(CartesianLayout layout) {
 		for (NodeElement node : _nodeElements)
 			node.position(layout.coordinatesFor(node.name()));
 	}
 
-	protected void initGraphElements(Iterable<Node<T>> graph) {
+	
+	private void initGraphElements(Iterable<Node<T>> graph) {
 		Map<Node<T>, NodeElement> nodeElementsByNode = new HashMap<Node<T>, NodeElement>();
 		List<DependencyElement> dependencyElements = new ArrayList<DependencyElement>();
 
@@ -94,29 +122,14 @@ public abstract class LayoutAlgorithm<T> {
 		_allElements.addAll(_dependencyElements);
 	}
 
+	
 	private NodeElement produceElementFor(Node<T> node, Map<Node<T>, NodeElement> nodeElementsByNode) {
 		NodeElement result = nodeElementsByNode.get(node);
 		if (result != null) return result;
 
-		result = createNodeElement(node);
+		result = new NodeElement(node, _sizeProvider.sizeGiven(node), _stressMeter);
 		nodeElementsByNode.put(node, result);
 		return result;
 	}
-
-	protected float minimumTimeNeededToMoveOnePixel() {
-		float result = Float.MAX_VALUE;
-		for (NodeElement node : _nodeElements) {
-			if (node.timeNeededToMoveOnePixel() < result)
-				result = node.timeNeededToMoveOnePixel();
-		}
-		return result;
-	}
-	
-	protected void give(float timeFrame) {
-		for (NodeElement node : _nodeElements)
-			node.give(timeFrame);
-	}
-
-	protected abstract NodeElement createNodeElement(Node<?> node);
 
 }

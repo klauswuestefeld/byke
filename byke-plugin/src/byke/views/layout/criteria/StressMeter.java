@@ -5,66 +5,59 @@ package byke.views.layout.criteria;
 
 import java.util.List;
 
-import byke.views.layout.criteria.forces.AlphabeticalOrder;
-import byke.views.layout.criteria.forces.DependencySpring;
+import byke.views.layout.criteria.forces.DependenciesDown;
 import byke.views.layout.criteria.forces.Force;
-import byke.views.layout.criteria.forces.Gravity;
-import byke.views.layout.criteria.forces.MutualExclusion;
-import byke.views.layout.criteria.forces.StaticElectricity;
-import byke.views.layout.criteria.forces.SuperiorityComplex;
+import byke.views.layout.criteria.forces.NonCluttering;
+import byke.views.layout.criteria.forces.NonOverlapping;
+import byke.views.layout.criteria.forces.SaveSpace;
 
 
 public class StressMeter {
 
-	private static final Force SUPERIORITY_COMPLEX = new SuperiorityComplex();
-	private static final Force ALPHABETICAL_ORDER = new AlphabeticalOrder();
-	private static final Force DEPENDENCY_SPRING = new DependencySpring();
-	private static final Force GRAVITY = new Gravity();
-	private static final Force STATIC_ELECTRICITY = new StaticElectricity();
-	private static final Force MUTUAL_EXCLUSION = new MutualExclusion();
+	//private static final Force ALPHABETICAL_ORDER = new AlphabeticalOrder();
+	private static final Force DEPENDENCIES_DOWN = new DependenciesDown();
+	private static final Force SAVE_SPACE = new SaveSpace();
+	private static final Force NON_OVERLAPPING = new NonOverlapping();
+	private static final Force NON_CLUTTERING = new NonCluttering();
 	
 	private float _reading;
 
+	
+	private void applyForces(NodeElement n1, NodeElement n2) {
+		// Symmetry breakers: (important for RandomAverage algorithm)
+		//ALPHABETICAL_ORDER.applyTo(n1, n2);
+		
+		// Converging:
+		SAVE_SPACE.applyTo(n1, n2);
+		DEPENDENCIES_DOWN.applyTo(n1, n2);
+		
+		// Diverging:
+		NON_CLUTTERING.applyTo(n1, n2);
+		NON_OVERLAPPING.applyTo(n1, n2);
+	}
 
+	
 	void addStress(float stress) {
 		if (Float.isNaN(stress)) throw new IllegalArgumentException("Stress cannot be NaN.");
 		_reading += stress;
 	}
 
-	private void reset() {
+	
+	public float applyForcesTo(List<? extends NodeElement> nodes) {
 		_reading = 0;
-	}
 
-	public float applyForcesTo(List<? extends NodeElement> nodes, List<GraphElement> graphElements) {
-		reset();
+		for (NodeElement n : nodes) n.clearPendingForces();
 
-		for (NodeElement node : nodes)
-			node.clearPendingForces();
+		for (int i = 0; i < nodes.size(); i++) {
+			NodeElement n1 = nodes.get(i);
+			for (int j = i + 1; j < nodes.size(); j++) {
+				NodeElement n2 = nodes.get(j);
 
-		for (int i = 0; i < graphElements.size(); i++) {
-			GraphElement element1 = graphElements.get(i);
-
-			for (int j = i + 1; j < graphElements.size(); j++) {
-				GraphElement element2 = graphElements.get(j);
-
-				// Symmetry breakers: (important for RandomAverage algorithm)
-				SUPERIORITY_COMPLEX.applyTo(element1, element2);
-				ALPHABETICAL_ORDER.applyTo(element1, element2);
-
-				// Converging:
-				DEPENDENCY_SPRING.applyTo(element1, element2);
-				GRAVITY.applyTo(element1, element2);
-
-				// Diverging:
-				STATIC_ELECTRICITY.applyTo(element1, element2);
-				MUTUAL_EXCLUSION.applyTo(element1, element2);
+				applyForces(n1, n2);
+				
 			}
 		}
 
-		return _reading;
-	}
-
-	public float reading() {
 		return _reading;
 	}
 

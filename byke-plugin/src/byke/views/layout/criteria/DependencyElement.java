@@ -18,15 +18,17 @@ public class DependencyElement extends GraphElement {
 
 	}
 
+	@Override
 	public Coordinates position() {
 		Coordinates p1 = _dependent.position();
 		Coordinates p2 = _provider.position();
-		float centerX = (p1._x + p2._x) / 2;
-		float centerY = (p1._y + p2._y) / 2;
+		int centerX = (p1._x + p2._x) / 2;
+		int centerY = (p1._y + p2._y) / 2;
 		return new Coordinates(centerX, centerY);
 	}
 
-	protected void addForceComponents(float x, float y) {
+	@Override
+	public void addForceComponents(float x, float y) {
 		float halfX = x / 2;
 		float halfY = y / 2;
 		_dependent.addForceComponents(halfX, halfY);

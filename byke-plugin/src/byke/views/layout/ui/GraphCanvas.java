@@ -24,13 +24,12 @@ import byke.JavaType;
 import byke.dependencygraph.Node;
 import byke.views.layout.CartesianLayout;
 import byke.views.layout.Coordinates;
-import byke.views.layout.FloatRectangle;
 import byke.views.layout.NodeSizeProvider;
 
 
 public class GraphCanvas<T> extends FigureCanvas implements NodeSizeProvider {
 
-	private static final float MARGIN_PIXELS = 3;
+	private static final int MARGIN_PIXELS = 3;
 
 
 	public interface Listener<LT> {
@@ -73,6 +72,7 @@ public class GraphCanvas<T> extends FigureCanvas implements NodeSizeProvider {
 
 	private Stub backgroundDoubleClickListener() {
 		return new MouseListener.Stub() {
+			@Override
 			public void mouseDoubleClicked(MouseEvent e) {
 				_listener.nodeSelected(null);
 				e.consume();
@@ -81,7 +81,8 @@ public class GraphCanvas<T> extends FigureCanvas implements NodeSizeProvider {
 	}
 
 	private Stub nodeDoubleClickListener() {
-		return new MouseListener.Stub() { public void mouseDoubleClicked(MouseEvent event) {
+		return new MouseListener.Stub() { @Override
+		public void mouseDoubleClicked(MouseEvent event) {
 			Node<T> node = _nodeByFigure.get((IFigure)event.getSource());
 			_listener.nodeSelected(node);
 			event.consume();
@@ -90,7 +91,8 @@ public class GraphCanvas<T> extends FigureCanvas implements NodeSizeProvider {
 	
 
 	private Stub nodeSingleClickListener() {
-		return new MouseListener.Stub() { public void mousePressed(MouseEvent event) {
+		return new MouseListener.Stub() { @Override
+		public void mousePressed(MouseEvent event) {
 			selectNode((IFigure) event.getSource());
 			event.consume();
 		}};
@@ -191,19 +193,16 @@ public class GraphCanvas<T> extends FigureCanvas implements NodeSizeProvider {
 	}
 
 	
-	public FloatRectangle sizeGiven(Node<?> node) {
-		Rectangle bounds = _nodeFiguresByNode.get(node).figure().getBounds();
-
-		FloatRectangle result = new FloatRectangle();
-		result._width = bounds.width;
-		result._height = bounds.height;
-		return result;
+	@Override
+	public Rectangle sizeGiven(Node<?> node) {
+		Rectangle result = _nodeFiguresByNode.get(node).figure().getBounds();
+		return new Rectangle(result);
 	}
 
 	
 	private static CartesianLayout translatedToOrigin(CartesianLayout layout) {
-		float smallestX = Float.MAX_VALUE;
-		float smallestY = Float.MAX_VALUE;
+		int smallestX = Integer.MAX_VALUE;
+		int smallestY = Integer.MAX_VALUE;
 
 		for (String nodeName : layout.nodeNames()) {
 			Coordinates coordinates = layout.coordinatesFor(nodeName);
@@ -211,8 +210,8 @@ public class GraphCanvas<T> extends FigureCanvas implements NodeSizeProvider {
 			if (coordinates._y < smallestY) smallestY = coordinates._y;
 		}
 
-		float dx = -smallestX + MARGIN_PIXELS;
-		float dy = -smallestY + MARGIN_PIXELS;
+		int dx = -smallestX + MARGIN_PIXELS;
+		int dy = -smallestY + MARGIN_PIXELS;
 
 		CartesianLayout result = new CartesianLayout();
 		for (String nodeName : layout.nodeNames()) {

@@ -79,7 +79,7 @@ public class Node<PayloadType> {
 
 	@Override
 	public int hashCode() {
-		return this._kind.hashCode() * 29 ^ this._name.hashCode();
+		return this._name.hashCode();
 	}
 
 	@Override

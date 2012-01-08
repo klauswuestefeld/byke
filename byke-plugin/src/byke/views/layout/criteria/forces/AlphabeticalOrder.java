@@ -1,24 +1,17 @@
 package byke.views.layout.criteria.forces;
 
 import byke.views.layout.criteria.Constants;
-import byke.views.layout.criteria.GraphElement;
 import byke.views.layout.criteria.NodeElement;
 
 
 public class AlphabeticalOrder implements Force {
 
-	public void applyTo(GraphElement element1, GraphElement element2) {
-
-		if (!(element1 instanceof NodeElement)) return;
-		if (!(element2 instanceof NodeElement)) return;
-
-		NodeElement node1 = (NodeElement)element1;
-		NodeElement node2 = (NodeElement)element2;
-
-		if (node1.name().compareToIgnoreCase(node2.name()) < 0) {
-			actUponFirstAndSecond(node1, node2);
+	@Override
+	public void applyTo(NodeElement n1, NodeElement n2) {
+		if (n1.name().compareToIgnoreCase(n2.name()) < 0) {
+			actUponFirstAndSecond(n1, n2);
 		} else {
-			actUponFirstAndSecond(node2, node1);
+			actUponFirstAndSecond(n2, n1);
 		}
 	}
 
@@ -26,8 +19,9 @@ public class AlphabeticalOrder implements Force {
 		float dx = Math.max(Math.abs(first._x - second._x), 1);
 		float dy = Math.max(Math.abs(first._y - second._y), 1);
 
-		first.addForceComponents(-Constants.ALPHABETICAL_ORDER_THRUST / dx, 0, second);
-		first.addForceComponents(0, -Constants.ALPHABETICAL_ORDER_THRUST / dy, second);
+		float cx = -Constants.ALPHABETICAL_ORDER_THRUST / dx;
+		float cy = -Constants.ALPHABETICAL_ORDER_THRUST / dy;
+		first.addForceComponents(cx, cy, second);
 	}
 
 }
