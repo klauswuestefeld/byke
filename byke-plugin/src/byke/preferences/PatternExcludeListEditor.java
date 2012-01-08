@@ -4,6 +4,7 @@ package byke.preferences;
 
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+
 import org.eclipse.jface.dialogs.IInputValidator;
 import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.preference.ListEditor;
@@ -29,6 +30,7 @@ public class PatternExcludeListEditor extends ListEditor {
 	@Override
 	protected String getNewInputObject() {
 		InputDialog dialog = new InputDialog(getShell(), "Input full qualified class name pattern", "Enter a regex pattern to be excluded:", "", new IInputValidator() {
+			@Override
 			public String isValid(String newText) {
 				try {
 					Pattern.compile(newText);

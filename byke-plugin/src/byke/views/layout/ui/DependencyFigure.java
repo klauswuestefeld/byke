@@ -32,6 +32,7 @@ class DependencyFigure extends GraphFigure {
 
 	}
 
+	@Override
 	IFigure produceFigure() {
 		_arrow = new PolylineConnection();
 
@@ -93,10 +94,12 @@ class DependencyFigure extends GraphFigure {
 	
 	private NodeFigureListener nodeFigureListener() {
 		return new NodeFigureListener() {
+			@Override
 			public void selected() {
 				highlight();
 			}
 			
+			@Override
 			public void deselected() {
 				clearHighlight();
 			}

@@ -208,6 +208,7 @@ public class PackageLayoutMap {
 
 	private WorkspaceJob createSaveJob() {
 		WorkspaceJob job = new WorkspaceJob("Writing Byke layout cache") {
+			@Override
 			public IStatus runInWorkspace(IProgressMonitor monitor) {
 				performScheduledSaves();
 				return Status.OK_STATUS;

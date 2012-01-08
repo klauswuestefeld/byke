@@ -22,10 +22,12 @@ public class BykePreferencePage extends FieldEditorPreferencePage implements IWo
 	/**
 	 * Creates the package exclude list field editor.
 	 */
+	@Override
 	public void createFieldEditors() {
 		addField(new PatternExcludeListEditor(PreferenceConstants.P_PATTERN_EXCLUDES, "&Classes excluded from dependency graphs: (regex patterns)", getFieldEditorParent()));
 	}
 
+	@Override
 	public void init(IWorkbench workbench) {}
 
 }

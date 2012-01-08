@@ -28,7 +28,6 @@ import byke.PackageDependencyAnalysis;
 import byke.dependencygraph.Node;
 import byke.views.layout.CartesianLayout;
 import byke.views.layout.algorithm.LayoutAlgorithm;
-import byke.views.layout.algorithm.random.RandomAverage;
 import byke.views.layout.ui.GraphCanvas;
 
 
@@ -57,6 +56,7 @@ public class BykeView extends ViewPart implements IBykeView {
 	private IJavaElement _deferredSelection;
 
 
+	@Override
 	public void init(IViewSite site) throws PartInitException {
 		super.init(site);
 		_site = site;
@@ -115,6 +115,7 @@ public class BykeView extends ViewPart implements IBykeView {
 		if (_canvas != null) _canvas.dispose();
 
 		_canvas = new GraphCanvas<IBinding>(_parent, graph, initialLayout, new GraphCanvas.Listener<IBinding>() {
+			@Override
 			public void nodeSelected(Node<IBinding> node) {
 				selectNode(node);
 			}
@@ -123,7 +124,7 @@ public class BykeView extends ViewPart implements IBykeView {
 	}
 
 	private void newAlgorithm(Collection<Node<IBinding>> graph, CartesianLayout initialLayout) {
-		_algorithm = new RandomAverage<IBinding>(graph, initialLayout, _canvas);
+		_algorithm = new LayoutAlgorithm<IBinding>(graph, initialLayout, _canvas);
 	}
 
 	@Override
@@ -132,10 +133,12 @@ public class BykeView extends ViewPart implements IBykeView {
 		super.dispose();
 	}
 
+	@Override
 	public void createPartControl(Composite parent) {
 		_parent = parent;
 	}
 
+	@Override
 	public void selectionChanged(IWorkbenchPart ignored, ISelection selectionCandidate) { // FIXME: After the "Show Dependencies" popup menu action, this method is no longer called (Byke is no longer notified of selections changes and no longer changes the graph display). If focus is changed to another View and back, for example, everything comes back to normal. Is this an Eclipse bug?
 		IJavaElement newSelection = validateSelection(selectionCandidate);
 		if (_paused) {
@@ -145,6 +148,7 @@ public class BykeView extends ViewPart implements IBykeView {
 		showJavaDependencies(newSelection);
 	}
 
+	@Override
 	public void showDependencies(ISelection selectionCandidate) {
 		showJavaDependencies(validateSelection(selectionCandidate));
 	}
@@ -180,6 +184,7 @@ public class BykeView extends ViewPart implements IBykeView {
 		}
 
 		(new Job("'" + packageBeingGenerated.getElementName() + "' analysis") {
+			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				try {
 					Collection<Node<IBinding>> nextGraph = new PackageDependencyAnalysis(packageBeingGenerated, compilationUnits, monitor).dependencyGraph();
@@ -224,6 +229,7 @@ public class BykeView extends ViewPart implements IBykeView {
 		showJavaDependencies(_selectedPackage.getParent());
 	}
 
+	@Override
 	public void togglePaused(boolean pause) {
 		assert pause != _paused;
 		_paused = pause;
@@ -255,6 +261,7 @@ public class BykeView extends ViewPart implements IBykeView {
 		return timeToSleep;
 	}
 
+	@Override
 	public void setFocus() {
 		_parent.setFocus();
 	}

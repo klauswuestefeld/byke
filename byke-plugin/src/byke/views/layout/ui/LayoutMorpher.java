@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+
 import org.eclipse.draw2d.geometry.Point;
 
 import byke.views.layout.CartesianLayout;

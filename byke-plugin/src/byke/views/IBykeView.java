@@ -18,6 +18,7 @@ public interface IBykeView extends ISelectionListener, IWorkbenchPart {
 
 	public void togglePaused(boolean pause);
 
+	@Override
 	public void selectionChanged(IWorkbenchPart part, ISelection selection);
 
 }

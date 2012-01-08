@@ -16,14 +16,17 @@ public class ToggleActiveAction implements IViewActionDelegate {
 	private IBykeView _view;
 
 
+	@Override
 	public void init(IViewPart view) {
 		_view = (BykeView)view;
 	}
 
+	@Override
 	public void run(IAction action) {
 		_view.togglePaused(action.isChecked());
 	}
 
+	@Override
 	public void selectionChanged(IAction ignored, ISelection ignoredToo) {}
 
 }

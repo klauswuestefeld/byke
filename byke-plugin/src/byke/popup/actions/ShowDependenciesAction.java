@@ -18,10 +18,12 @@ public class ShowDependenciesAction implements IViewActionDelegate {
 	private ISelection _selection;
 
 
+	@Override
 	public void init(IViewPart view) {
 	// Apparently never called.
 	}
 
+	@Override
 	public void run(IAction ignored) {
 		if (_selection == null) return;
 		bykeView().showDependencies(_selection);
@@ -42,6 +44,7 @@ public class ShowDependenciesAction implements IViewActionDelegate {
 		return result;
 	}
 
+	@Override
 	public void selectionChanged(IAction ignored, ISelection selection) {
 		_selection = selection;
 	}

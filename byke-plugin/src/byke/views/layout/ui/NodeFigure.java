@@ -32,6 +32,7 @@ public class NodeFigure<T> extends GraphFigure {
 		return icon == null ? new Label(" " + text, icon) : new Label(text, icon);
 	}
 
+	@Override
 	IFigure produceFigure() {
 		IFigure result;
 		

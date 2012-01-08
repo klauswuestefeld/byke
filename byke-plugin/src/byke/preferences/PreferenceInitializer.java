@@ -11,6 +11,7 @@ import byke.BykePlugin;
  */
 public class PreferenceInitializer extends AbstractPreferenceInitializer {
 
+	@Override
 	public void initializeDefaultPreferences() {
 		IPreferenceStore store = BykePlugin.getDefault().getPreferenceStore();
 		store.setDefault(PreferenceConstants.P_PATTERN_EXCLUDES, ".*Exception$");
