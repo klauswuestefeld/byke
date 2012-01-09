@@ -11,7 +11,7 @@ public abstract class CenterAllignedForce implements Force {
 	@Override
 	public void applyTo(NodeElement n1, NodeElement n2) {
 		Coordinates p1 = n1.position();
-		Coordinates p2 = n2.position();
+		Coordinates p2 = node2Position(n2);
 
 		float intensity = this.intensityGiven(n1, n2);
 		
@@ -23,6 +23,10 @@ public abstract class CenterAllignedForce implements Force {
 		float yComponent = (float)(Math.cos(direction) * intensity);
 
 		n1.addForceComponents(xComponent, yComponent, n2);
+	}
+
+	protected Coordinates node2Position(NodeElement n) {
+		return n.position();
 	}
 
 }

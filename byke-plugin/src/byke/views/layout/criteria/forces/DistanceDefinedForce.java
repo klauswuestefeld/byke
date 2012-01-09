@@ -10,7 +10,7 @@ public abstract class DistanceDefinedForce extends CenterAllignedForce {
 	@Override
 	protected float intensityGiven(NodeElement n1, NodeElement n2) {
 		Coordinates p1 = n1.position();
-		Coordinates p2 = n2.position();
+		Coordinates p2 = node2Position(n2);
 		
 		float distance = p1.getDistance(p2);
 		return intensityGiven(safe(distance));

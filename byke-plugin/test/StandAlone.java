@@ -66,7 +66,7 @@ public class StandAlone {
 	
 	private void work(LayoutAlgorithm<String> algorithm, GraphCanvas<String> canvas) {
 		boolean improved = algorithm.improveLayoutStep();
-		if (improved)
+		//if (improved)
 			canvas.useLayout(algorithm.layoutMemento());
 
 		canvas.animationStep(1);
@@ -74,7 +74,7 @@ public class StandAlone {
 
 	
 	private Collection<Node<String>> graph() {
-		String[] names = new String[8];
+		String[] names = new String[21];
 		for (int i = 0; i < names.length; i++)
 			names[i] = "Node " + i;
 

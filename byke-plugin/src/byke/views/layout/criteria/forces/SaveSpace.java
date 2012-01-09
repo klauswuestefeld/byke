@@ -1,13 +1,11 @@
 package byke.views.layout.criteria.forces;
 
-import byke.views.layout.criteria.NodeElement;
 
-
-public class SaveSpace extends CenterAllignedForce {
+public class SaveSpace extends DistanceDefinedForce {
 
 	@Override
-	protected float intensityGiven(NodeElement n1, NodeElement n2) {
-		return -1;
+	protected float intensityGiven(float nonZeroDistance) {
+		return -nonZeroDistance;
 	}
 
 }
