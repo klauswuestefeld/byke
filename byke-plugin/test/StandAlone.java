@@ -66,7 +66,7 @@ public class StandAlone {
 	
 	private void work(LayoutAlgorithm<String> algorithm, GraphCanvas<String> canvas) {
 		boolean improved = algorithm.improveLayoutStep();
-		//if (improved)
+		if (improved)
 			canvas.useLayout(algorithm.layoutMemento());
 
 		canvas.animationStep(1);
@@ -118,7 +118,7 @@ public class StandAlone {
 
 	
 	private static <T> void produceRandomDependencies(List<Node<T>> graph) {
-		int dependenciesToCreate = (int)(graph.size() * 1.1);
+		int dependenciesToCreate = (int)(graph.size() * 1.3);
 	
 		while (dependenciesToCreate-- > 0) {
 			Node<T> node1 = drawOneFrom(graph);
