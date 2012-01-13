@@ -30,7 +30,7 @@ public class LayoutAlgorithm<T> {
 	protected float _lowestStressEver;
 
 	private final NodeSizeProvider _sizeProvider;
-	private int nodeBumpContdown = 0;
+	private int nodeJoltContdown = 0;
 
 
 	public LayoutAlgorithm(Iterable<Node<T>> graph, CartesianLayout initialLayout, NodeSizeProvider sizeProvider) {
@@ -57,7 +57,7 @@ public class LayoutAlgorithm<T> {
 	public boolean improveLayoutStep() {
 		if (_nodeElements.size() <= 1) return false;
 		
-		bumpSomeNodeIfNecessary();
+		joltSomeNodeIfNecessary();
 
 		for (NodeElement node : _nodeElements)
 			relaxByOnePixel(node);
@@ -66,14 +66,14 @@ public class LayoutAlgorithm<T> {
 	}
 
 
-	private void bumpSomeNodeIfNecessary() {
-		if (nodeBumpContdown-- != 0) return;
+	private void joltSomeNodeIfNecessary() {
+		if (nodeJoltContdown-- != 0) return;
 		
 		int rx = RANDOM.nextInt(400);
 		int ry = RANDOM.nextInt(400);
 		NodeElement node = _nodeElements.get(RANDOM.nextInt(_nodeElements.size()));
 		node.move(rx, ry);
-		nodeBumpContdown = Math.max(rx, ry);
+		nodeJoltContdown = Math.max(rx, ry);
 	}
 
 
