@@ -194,7 +194,7 @@ public class PackageDependencyAnalysis {
 
 		@Override
 		public boolean visit(MethodInvocation node) {
-			addProvider(node.resolveTypeBinding());
+			addProvider(node.resolveMethodBinding().getDeclaringClass());
 			return true;
 		}
 
