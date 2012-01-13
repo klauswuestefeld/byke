@@ -108,7 +108,7 @@ public class PackageLayoutMap {
 			Properties prop = new Properties();
 			for (String name : memento.nodeNames()) {
 				Coordinates coordinates = memento.coordinatesFor(name);
-				prop.setProperty(name, Float.toString(coordinates._x) + ',' + Float.toString(coordinates._y));
+				prop.setProperty(name, coordinates._x + "," + coordinates._y);
 			}
 			prop.store(serialization, "");
 			file.create(new ByteArrayInputStream(serialization.toByteArray()), false, null);
