@@ -13,7 +13,6 @@ import java.util.regex.Pattern;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -24,10 +23,12 @@ import org.eclipse.jdt.core.dom.AnnotationTypeDeclaration;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.EnumDeclaration;
-import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.FieldAccess;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 
@@ -41,15 +42,11 @@ public class PackageDependencyAnalysis {
 	private List<Pattern> _excludedClassPattern;
 
 
-	public PackageDependencyAnalysis(IPackageFragment packageBeingGenerated, ICompilationUnit[] compilationUnits, IProgressMonitor monitor) throws JavaModelException {
-
-		if (null == monitor) {
-			monitor = new NullProgressMonitor();
-		}
+	public PackageDependencyAnalysis(String topLevelPackage, ICompilationUnit[] compilationUnits, IProgressMonitor monitor) throws JavaModelException {
+		if (monitor == null) monitor = new NullProgressMonitor();
 
 		ASTParser parser = ASTParser.newParser(AST.JLS3);
-
-		DependencyVisitor visitor = new DependencyVisitor(packageBeingGenerated.getElementName());
+		DependencyVisitor visitor = new DependencyVisitor(topLevelPackage);
 
 		monitor.beginTask("dependency analysis", compilationUnits.length);
 
@@ -114,8 +111,7 @@ public class PackageDependencyAnalysis {
 		private String _currentPackageName;
 		private String _topLevelPackage;
 
-		public DependencyVisitor(String topLevelPackage)
-		{
+		public DependencyVisitor(String topLevelPackage) {
 			_topLevelPackage = topLevelPackage;
 		}
 
@@ -174,14 +170,25 @@ public class PackageDependencyAnalysis {
 			return true;
 		}
 
+		
+		
 		@Override
-		public boolean visit(SimpleType node) {
-			addProvider(node.resolveBinding());
+		public void preVisit(ASTNode node) {
+			super.preVisit(node);
+			System.out.println(node.getClass() + " " + node);
+		}
+
+		@Override
+		public boolean visit(QualifiedName node) {
+			IBinding b = node.resolveBinding();
+			if (b instanceof IVariableBinding)
+				addProviderOf((IVariableBinding)b);
 			return true;
 		}
 
-		public boolean visit(Expression node) {
-			addProvider(node.resolveTypeBinding());
+		@Override
+		public boolean visit(SimpleType node) {
+			addProvider(node.resolveBinding());
 			return true;
 		}
 
@@ -197,6 +204,17 @@ public class PackageDependencyAnalysis {
 			return true;
 		}
 
+		@Override
+		public boolean visit(FieldAccess node) {
+			addProviderOf(node.resolveFieldBinding());
+			return true;
+		}
+
+		private void addProviderOf(IVariableBinding binding) {
+			addProvider(binding.getDeclaringClass());
+		}
+
+		
 		private boolean isSelectedPackage(String packageName) {
 			return packageName.equals(_currentPackageName);
 		}

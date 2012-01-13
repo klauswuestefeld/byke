@@ -187,7 +187,7 @@ public class BykeView extends ViewPart implements IBykeView {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				try {
-					Collection<Node<IBinding>> nextGraph = new PackageDependencyAnalysis(packageBeingGenerated, compilationUnits, monitor).dependencyGraph();
+					Collection<Node<IBinding>> nextGraph = new PackageDependencyAnalysis(packageBeingGenerated.getElementName(), compilationUnits, monitor).dependencyGraph();
 
 					synchronized (_graphChangeMonitor) {
 						if (packageBeingGenerated != _selectedPackage) return Status.OK_STATUS;

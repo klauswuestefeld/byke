@@ -25,6 +25,8 @@
       <import plugin="org.eclipse.ui.ide"/>
       <import plugin="org.eclipse.jdt.ui"/>
       <import plugin="org.eclipse.core.resources"/>
+      <import plugin="org.junit4" version="4.8.1" optional="true"/>
+      <import plugin="org.eclipse.jdt.launching" version="3.5.100"/>
    </requires>
 
    <extension
