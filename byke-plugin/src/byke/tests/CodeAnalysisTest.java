@@ -13,6 +13,7 @@ import org.junit.Test;
 
 import byke.PackageDependencyAnalysis;
 import byke.dependencygraph.Node;
+import byke.tests.utils.JavaProject;
 
 
 public class CodeAnalysisTest extends Assert {
