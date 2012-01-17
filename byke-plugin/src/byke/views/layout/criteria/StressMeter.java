@@ -14,7 +14,7 @@ import byke.views.layout.criteria.forces.SaveSpace;
 
 public class StressMeter {
 
-	//private static final Force ALPHABETICAL_ORDER = new AlphabeticalOrder();
+//	private static final Force ALPHABETICAL_ORDER = new AlphabeticalOrder();
 	private static final Force DEPENDENCIES_DOWN = new DependenciesDown();
 	private static final Force SAVE_SPACE = new SaveSpace();
 	private static final Force NON_OVERLAPPING = new NonOverlapping();

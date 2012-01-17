@@ -31,7 +31,7 @@ public class StandAlone {
 	private StandAlone() {
 		Shell shell = new Shell(_display);
 		shell.setText("Byke");
-		shell.setSize(300, 300);
+		shell.setSize(600, 600);
 
 		FillLayout layout = new FillLayout();
 		shell.setLayout(layout);
@@ -74,7 +74,7 @@ public class StandAlone {
 
 	
 	private Collection<Node<String>> graph() {
-		String[] names = new String[21];
+		String[] names = new String[12];
 		for (int i = 0; i < names.length; i++)
 			names[i] = "Node " + i;
 
