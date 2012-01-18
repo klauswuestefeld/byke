@@ -25,10 +25,13 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.EnumDeclaration;
 import org.eclipse.jdt.core.dom.FieldAccess;
 import org.eclipse.jdt.core.dom.IBinding;
+import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
+import org.eclipse.jdt.core.dom.ImportDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.QualifiedName;
+import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 
@@ -115,6 +118,15 @@ public class PackageDependencyAnalysis {
 			_topLevelPackage = topLevelPackage;
 		}
 
+		
+		
+		@Override
+		public boolean visit(ImportDeclaration node) {
+			return false; //We don't have a current node yet.
+		}
+
+
+
 		@SuppressWarnings("unchecked")
 		private boolean visit0(AbstractTypeDeclaration node) {
 			Node<IBinding> saved = _currentNode;
@@ -175,7 +187,6 @@ public class PackageDependencyAnalysis {
 		@Override
 		public void preVisit(ASTNode node) {
 			super.preVisit(node);
-			System.out.println(node.getClass() + " " + node);
 		}
 
 		@Override
@@ -193,8 +204,21 @@ public class PackageDependencyAnalysis {
 		}
 
 		@Override
+		public boolean visit(SimpleName node) {
+			IBinding b = node.resolveBinding();
+			if (b instanceof ITypeBinding)
+				addProvider((ITypeBinding)b);
+			else if (b instanceof IVariableBinding)
+				addProviderOf((IVariableBinding)b);
+			return true;
+		}
+
+		@Override
 		public boolean visit(MethodInvocation node) {
-			addProvider(node.resolveMethodBinding().getDeclaringClass());
+			IMethodBinding binding = node.resolveMethodBinding();
+			if (binding == null)
+				return true;
+			addProvider(binding.getDeclaringClass());
 			return true;
 		}
 
@@ -210,7 +234,9 @@ public class PackageDependencyAnalysis {
 			return true;
 		}
 
+		
 		private void addProviderOf(IVariableBinding binding) {
+			if (binding == null) return;
 			addProvider(binding.getDeclaringClass());
 		}
 
@@ -224,9 +250,8 @@ public class PackageDependencyAnalysis {
 			if (type.isArray()) type = type.getElementType();
 			if (type.isPrimitive() || type.isWildcardType()) return;
 			if (type.isTypeVariable()) {
-				for (ITypeBinding subType : type.getTypeBounds()) {
+				for (ITypeBinding subType : type.getTypeBounds())
 					addProvider(subType);
-				}
 				return;
 			}
 			if (type.getQualifiedName().equals("")) return; // TODO: Check why this happens.
