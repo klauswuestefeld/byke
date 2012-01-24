@@ -29,6 +29,7 @@ import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.ImportDeclaration;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
@@ -49,7 +50,9 @@ public class PackageDependencyAnalysis {
 		if (monitor == null) monitor = new NullProgressMonitor();
 
 		ASTParser parser = ASTParser.newParser(AST.JLS3);
-		DependencyVisitor visitor = new DependencyVisitor(topLevelPackage);
+		ASTVisitor visitor = compilationUnits.length == 1
+			? new TypeVisitor()
+			: new PackageVisitor(topLevelPackage);
 
 		monitor.beginTask("dependency analysis", compilationUnits.length);
 
@@ -108,13 +111,13 @@ public class PackageDependencyAnalysis {
 	}
 
 
-	class DependencyVisitor extends ASTVisitor {
+	class PackageVisitor extends ASTVisitor {
 		private Node<IBinding> _currentNode;
 
 		private String _currentPackageName;
 		private String _topLevelPackage;
 
-		public DependencyVisitor(String topLevelPackage) {
+		public PackageVisitor(String topLevelPackage) {
 			_topLevelPackage = topLevelPackage;
 		}
 
@@ -128,7 +131,7 @@ public class PackageDependencyAnalysis {
 
 
 		@SuppressWarnings("unchecked")
-		private boolean visit0(AbstractTypeDeclaration node) {
+		private boolean visitType(AbstractTypeDeclaration node) {
 			Node<IBinding> saved = _currentNode;
 			String savedPackage = _currentPackageName;
 			ITypeBinding binding = node.resolveBinding();
@@ -147,17 +150,17 @@ public class PackageDependencyAnalysis {
 
 		@Override
 		public boolean visit(AnnotationTypeDeclaration node) {
-			return visit0(node);
+			return visitType(node);
 		}
 
 		@Override
 		public boolean visit(EnumDeclaration node) {
-			return visit0(node);
+			return visitType(node);
 		}
 
 		@Override
 		public boolean visit(TypeDeclaration node) {
-			return visit0(node);
+			return visitType(node);
 		}
 
 		private Node<IBinding> getNode2(ITypeBinding binding) {
@@ -276,5 +279,57 @@ public class PackageDependencyAnalysis {
 			}
 			_currentNode.addProvider(getNode(type.getPackage(), packageName, JavaType.PACKAGE));
 		}
+	}
+
+
+	class TypeVisitor extends ASTVisitor {
+		private Node<IBinding> _currentNode;
+	
+		//TODO:
+		// Metodo -> Metodo
+		// metodo le campo: metodo -> campo
+		// metodo atribui campo: campo -> metodo
+		// initializer de instancia é "inlined" e suas dependencias passam direto.
+		
+		@Override
+		public boolean visit(MethodDeclaration node) {
+			IMethodBinding methodBinding = node.resolveBinding();
+			_currentNode = methodNode(methodBinding);
+			return true;
+		}
+
+
+		private Node<IBinding> methodNode(IMethodBinding methodBinding) {
+			return getNode(methodBinding, methodBinding.getName(), JavaType.METHOD);
+		}
+
+		
+		@Override
+		public boolean visit(MethodInvocation node) {
+			IMethodBinding binding = node.resolveMethodBinding();
+			if (binding != null)
+				addProvider(binding);
+			return true;
+		}
+	
+		@Override
+		public boolean visit(ClassInstanceCreation node) {
+//			addProvider(node.resolveTypeBinding());
+			return true;
+		}
+	
+		@Override
+		public boolean visit(FieldAccess node) {
+//			addProviderOf(node.resolveFieldBinding());
+			return true;
+		}
+	
+		
+		private void addProvider(IMethodBinding binding) {
+			if (binding == null) return;
+			if (_currentNode == null) System.out.println("Current Node Null while adding provider: " + binding);
+			_currentNode.addProvider(methodNode(binding));
+		}
+		
 	}
 }
