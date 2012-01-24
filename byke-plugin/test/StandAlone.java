@@ -79,10 +79,25 @@ public class StandAlone {
 			names[i] = "Node " + i;
 
 		return createGraph(names);
+
 		
 		// return Node.createGraph(new String[]{"1 234", "12 34", "123 4"});
 
+		
 //		 Collection<Node<String>> result = new ArrayList<Node<String>>();
+//		 Node<String> nodeA = new Node<String>("main");
+//		 Node<String> nodeB = new Node<String>("banana");
+//		 Node<String> nodeC = new Node<String>("abacaxi");
+//		 nodeA.addProvider(nodeB);
+//		 nodeB.addProvider(nodeC);
+//		 nodeC.addProvider(nodeA);
+//		 result.add(nodeA);
+//		 result.add(nodeB);
+//		 result.add(nodeC);
+//		 return result;
+
+		
+		//		 Collection<Node<String>> result = new ArrayList<Node<String>>();
 //		 Node<String> nodeA = new Node<String>("Agua");
 //		 Node<String> nodeB = new Node<String>("Luz");
 //		 Node<String> nodeC = new Node<String>("Gás");
