@@ -8,11 +8,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.core.IPackageFragment;
-import org.eclipse.jdt.core.IPackageFragmentRoot;
-import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -24,7 +20,8 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.progress.UIJob;
 
-import byke.PackageDependencyAnalysis;
+import byke.DependencyAnalysis;
+import byke.InvalidElement;
 import byke.dependencygraph.Node;
 import byke.views.layout.CartesianLayout;
 import byke.views.layout.algorithm.LayoutAlgorithm;
@@ -43,14 +40,14 @@ public class BykeView extends ViewPart implements IBykeView {
 	private Composite _parent;
 	private GraphCanvas<IBinding> _canvas;
 
-	private IPackageFragment _selectedPackage;
-	private Collection<Node<IBinding>> _selectedPackageGraph;
+	private IJavaElement _selectedElement;
+	private Collection<Node<IBinding>> _selectedGraph;
 
 	private final Object _graphChangeMonitor = new Object();
 
 	private UIJob _layoutJob;
 	private long _timeLastLayoutJobStarted;
-	private final PackageLayoutMap _layoutCache = new PackageLayoutMap();
+	private final LayoutMap _layoutCache = new LayoutMap();
 
 	private boolean _paused;
 	private IJavaElement _deferredSelection;
@@ -61,9 +58,9 @@ public class BykeView extends ViewPart implements IBykeView {
 		super.init(site);
 		_site = site;
 		_site.getPage().addSelectionListener(this);
-		_layoutJob = new UIJob("Package dependency layout") {
+		_layoutJob = new UIJob("Code structure layout") {
 
-			private IPackageFragment _packageBeingDisplayed;
+			private IJavaElement _elementBeingDisplayed;
 
 
 			@Override
@@ -84,22 +81,22 @@ public class BykeView extends ViewPart implements IBykeView {
 				if (improved) {
 					CartesianLayout bestSoFar = _algorithm.layoutMemento();
 					_canvas.useLayout(bestSoFar);
-					_layoutCache.keep(_packageBeingDisplayed, bestSoFar);
+					_layoutCache.keep(_elementBeingDisplayed, bestSoFar);
 				}
 
 				return Status.OK_STATUS;
 			}
 
 			private void checkForNewGraph() {
-				if (_selectedPackageGraph == null) return;
+				if (_selectedGraph == null) return;
 
 				Collection<Node<IBinding>> myGraph;
 				synchronized (_graphChangeMonitor) {
-					_packageBeingDisplayed = _selectedPackage;
-					myGraph = _selectedPackageGraph;
-					_selectedPackageGraph = null;
+					_elementBeingDisplayed = _selectedElement;
+					myGraph = _selectedGraph;
+					_selectedGraph = null;
 				}
-				CartesianLayout bestSoFar = _layoutCache.getLayoutFor(_packageBeingDisplayed);
+				CartesianLayout bestSoFar = _layoutCache.getLayoutFor(_elementBeingDisplayed);
 				if (bestSoFar == null) bestSoFar = new CartesianLayout();
 
 				newCanvas((Collection<Node<IBinding>>)myGraph, bestSoFar);
@@ -140,7 +137,7 @@ public class BykeView extends ViewPart implements IBykeView {
 
 	@Override
 	public void selectionChanged(IWorkbenchPart ignored, ISelection selectionCandidate) { // FIXME: After the "Show Dependencies" popup menu action, this method is no longer called (Byke is no longer notified of selections changes and no longer changes the graph display). If focus is changed to another View and back, for example, everything comes back to normal. Is this an Eclipse bug?
-		IJavaElement newSelection = validateSelection(selectionCandidate);
+		IJavaElement newSelection = asJavaElement(selectionCandidate);
 		if (_paused) {
 			_deferredSelection = newSelection;
 			return;
@@ -150,63 +147,44 @@ public class BykeView extends ViewPart implements IBykeView {
 
 	@Override
 	public void showDependencies(ISelection selectionCandidate) {
-		showJavaDependencies(validateSelection(selectionCandidate));
+		showJavaDependencies(asJavaElement(selectionCandidate));
 	}
 
 	private void showJavaDependencies(IJavaElement javaElement) {
-
-		IPackageFragment newPackage = getPackage(javaElement);
-
-		if (newPackage == null) return;
-		if (newPackage == _selectedPackage) return;
+		if (javaElement == null) return;
+		
+		DependencyAnalysis a;
 		try {
-			// No empty view if select package without source 
-			if (newPackage.getKind() == IPackageFragmentRoot.K_BINARY) return;
-		} catch (JavaModelException e) {
-			// FIXME Auto-generated catch block
-			e.printStackTrace();
-		} 
-		synchronized (_graphChangeMonitor) {
-			_selectedPackage = newPackage;
-			_selectedPackageGraph = null;
-		}
-
-		generateGraph(newPackage);
-	}
-
-	private void generateGraph(final IPackageFragment packageBeingGenerated) {
-		final ICompilationUnit[] compilationUnits;
-		try {
-			compilationUnits = packageBeingGenerated.getCompilationUnits();
-		} catch (JavaModelException x) {
-			x.printStackTrace();
+			a = new DependencyAnalysis(javaElement);
+		} catch (InvalidElement e) {
+			System.err.println(e.getMessage());
 			return;
 		}
+		if (a.subject() == _selectedElement) return;
 
-		(new Job("'" + packageBeingGenerated.getElementName() + "' analysis") {
-			@Override
-			protected IStatus run(IProgressMonitor monitor) {
-				try {
-					Collection<Node<IBinding>> nextGraph = new PackageDependencyAnalysis(packageBeingGenerated.getElementName(), compilationUnits, monitor).dependencyGraph();
+		synchronized (_graphChangeMonitor) {
+			_selectedElement = a.subject();
+			_selectedGraph = null;
+		}
 
-					synchronized (_graphChangeMonitor) {
-						if (packageBeingGenerated != _selectedPackage) return Status.OK_STATUS;
-						_selectedPackageGraph = nextGraph;
-					}
-					_layoutJob.schedule();
-				} catch (Exception x) {
-					UIJob.errorStatus(x);
-				}
-				return Status.OK_STATUS;
-			}
-
-		}).schedule();
+		generateGraph(a);
 	}
 
-	private IPackageFragment getPackage(IJavaElement element) {
-		if (element == null) return null;
-		if (element instanceof IPackageFragment) return (IPackageFragment)element;
-		return getPackage(element.getParent());
+	private void generateGraph(final DependencyAnalysis analysis) {
+		(new Job("'" + analysis.subject().getElementName() + "' analysis") { @Override protected IStatus run(IProgressMonitor monitor) {
+			try {
+				Collection<Node<IBinding>> nextGraph = analysis.dependencyGraph(monitor);
+
+				synchronized (_graphChangeMonitor) {
+					if (analysis.subject() != _selectedElement) return Status.OK_STATUS;
+					_selectedGraph = nextGraph;
+				}
+				_layoutJob.schedule();
+			} catch (Exception x) {
+				return UIJob.errorStatus(x);
+			}
+			return Status.OK_STATUS;
+		}}).schedule();
 	}
 
 	private void selectNode(Node<IBinding> selection) {
@@ -226,7 +204,7 @@ public class BykeView extends ViewPart implements IBykeView {
 	}
 
 	private void drillUp() { // FIXME: drillUp is apparently not being called.
-		showJavaDependencies(_selectedPackage.getParent());
+		showJavaDependencies(_selectedElement.getParent());
 	}
 
 	@Override
@@ -237,7 +215,7 @@ public class BykeView extends ViewPart implements IBykeView {
 		_layoutJob.schedule();
 	}
 
-	private IJavaElement validateSelection(ISelection candidate) {
+	private IJavaElement asJavaElement(ISelection candidate) {
 		if (!(candidate instanceof IStructuredSelection)) return null;
 
 		Object firstElement = ((IStructuredSelection)candidate).getFirstElement();

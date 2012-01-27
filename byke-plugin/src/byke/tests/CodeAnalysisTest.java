@@ -8,6 +8,7 @@ import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.junit.After;
@@ -16,10 +17,10 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import byke.PackageDependencyAnalysis;
+import byke.DependencyAnalysis;
+import byke.InvalidElement;
 import byke.dependencygraph.Node;
 import byke.tests.utils.JavaProject;
-
 
 public class CodeAnalysisTest extends Assert {
 
@@ -111,24 +112,75 @@ public class CodeAnalysisTest extends Assert {
 	}
 
 	
-	private void assertDepends(String dependent, String provider) throws CoreException, JavaModelException {
-		ICompilationUnit a = project.createCompilationUnit("foopackage", "A.java", "package foopackage; " + dependent);
-		ICompilationUnit b = project.createCompilationUnit("foopackage", "B.java", "package foopackage; " + provider);
+	@Test
+	public void methodCallsMethod() throws Exception {
+		ICompilationUnit a = createCompilationUnit("A", "class A { void main() { foo(); } void foo() {} }");
+		assertDepends(a, "main");
+	}
 
+	
+	@Test
+	public void externalMethodCallsAreIgnored() throws Exception {
+		ICompilationUnit a = createCompilationUnit("A", "class A { void main() { valid(); B.invalid(); } void valid(){} }");
+		createCompilationUnit("B", "class B { static void invalid() {} }");
+		assertDepends(a, "main");
+	}
+
+	
+	@Test
+	public void methodReadsField() throws Exception {
+		ICompilationUnit a = createCompilationUnit("A", "class A { int b; void main() { int a = this.b; } }");
+		assertDepends(a, "main");
+	}
+
+	
+	@Ignore
+	@Test
+	public void methodCallsConstructor() throws Exception {
+		ICompilationUnit a = createCompilationUnit("A", "class A { static void main() { new A(); } }");
+		assertDepends(a, "main");
+	}
+
+	
+	private void assertDepends(String dependent, String provider) throws CoreException, JavaModelException, InvalidElement {
+		ICompilationUnit unit = createCompilationUnit("A", dependent);
+		createCompilationUnit("B", provider);
+
+		assertDepends(unit.getParent(), "A");
+	}
+	
+	
+	private ICompilationUnit createCompilationUnit(String className, String code) throws CoreException {
+		return project.createCompilationUnit("foopackage", className + ".java", "package foopackage; " + code);
+	}
+	
+	
+	private void assertDepends(IJavaElement element, String dependentName) throws CoreException, InvalidElement {
 		//project.buildProject(null);
 		project.joinAutoBuild();
 		assertBuildOK();
 
-		ICompilationUnit[] units = {a, b};
-		Collection<Node<IBinding>> graph = new PackageDependencyAnalysis("foopackage", units, null).dependencyGraph();
-		Iterator<Node<IBinding>> it = graph.iterator();
-		Node<IBinding> nodeA = it.next();
-		assertTrue(nodeA.name().contains("A"));
 		
+		Collection<Node<IBinding>> graph = new DependencyAnalysis(element).dependencyGraph(null);
+		assertTrue(""+graph, graph.size() > 1);
+
+		Node<IBinding> dependent = findNode(dependentName, graph);
+		
+		Iterator<Node<IBinding>> it = graph.iterator();
 		while (it.hasNext()) {
-			Node<IBinding> providerNode = it.next();
-			assertTrue("Should be provider: " + providerNode.name(), nodeA.providers().contains(providerNode));
+			Node<IBinding> provider = it.next();
+			if (provider == dependent) continue;
+			assertFalse("Invalid provider detected.", provider.name().equals("invalid"));
+			assertTrue("Should be provider: " + provider.name(), dependent.providers().contains(provider));
 		}
+	}
+	
+	
+	private Node<IBinding> findNode(String suffix, Collection<Node<IBinding>> graph) {
+		for (Node<IBinding> node : graph)
+			if (node.name().endsWith(suffix)) return node;
+		
+		throw new IllegalStateException("Node " + suffix + " not found in " + graph);
 	}
 	
 	

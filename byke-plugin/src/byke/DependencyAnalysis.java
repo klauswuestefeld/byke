@@ -13,6 +13,11 @@ import java.util.regex.Pattern;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IMember;
+import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -40,40 +45,99 @@ import byke.dependencygraph.Node;
 import byke.preferences.PreferenceConstants;
 
 
-public class PackageDependencyAnalysis {
+public class DependencyAnalysis {
 	private final Map<String, Node<IBinding>> _nodes = new HashMap<String, Node<IBinding>>();
 
 	private List<Pattern> _excludedClassPattern;
 
+	private IJavaElement _subject;
 
-	public PackageDependencyAnalysis(String topLevelPackage, ICompilationUnit[] compilationUnits, IProgressMonitor monitor) throws JavaModelException {
-		if (monitor == null) monitor = new NullProgressMonitor();
 
-		ASTParser parser = ASTParser.newParser(AST.JLS3);
-		ASTVisitor visitor = compilationUnits.length == 1
-			? new TypeVisitor()
-			: new PackageVisitor(topLevelPackage);
+	public DependencyAnalysis(IJavaElement child) throws InvalidElement {
+		_subject = enclosingSubject(child);
+		if (_subject == null) throw new InvalidElement("No supported subject found for child: " + child);
+	}
+	
+	
+	private IJavaElement enclosingSubject(IJavaElement element) throws InvalidElement {
+		if (element == null) return null;
+		if (element instanceof IType) return element;
+		if (element instanceof ICompilationUnit) return ((ICompilationUnit)element).findPrimaryType();
+		if (element instanceof IMember)
+			return enclosingTypeOf((IMember)element);
 
-		monitor.beginTask("dependency analysis", compilationUnits.length);
+		return enclosingPackageOf(element);
+	}
 
-		for (ICompilationUnit each : compilationUnits) {
-			parser.setResolveBindings(true);
-			parser.setSource(each);
 
-			monitor.subTask(each.getElementName());
+	private IJavaElement enclosingTypeOf(IMember element) {
+		return element.getAncestor(IJavaElement.TYPE);
+	}
+	
+	
+	private IJavaElement enclosingPackageOf(IJavaElement element) throws InvalidElement {
+		IPackageFragment result = (IPackageFragment)element.getAncestor(IJavaElement.PACKAGE_FRAGMENT);
+		assertNotBinary(result); 
+		return result;
+	}
 
-			CompilationUnit node = (CompilationUnit)parser.createAST(monitor);
-			node.accept(visitor);
-			monitor.worked(1);
-			if (monitor.isCanceled()) {
-				break;
-			}
+
+	private void assertNotBinary(IPackageFragment result) throws InvalidElement {
+		try {
+			if (result.getKind() == IPackageFragmentRoot.K_BINARY)
+				throw new InvalidElement("Binary Package");
+		} catch (JavaModelException e) {
+			throw new InvalidElement(e);
 		}
 	}
 
-	public Collection<Node<IBinding>> dependencyGraph() {
+
+	public Collection<Node<IBinding>> dependencyGraph(IProgressMonitor monitor) {
+		try {
+			populateNodes(monitor);
+		} catch (JavaModelException x) {
+			x.printStackTrace();
+		}
 		return _nodes.values();
 	}
+
+	
+	private void populateNodes(IProgressMonitor monitor) throws JavaModelException {
+		if (monitor == null) monitor = new NullProgressMonitor();
+		
+		ASTParser parser = ASTParser.newParser(AST.JLS3);
+		
+		ASTVisitor visitor = _subject instanceof IType
+			? new TypeVisitor()
+			: new PackageVisitor(_subject.getElementName());
+
+		ICompilationUnit[] compilationUnits = compilationUnits();
+		monitor.beginTask("dependency analysis", compilationUnits.length);
+		
+		for (ICompilationUnit each : compilationUnits) {
+			if (monitor.isCanceled()) break;
+			populateNodes(monitor, parser, visitor, each);
+		}
+	}
+
+
+	private void populateNodes(IProgressMonitor monitor, ASTParser parser, ASTVisitor visitor, ICompilationUnit each) {
+		monitor.subTask(each.getElementName());
+
+		parser.setResolveBindings(true);
+		parser.setSource(each);
+		CompilationUnit node = (CompilationUnit)parser.createAST(monitor);
+		node.accept(visitor);
+		monitor.worked(1);
+	}
+
+
+	private ICompilationUnit[] compilationUnits() throws JavaModelException {
+		return _subject instanceof IPackageFragment
+			? ((IPackageFragment)_subject).getCompilationUnits()
+			: new ICompilationUnit[] { ((ICompilationUnit)_subject.getAncestor(IJavaElement.COMPILATION_UNIT)) };
+	}
+
 
 	private Node<IBinding> getNode(IBinding binding, String nodeName, JavaType kind) {
 		String key = getBindingKey(binding);
@@ -86,11 +150,13 @@ public class PackageDependencyAnalysis {
 		return node;
 	}
 
+	
 	private String getBindingKey(IBinding binding) {
 		// return binding.getKey();
 		return binding.getJavaElement().getElementName();
 	}
 
+	
 	private List<Pattern> getClassExcludePattern() {
 		if (_excludedClassPattern == null) {
 			_excludedClassPattern = new ArrayList<Pattern>();
@@ -283,7 +349,24 @@ public class PackageDependencyAnalysis {
 
 
 	class TypeVisitor extends ASTVisitor {
+		
+		@Override
+		public boolean visit(TypeDeclaration node) {
+			ITypeBinding binding = node.resolveBinding();
+			IJavaElement javaElement = binding.getJavaElement();
+			if (!javaElement.getHandleIdentifier().equals(_subject.getHandleIdentifier()))
+				return true;
+			TypeAnalyser typeVisitor = new TypeAnalyser(binding);
+			for (Object decl : node.bodyDeclarations())
+				((ASTNode)decl).accept(typeVisitor);
+			return false;
+		}
+	}
+	
+		
+	class TypeAnalyser extends ASTVisitor {
 		private Node<IBinding> _currentNode;
+		private final ITypeBinding _type;
 	
 		//TODO:
 		// Metodo -> Metodo
@@ -291,6 +374,15 @@ public class PackageDependencyAnalysis {
 		// metodo atribui campo: campo -> metodo
 		// initializer de instancia é "inlined" e suas dependencias passam direto.
 		
+		TypeAnalyser(ITypeBinding binding) {
+			_type = binding;
+		}
+
+		@Override
+		public boolean visit(TypeDeclaration node) {
+			return false;
+		}
+
 		@Override
 		public boolean visit(MethodDeclaration node) {
 			IMethodBinding methodBinding = node.resolveBinding();
@@ -299,16 +391,9 @@ public class PackageDependencyAnalysis {
 		}
 
 
-		private Node<IBinding> methodNode(IMethodBinding methodBinding) {
-			return getNode(methodBinding, methodBinding.getName(), JavaType.METHOD);
-		}
-
-		
 		@Override
 		public boolean visit(MethodInvocation node) {
-			IMethodBinding binding = node.resolveMethodBinding();
-			if (binding != null)
-				addProvider(binding);
+			addProvider(node.resolveMethodBinding());
 			return true;
 		}
 	
@@ -320,16 +405,42 @@ public class PackageDependencyAnalysis {
 	
 		@Override
 		public boolean visit(FieldAccess node) {
-//			addProviderOf(node.resolveFieldBinding());
+			addProvider(node.resolveFieldBinding());
 			return true;
 		}
 	
 		
 		private void addProvider(IMethodBinding binding) {
 			if (binding == null) return;
-			if (_currentNode == null) System.out.println("Current Node Null while adding provider: " + binding);
-			_currentNode.addProvider(methodNode(binding));
+			if (binding.getDeclaringClass() != _type) return;
+			addProvider(methodNode(binding));
+		}
+
+
+		private void addProvider(IVariableBinding binding) {
+			if (binding == null) return;
+			if (binding.getDeclaringClass() != _type) return;
+			addProvider(fieldNode(binding));
+		}
+
+
+		private Node<IBinding> methodNode(IMethodBinding methodBinding) {
+			return getNode(methodBinding, methodBinding.getName(), JavaType.METHOD);
+		}
+		private Node<IBinding> fieldNode(IVariableBinding fieldBinding) {
+			return getNode(fieldBinding, fieldBinding.getName(), JavaType.FIELD);
+		}
+
+
+		private void addProvider(Node<IBinding> provider) {
+			if (_currentNode == null) System.out.println("Current Node Null while adding provider: " + provider);
+			_currentNode.addProvider(provider);
 		}
 		
+	}
+
+
+	public IJavaElement subject() {
+		return _subject;
 	}
 }

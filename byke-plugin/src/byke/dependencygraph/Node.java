@@ -90,4 +90,8 @@ public class Node<PayloadType> {
 		return _kind.equals(n._kind) && _name.equals(n._name);
 	}
 
+	@Override
+	public String toString() {
+		return name();
+	}
 }

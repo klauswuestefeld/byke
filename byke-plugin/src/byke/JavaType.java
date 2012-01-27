@@ -11,7 +11,8 @@ public enum JavaType {
 	ANNOTATION(ISharedImages.IMG_OBJS_ANNOTATION), 
 	INTERFACE(ISharedImages.IMG_OBJS_INTERFACE),
 	ENUM(ISharedImages.IMG_OBJS_ENUM),
-	METHOD(ISharedImages.IMG_OBJS_DEFAULT);
+	METHOD(ISharedImages.IMG_OBJS_DEFAULT),
+	FIELD(ISharedImages.IMG_FIELD_DEFAULT);
 
 	private final String iconResourceName;
 

@@ -26,7 +26,7 @@ import byke.views.layout.CartesianLayout;
 import byke.views.layout.Coordinates;
 
 
-public class PackageLayoutMap {
+public class LayoutMap {
 
 	private static final String FILE_EXTENSION = "properties";
 
@@ -35,11 +35,15 @@ public class PackageLayoutMap {
 	private final Object _scheduledSavesMonitor = new Object();
 
 
-	public CartesianLayout getLayoutFor(IPackageFragment aPackage) {
-		CartesianLayout newest = mementoToBeWrittenFor(aPackage);
+	public CartesianLayout getLayoutFor(IJavaElement element) {
+		if (!(element instanceof IPackageFragment)) {
+			System.out.println("Cannot yet read layout for " + element.getClass());
+			return null;
+		}
+		CartesianLayout newest = mementoToBeWrittenFor((IPackageFragment)element);
 		if (newest != null) return newest;
 
-		return read(aPackage);
+		return read((IPackageFragment)element);
 		// TODO: Optimize: Use an LRU cache. This is not so urgent because Eclipse apparently does a lot of caching of the workspace files.
 	}
 
@@ -88,8 +92,13 @@ public class PackageLayoutMap {
 		return _cartesianLayout;
 	}
 
-	public void keep(IPackageFragment aPackage, CartesianLayout memento) {
-		scheduleSave(aPackage, memento);
+	public void keep(IJavaElement element, CartesianLayout memento) {
+		if (element instanceof IPackageFragment)
+			scheduleSave((IPackageFragment)element, memento);
+		
+		int todo;
+//		else
+//			System.out.println("Cannot yet save " + element.getClass());
 	}
 
 	private void scheduleSave(IPackageFragment aPackage, CartesianLayout memento) {

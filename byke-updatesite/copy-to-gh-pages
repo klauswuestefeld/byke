@@ -1,0 +1,3 @@
+TARGET=../../byke-gh-pages/updatesite
+rm -rf $TARGET/*
+cp -R * $TARGET
