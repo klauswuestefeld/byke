@@ -105,7 +105,7 @@ public class LayoutMap {
 		synchronized (_scheduledSavesMonitor) {
 			scheduledSaves().put(aPackage, memento);
 		}
-		_saveJob.schedule(1000 * 10);
+		_saveJob.schedule(1000 * 3);
 	}
 
 	private void save(IPackageFragment aPackage, CartesianLayout memento) {
@@ -216,13 +216,10 @@ public class LayoutMap {
 	}
 
 	private WorkspaceJob createSaveJob() {
-		WorkspaceJob job = new WorkspaceJob("Writing Byke layout cache") {
-			@Override
-			public IStatus runInWorkspace(IProgressMonitor monitor) {
-				performScheduledSaves();
-				return Status.OK_STATUS;
-			}
-		};
+		WorkspaceJob job = new WorkspaceJob("Writing Byke layout cache") { @Override public IStatus runInWorkspace(IProgressMonitor monitor) {
+			performScheduledSaves();
+			return Status.OK_STATUS;
+		}};
 		job.setSystem(true);
 		job.setPriority(Job.DECORATE); // Low priority.
 		return job;

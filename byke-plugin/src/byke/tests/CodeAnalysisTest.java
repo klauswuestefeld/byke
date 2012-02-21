@@ -20,22 +20,15 @@ import org.junit.Test;
 import byke.DependencyAnalysis;
 import byke.InvalidElement;
 import byke.dependencygraph.Node;
-import byke.tests.utils.JavaProject;
+import byke.tests.workspaceutils.JavaProject;
 
 public class CodeAnalysisTest extends Assert {
-
 	
 	private JavaProject project;
 
 	
-	@Before
-	public void beforeCodeAnalysisTest() throws Exception {
-		project = new JavaProject();
-	}
-	@After
-	public void afterCodeAnalysisTest() throws Exception {
-		project.dispose();
-	}
+	@Before public void beforeCodeAnalysisTest() throws Exception { project = new JavaProject();}
+	@After public void afterCodeAnalysisTest() throws Exception { project.dispose(); }
 	
 	
 	@Ignore
@@ -134,7 +127,6 @@ public class CodeAnalysisTest extends Assert {
 	}
 
 	
-	@Ignore
 	@Test
 	public void methodCallsConstructor() throws Exception {
 		ICompilationUnit a = createCompilationUnit("A", "class A { static void main() { new A(); } }");
@@ -155,13 +147,13 @@ public class CodeAnalysisTest extends Assert {
 	}
 	
 	
-	private void assertDepends(IJavaElement element, String dependentName) throws CoreException, InvalidElement {
+	private void assertDepends(IJavaElement toAnalyse, String dependentName) throws CoreException, InvalidElement {
 		//project.buildProject(null);
 		project.joinAutoBuild();
 		assertBuildOK();
 
 		
-		Collection<Node<IBinding>> graph = new DependencyAnalysis(element).dependencyGraph(null);
+		Collection<Node<IBinding>> graph = new DependencyAnalysis(toAnalyse).dependencyGraph(null);
 		assertTrue(""+graph, graph.size() > 1);
 
 		Node<IBinding> dependent = findNode(dependentName, graph);

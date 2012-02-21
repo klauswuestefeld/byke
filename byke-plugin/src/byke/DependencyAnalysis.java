@@ -139,21 +139,15 @@ public class DependencyAnalysis {
 	}
 
 
-	private Node<IBinding> getNode(IBinding binding, String nodeName, JavaType kind) {
-		String key = getBindingKey(binding);
-		Node<IBinding> node = _nodes.get(key);
+	private Node<IBinding> getNode(IBinding binding, JavaType kind) {
+		String name = binding.getName();
+		Node<IBinding> node = _nodes.get(name);
 		if (null == node) {
-			node = new Node<IBinding>(nodeName, kind);
+			node = new Node<IBinding>(name, kind);
 			node.payload(binding);
-			_nodes.put(key, node);
+			_nodes.put(name, node);
 		}
 		return node;
-	}
-
-	
-	private String getBindingKey(IBinding binding) {
-		// return binding.getKey();
-		return binding.getJavaElement().getElementName();
 	}
 
 	
@@ -235,7 +229,7 @@ public class DependencyAnalysis {
 			if (null != declaringClass) return getNode2(declaringClass);
 			
 			JavaType type = JavaType.valueOf(binding);
-			return getNode(binding, binding.getQualifiedName(), type);
+			return getNode(binding, type);
 		}
 
 		private void visitList(List<ASTNode> l) {
@@ -310,10 +304,6 @@ public class DependencyAnalysis {
 		}
 
 		
-		private boolean isSelectedPackage(String packageName) {
-			return packageName.equals(_currentPackageName);
-		}
-
 		private void addProvider(ITypeBinding type) {
 			if (null == type) return;
 			if (type.isArray()) type = type.getElementType();
@@ -328,22 +318,22 @@ public class DependencyAnalysis {
 			String packageName = type.getPackage().getName();
 			if (!packageName.startsWith(_topLevelPackage)) return;
 
-			if (isSelectedPackage(packageName)) {
-				if (type.isParameterizedType()) { // if Map<K,V>
-					for (ITypeBinding subtype : type.getTypeArguments()) { // <K,V>
-						if (ignoreClass(subtype.getQualifiedName())) continue;
-						addProvider(subtype);
-					}
-					final ITypeBinding erasure = type.getErasure();
-					if (ignoreClass(erasure.getQualifiedName())) return;
-					_currentNode.addProvider(getNode2(erasure));
-				} else {
-					if (ignoreClass(type.getQualifiedName())) return;
-					_currentNode.addProvider(getNode2(type));
-				}
+			if (!packageName.equals(_currentPackageName)) {
+				_currentNode.addProvider(getNode(type.getPackage(), JavaType.PACKAGE));
 				return;
 			}
-			_currentNode.addProvider(getNode(type.getPackage(), packageName, JavaType.PACKAGE));
+			if (type.isParameterizedType()) { // if Map<K,V>
+				for (ITypeBinding subtype : type.getTypeArguments()) { // <K,V>
+					if (ignoreClass(subtype.getQualifiedName())) continue;
+					addProvider(subtype);
+				}
+				final ITypeBinding erasure = type.getErasure();
+				if (ignoreClass(erasure.getQualifiedName())) return;
+				_currentNode.addProvider(getNode2(erasure));
+			} else {
+				if (ignoreClass(type.getQualifiedName())) return;
+				_currentNode.addProvider(getNode2(type));
+			}
 		}
 	}
 
@@ -399,7 +389,7 @@ public class DependencyAnalysis {
 	
 		@Override
 		public boolean visit(ClassInstanceCreation node) {
-//			addProvider(node.resolveTypeBinding());
+			addProvider(node.resolveConstructorBinding());
 			return true;
 		}
 	
@@ -425,10 +415,10 @@ public class DependencyAnalysis {
 
 
 		private Node<IBinding> methodNode(IMethodBinding methodBinding) {
-			return getNode(methodBinding, methodBinding.getName(), JavaType.METHOD);
+			return getNode(methodBinding, JavaType.METHOD);
 		}
 		private Node<IBinding> fieldNode(IVariableBinding fieldBinding) {
-			return getNode(fieldBinding, fieldBinding.getName(), JavaType.FIELD);
+			return getNode(fieldBinding, JavaType.FIELD);
 		}
 
 
@@ -436,7 +426,13 @@ public class DependencyAnalysis {
 			if (_currentNode == null) System.out.println("Current Node Null while adding provider: " + provider);
 			_currentNode.addProvider(provider);
 		}
-		
+
+		@Override
+		public void preVisit(ASTNode node) {
+			System.out.println(node.getClass() + ": " + node);
+			super.preVisit(node);
+		}
+
 	}
 
 
