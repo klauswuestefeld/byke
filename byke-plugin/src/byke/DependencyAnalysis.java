@@ -2,6 +2,7 @@
 //This is free software. See the license distributed along with this file.
 package byke;
 
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -34,7 +35,6 @@ import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.ImportDeclaration;
-import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
@@ -139,8 +139,13 @@ public class DependencyAnalysis {
 	}
 
 
-	private Node<IBinding> getNode(IBinding binding, JavaType kind) {
+	Node<IBinding> getNode(IBinding binding, JavaType kind) {
 		String name = binding.getName();
+		return getNode(name, binding, kind);
+	}
+
+
+	Node<IBinding> getNode(String name, IBinding binding, JavaType kind) {
 		Node<IBinding> node = _nodes.get(name);
 		if (null == node) {
 			node = new Node<IBinding>(name, kind);
@@ -162,11 +167,10 @@ public class DependencyAnalysis {
 	}
 
 	private boolean ignoreClass(String qualifiedClassName) {
-		for (Pattern pattern : getClassExcludePattern()) {
-			if (pattern.matcher(qualifiedClassName).matches()) {
+		for (Pattern pattern : getClassExcludePattern())
+			if (pattern.matcher(qualifiedClassName).matches())
 				return true;
-			}
-		}
+
 		return false;
 	}
 
@@ -346,7 +350,7 @@ public class DependencyAnalysis {
 			IJavaElement javaElement = binding.getJavaElement();
 			if (!javaElement.getHandleIdentifier().equals(_subject.getHandleIdentifier()))
 				return true;
-			TypeAnalyser typeVisitor = new TypeAnalyser(binding);
+			TypeAnalyser typeVisitor = new TypeAnalyser(DependencyAnalysis.this, binding);
 			for (Object decl : node.bodyDeclarations())
 				((ASTNode)decl).accept(typeVisitor);
 			return false;
@@ -354,88 +358,6 @@ public class DependencyAnalysis {
 	}
 	
 		
-	class TypeAnalyser extends ASTVisitor {
-		private Node<IBinding> _currentNode;
-		private final ITypeBinding _type;
-	
-		//TODO:
-		// Metodo -> Metodo
-		// metodo le campo: metodo -> campo
-		// metodo atribui campo: campo -> metodo
-		// initializer de instancia é "inlined" e suas dependencias passam direto.
-		
-		TypeAnalyser(ITypeBinding binding) {
-			_type = binding;
-		}
-
-		@Override
-		public boolean visit(TypeDeclaration node) {
-			return false;
-		}
-
-		@Override
-		public boolean visit(MethodDeclaration node) {
-			IMethodBinding methodBinding = node.resolveBinding();
-			_currentNode = methodNode(methodBinding);
-			return true;
-		}
-
-
-		@Override
-		public boolean visit(MethodInvocation node) {
-			addProvider(node.resolveMethodBinding());
-			return true;
-		}
-	
-		@Override
-		public boolean visit(ClassInstanceCreation node) {
-			addProvider(node.resolveConstructorBinding());
-			return true;
-		}
-	
-		@Override
-		public boolean visit(FieldAccess node) {
-			addProvider(node.resolveFieldBinding());
-			return true;
-		}
-	
-		
-		private void addProvider(IMethodBinding binding) {
-			if (binding == null) return;
-			if (binding.getDeclaringClass() != _type) return;
-			addProvider(methodNode(binding));
-		}
-
-
-		private void addProvider(IVariableBinding binding) {
-			if (binding == null) return;
-			if (binding.getDeclaringClass() != _type) return;
-			addProvider(fieldNode(binding));
-		}
-
-
-		private Node<IBinding> methodNode(IMethodBinding methodBinding) {
-			return getNode(methodBinding, JavaType.METHOD);
-		}
-		private Node<IBinding> fieldNode(IVariableBinding fieldBinding) {
-			return getNode(fieldBinding, JavaType.FIELD);
-		}
-
-
-		private void addProvider(Node<IBinding> provider) {
-			if (_currentNode == null) System.out.println("Current Node Null while adding provider: " + provider);
-			_currentNode.addProvider(provider);
-		}
-
-		@Override
-		public void preVisit(ASTNode node) {
-			System.out.println(node.getClass() + ": " + node);
-			super.preVisit(node);
-		}
-
-	}
-
-
 	public IJavaElement subject() {
 		return _subject;
 	}
