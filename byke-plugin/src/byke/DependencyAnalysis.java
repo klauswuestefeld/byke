@@ -45,7 +45,7 @@ import byke.dependencygraph.Node;
 import byke.preferences.PreferenceConstants;
 
 
-public class DependencyAnalysis {
+public class DependencyAnalysis implements NodeProducer {
 	private final Map<String, Node<IBinding>> _nodes = new HashMap<String, Node<IBinding>>();
 
 	private List<Pattern> _excludedClassPattern;
@@ -139,13 +139,20 @@ public class DependencyAnalysis {
 	}
 
 
-	Node<IBinding> getNode(IBinding binding, JavaType kind) {
+	@Override
+	public Node<IBinding> produceNode(IBinding binding, JavaType kind) {
 		String name = binding.getName();
-		return getNode(name, binding, kind);
+		return produceNode(name, binding, kind);
 	}
 
+	
+	@Override
+	public Node<IBinding> produceNode(String name, JavaType kind) {
+		return produceNode(name, null, kind);
+	}
 
-	Node<IBinding> getNode(String name, IBinding binding, JavaType kind) {
+	
+	private Node<IBinding> produceNode(String name, IBinding binding, JavaType kind) {
 		Node<IBinding> node = _nodes.get(name);
 		if (null == node) {
 			node = new Node<IBinding>(name, kind);
@@ -233,7 +240,7 @@ public class DependencyAnalysis {
 			if (null != declaringClass) return getNode2(declaringClass);
 			
 			JavaType type = JavaType.valueOf(binding);
-			return getNode(binding, type);
+			return produceNode(binding, type);
 		}
 
 		private void visitList(List<ASTNode> l) {
@@ -323,7 +330,7 @@ public class DependencyAnalysis {
 			if (!packageName.startsWith(_topLevelPackage)) return;
 
 			if (!packageName.equals(_currentPackageName)) {
-				_currentNode.addProvider(getNode(type.getPackage(), JavaType.PACKAGE));
+				_currentNode.addProvider(produceNode(type.getPackage(), JavaType.PACKAGE));
 				return;
 			}
 			if (type.isParameterizedType()) { // if Map<K,V>
@@ -361,4 +368,5 @@ public class DependencyAnalysis {
 	public IJavaElement subject() {
 		return _subject;
 	}
+
 }

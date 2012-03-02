@@ -23,13 +23,13 @@ import org.eclipse.jdt.core.dom.TypeDeclaration;
 import byke.dependencygraph.Node;
 
 class TypeAnalyser extends ASTVisitor {
-	private final DependencyAnalysis _dependencyAnalysis;
+	private final NodeProducer _nodeProducer;
 	private Node<IBinding> _currentNode;
 	private final ITypeBinding _type;
 
 	
-	TypeAnalyser(DependencyAnalysis dependencyAnalysis, ITypeBinding binding) {
-		_dependencyAnalysis = dependencyAnalysis;
+	TypeAnalyser(NodeProducer nodeProducer, ITypeBinding binding) {
+		_nodeProducer = nodeProducer;
 		_type = binding;
 	}
 
@@ -50,7 +50,7 @@ class TypeAnalyser extends ASTVisitor {
 	
 	@Override
 	public boolean visit(Initializer node) {
-		_currentNode = _dependencyAnalysis.getNode("{initializer}", null, METHOD);
+		_currentNode = _nodeProducer.produceNode("{initializer}", METHOD);
 		return true;
 	}
 
@@ -127,10 +127,10 @@ class TypeAnalyser extends ASTVisitor {
 
 
 	private Node<IBinding> methodNode(IMethodBinding methodBinding) {
-		return _dependencyAnalysis.getNode(methodBinding, METHOD);
+		return _nodeProducer.produceNode(methodBinding, METHOD);
 	}
 	private Node<IBinding> fieldNode(IVariableBinding fieldBinding) {
-		return _dependencyAnalysis.getNode(fieldBinding, FIELD);
+		return _nodeProducer.produceNode(fieldBinding, FIELD);
 	}
 
 
