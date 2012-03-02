@@ -3,12 +3,15 @@ package byke;
 import static byke.JavaType.FIELD;
 import static byke.JavaType.METHOD;
 
+import java.util.List;
+
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.Assignment;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.FieldAccess;
+import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
@@ -19,6 +22,7 @@ import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
+import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 
 import byke.dependencygraph.Node;
 
@@ -55,6 +59,18 @@ class TypeAnalyser extends ASTVisitor {
 	}
 
 
+	@Override
+	public boolean visit(FieldDeclaration node) {
+		List<?> frags = node.fragments();
+		for (Object frag : frags) {
+			IVariableBinding b = ((VariableDeclarationFragment)frag).resolveBinding();
+			System.out.println(">>>>>> Frag: " + frag + " binding: " + b);
+		}
+//		_currentNode = methodNode(methodBinding);
+		return true;
+	}
+
+	
 	@Override
 	public boolean visit(MethodInvocation node) {
 		addProvider(node.resolveMethodBinding());

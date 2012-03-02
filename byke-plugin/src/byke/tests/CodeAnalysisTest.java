@@ -9,13 +9,10 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
 
 import byke.DependencyAnalysis;
 import byke.InvalidElement;
@@ -31,165 +28,18 @@ public class CodeAnalysisTest extends Assert {
 	@After public void afterCodeAnalysisTest() throws Exception { project.dispose(); }
 	
 	
-	@Ignore
-	@Test
-	public void genericConstraint1() throws Exception {
-		assertDepends(
-			"class A <T extends B> {}",
-			"class B {}"
-		);
-	}
-
-	
-	@Ignore
-	@Test
-	public void genericConstraint2() throws Exception {
-		assertDepends(
-			"abstract class A implements Iterable<B> {}",
-			"class B {}"
-		);
-	}
-
-	
-	@Test
-	public void staticField() throws Exception {
-		assertDepends(
-			"class A { int foo = B.foo; }",
-			"class B { static int foo = 42; }"
-		);
-	}
-
-	
-	@Test
-	public void constructor() throws Exception {
-		assertDepends(
-			"class A { Object foo = new B(); }",
-			"class B {}"
-		);
-	}
-	
-	
-	@Test
-	public void instanceField() throws Exception {
-		assertDepends(
-			"class A { Object foo = B.newC().field; }",
-			"class B { static C newC() {return null;} } class C { int field; }"
-		);
-	}
-	
-	
-	@Test
-	public void staticFieldImport() throws Exception {
-		assertDepends(
-			"import static foopackage.B.foo; class A { int f = foo; }",
-			"class B { static int foo = 42; }"
-		);
-	}
-	
-	
-	@Test
-	public void methodInvocation() throws Exception {
-		assertDepends(
-			"class A { { B.foo(); } }",
-			"class B { static void foo() {} }"
-		);
-	}
-
-	
-	@Test
-	public void declaredException() throws Exception {
-		assertDepends(
-			"class A { void foo() throws B {} }",
-			"class B extends Exception {  }"
-		);
-	}
-
-	
-	@Test
-	public void methodCallsMethod() throws Exception {
-		ICompilationUnit a = createCompilationUnit("A", "class A { void main() { foo(); } void foo() {} }");
-		assertDepends(a, "main");
-	}
-
-	
-	@Test
-	public void externalMethodCallsAreIgnored() throws Exception {
-		ICompilationUnit a = createCompilationUnit("A", "class A { void main() { valid(); B.invalid(); } void valid(){} }");
-		createCompilationUnit("B", "class B { static void invalid() {} }");
-		assertDepends(a, "main");
-	}
-
-	
-	@Test
-	public void methodReadsField() throws Exception {
-		ICompilationUnit a = createCompilationUnit("A", "class A { int b; void main() { int a = this.b; } }");
-		assertDepends(a, "main");
-	}
-
-	
-	@Test
-	public void methodCallsConstructor() throws Exception {
-		ICompilationUnit a = createCompilationUnit("A", "class A { static void main() { new A(); } }");
-		assertDepends(a, "main");
-	}
-
-	
-	@Test
-	public void constructorCallsMethod() throws Exception {
-		ICompilationUnit a = createCompilationUnit("A", "class A { A() { main(); } static void main() {} }");
-		assertDepends(a, "A");
-	}
-
-
-	@Test
-	public void initializerCallsMethod() throws Exception {
-		ICompilationUnit a = createCompilationUnit("A", "class A { { main(); } static void main() {} }");
-		assertDepends(a, "{initializer}");
-	}
-
-	
-	@Test
-	public void fieldDependsOnAssignmentByMethod() throws Exception {
-		ICompilationUnit a = createCompilationUnit("A", "class A { int b; void main() { b = 3; } }");
-		assertDepends(a, "b");
-	}
-
-	
-	@Test
-	public void thisFieldDependsOnAssignmentByMethod() throws Exception {
-		ICompilationUnit a = createCompilationUnit("A", "class A { int b; void main() { this.b = 3; } }");
-		assertDepends(a, "b");
-	}
-
-	
-	@Test
-	public void staticFieldDependsOnAssignmentByMethod() throws Exception {
-		ICompilationUnit a = createCompilationUnit("A", "class A { static int b; void main() { A.b = 3; } }");
-		assertDepends(a, "b");
-	}
-
-	
-	private void assertDepends(String dependent, String provider) throws CoreException, JavaModelException, InvalidElement {
-		ICompilationUnit unit = createCompilationUnit("A", dependent);
-		createCompilationUnit("B", provider);
-
-		assertDepends(unit.getParent(), "A");
-	}
-	
-	
-	private ICompilationUnit createCompilationUnit(String className, String code) throws CoreException {
+	protected ICompilationUnit createCompilationUnit(String className, String code) throws CoreException {
 		return project.createCompilationUnit("foopackage", className + ".java", "package foopackage; " + code);
 	}
 	
 	
-	private void assertDepends(IJavaElement toAnalyse, String dependentName) throws CoreException, InvalidElement {
+	protected void assertDepends(IJavaElement toAnalyse, String dependentName) throws CoreException, InvalidElement {
 		//project.buildProject(null);
 		project.joinAutoBuild();
 		assertBuildOK();
-
 		
 		Collection<Node<IBinding>> graph = new DependencyAnalysis(toAnalyse).dependencyGraph(null);
-		assertTrue(""+graph, graph.size() > 1);
+		assertTrue("Graph should have more than one node: " + graph, graph.size() > 1);
 
 		Node<IBinding> dependent = findNode(dependentName, graph);
 		
