@@ -134,6 +134,41 @@ public class CodeAnalysisTest extends Assert {
 	}
 
 	
+	@Test
+	public void constructorCallsMethod() throws Exception {
+		ICompilationUnit a = createCompilationUnit("A", "class A { A() { main(); } static void main() {} }");
+		assertDepends(a, "A");
+	}
+
+
+	@Test
+	public void initializerCallsMethod() throws Exception {
+		ICompilationUnit a = createCompilationUnit("A", "class A { { main(); } static void main() {} }");
+		assertDepends(a, "{initializer}");
+	}
+
+	
+	@Test
+	public void fieldDependsOnAssignmentByMethod() throws Exception {
+		ICompilationUnit a = createCompilationUnit("A", "class A { int b; void main() { b = 3; } }");
+		assertDepends(a, "b");
+	}
+
+	
+	@Test
+	public void thisFieldDependsOnAssignmentByMethod() throws Exception {
+		ICompilationUnit a = createCompilationUnit("A", "class A { int b; void main() { this.b = 3; } }");
+		assertDepends(a, "b");
+	}
+
+	
+	@Test
+	public void staticFieldDependsOnAssignmentByMethod() throws Exception {
+		ICompilationUnit a = createCompilationUnit("A", "class A { static int b; void main() { A.b = 3; } }");
+		assertDepends(a, "b");
+	}
+
+	
 	private void assertDepends(String dependent, String provider) throws CoreException, JavaModelException, InvalidElement {
 		ICompilationUnit unit = createCompilationUnit("A", dependent);
 		createCompilationUnit("B", provider);
