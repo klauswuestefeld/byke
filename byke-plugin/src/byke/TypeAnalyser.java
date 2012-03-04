@@ -3,15 +3,12 @@ package byke;
 import static byke.JavaType.FIELD;
 import static byke.JavaType.METHOD;
 
-import java.util.List;
-
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.Assignment;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.FieldAccess;
-import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
@@ -27,8 +24,10 @@ import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import byke.dependencygraph.Node;
 
 class TypeAnalyser extends ASTVisitor {
+	
 	private final NodeProducer _nodeProducer;
-	private Node<IBinding> _currentNode;
+	private Node<IBinding> _currentMethod;
+	private Node<IBinding> _currentField;
 	private final ITypeBinding _type;
 
 	
@@ -39,35 +38,48 @@ class TypeAnalyser extends ASTVisitor {
 
 	
 	@Override
-	public boolean visit(TypeDeclaration node) {
+	public boolean visit(TypeDeclaration ignored) { //Nested type?
 		return false;
 	}
 
 	
 	@Override
-	public boolean visit(MethodDeclaration node) {
-		IMethodBinding methodBinding = node.resolveBinding();
-		_currentNode = methodNode(methodBinding);
+	public boolean visit(MethodDeclaration method) {
+		setCurrentMethod(methodGiven(method.resolveBinding()));
 		return true;
+	}
+	@Override
+	public void endVisit(MethodDeclaration method) {
+		_currentMethod = null;
 	}
 
 	
 	@Override
 	public boolean visit(Initializer node) {
-		_currentNode = _nodeProducer.produceNode("{initializer}", METHOD);
+		setCurrentMethod(_nodeProducer.produceNode("{initializer}", METHOD));
 		return true;
+	}
+	@Override
+	public void endVisit(Initializer node) {
+		_currentMethod = null;
+	}
+	
+	
+	private void setCurrentMethod(Node<IBinding> methodNode) {
+		if (_currentMethod != null) throw new UnsupportedOperationException("Visiting method inside method.");
+		_currentMethod = methodNode;
 	}
 
 
 	@Override
-	public boolean visit(FieldDeclaration node) {
-		List<?> frags = node.fragments();
-		for (Object frag : frags) {
-			IVariableBinding b = ((VariableDeclarationFragment)frag).resolveBinding();
-			System.out.println(">>>>>> Frag: " + frag + " binding: " + b);
-		}
-//		_currentNode = methodNode(methodBinding);
+	public boolean visit(VariableDeclarationFragment field) {
+		if (_currentField != null) throw new UnsupportedOperationException("Visiting field inside field.");
+		_currentField = fieldGiven(field.resolveBinding());
 		return true;
+	}
+	@Override
+	public void endVisit(VariableDeclarationFragment field) {
+		_currentField = null;
 	}
 
 	
@@ -86,8 +98,8 @@ class TypeAnalyser extends ASTVisitor {
 
 	
 	@Override
-	public boolean visit(FieldAccess node) {
-		addProvider(node.resolveFieldBinding());
+	public boolean visit(FieldAccess fieldAccess) {
+		addProvider(fieldAccess.resolveFieldBinding());
 		return true;
 	}
 
@@ -123,39 +135,38 @@ class TypeAnalyser extends ASTVisitor {
 	private void addDependent(IVariableBinding b) {
 		System.out.println("Binding " + b.getClass() + " " + b);
 		
-		Node<IBinding> field = fieldNode(b);
-		field.addProvider(_currentNode);
+		Node<IBinding> field = fieldGiven(b);
+		field.addProvider(_currentMethod);
 	}
 
 	
 	private void addProvider(IMethodBinding binding) {
 		if (binding == null) return;
 		if (binding.getDeclaringClass() != _type) return;
-		addProvider(methodNode(binding));
+		addProvider(methodGiven(binding));
 	}
 
 
 	private void addProvider(IVariableBinding binding) {
 		if (binding == null) return;
 		if (binding.getDeclaringClass() != _type) return;
-		addProvider(fieldNode(binding));
+		addProvider(fieldGiven(binding));
 	}
 
 
-	private Node<IBinding> methodNode(IMethodBinding methodBinding) {
+	private Node<IBinding> methodGiven(IMethodBinding methodBinding) {
 		return _nodeProducer.produceNode(methodBinding, METHOD);
 	}
-	private Node<IBinding> fieldNode(IVariableBinding fieldBinding) {
+	private Node<IBinding> fieldGiven(IVariableBinding fieldBinding) {
 		return _nodeProducer.produceNode(fieldBinding, FIELD);
 	}
 
 
 	private void addProvider(Node<IBinding> provider) {
-		if (_currentNode == null) {
-			System.out.println("Current Node Null while adding provider: " + provider);
-			return;
-		}
-		_currentNode.addProvider(provider);
+		if (_currentMethod != null)
+			_currentMethod.addProvider(provider);
+		if (_currentField != null)
+			_currentField.addProvider(provider);
 	}
 
 	

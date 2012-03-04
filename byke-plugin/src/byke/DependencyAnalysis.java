@@ -90,7 +90,7 @@ public class DependencyAnalysis implements NodeProducer {
 		
 		ASTVisitor visitor = _subject instanceof IType
 			? new TypeVisitor()
-			: new PackageVisitor(this, _subject.getElementName());
+			: new PackageAnalyser(this, _subject.getElementName());
 
 		ICompilationUnit[] compilationUnits = compilationUnits();
 		monitor.beginTask("dependency analysis", compilationUnits.length);

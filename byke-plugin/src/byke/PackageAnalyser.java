@@ -23,7 +23,7 @@ import org.eclipse.jdt.core.dom.TypeDeclaration;
 
 import byke.dependencygraph.Node;
 
-class PackageVisitor extends ASTVisitor {
+class PackageAnalyser extends ASTVisitor {
 	
 	private final NodeProducer nodeProducer;
 
@@ -33,7 +33,7 @@ class PackageVisitor extends ASTVisitor {
 	private String _topLevelPackage;
 
 	
-	public PackageVisitor(DependencyAnalysis dependencyAnalysis, String topLevelPackage) {
+	public PackageAnalyser(DependencyAnalysis dependencyAnalysis, String topLevelPackage) {
 		nodeProducer = dependencyAnalysis;
 		_topLevelPackage = topLevelPackage;
 	}
