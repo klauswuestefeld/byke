@@ -76,7 +76,7 @@ public class DependencyAnalysis implements NodeProducer {
 	public Collection<Node<IBinding>> dependencyGraph(IProgressMonitor monitor) {
 		try {
 			populateNodes(monitor);
-		} catch (JavaModelException x) {
+		} catch (Exception x) {
 			x.printStackTrace();
 		}
 		return _nodes.values();
