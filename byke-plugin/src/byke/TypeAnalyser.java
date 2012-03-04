@@ -26,14 +26,14 @@ import byke.dependencygraph.Node;
 class TypeAnalyser extends ASTVisitor {
 	
 	private final ITypeBinding type;
-	private final NodeProducer nodeProducer;
+	private final NodeAccumulator nodeAccumulator;
 
 	private Node<IBinding> methodBeingVisited;
 	private Node<IBinding> fieldBeingAssigned;
 
 	
-	TypeAnalyser(NodeProducer nodeProducer, ITypeBinding type) {
-		this.nodeProducer = nodeProducer;
+	TypeAnalyser(NodeAccumulator nodeAccumulator, ITypeBinding type) {
+		this.nodeAccumulator = nodeAccumulator;
 		this.type = type;
 	}
 
@@ -57,7 +57,7 @@ class TypeAnalyser extends ASTVisitor {
 	
 	@Override
 	public boolean visit(Initializer node) {
-		enterMethod(nodeProducer.produceNode("{initializer}", METHOD));
+		enterMethod(nodeAccumulator.produceNode("{initializer}", METHOD));
 		return true;
 	}
 	@Override
@@ -140,25 +140,23 @@ class TypeAnalyser extends ASTVisitor {
 	}
 
 
-	private void addProviderMethod(IMethodBinding binding) {
-		if (binding == null) return;
-		if (binding.getDeclaringClass() != type) return;
-		addProvider(methodNodeGiven(binding));
+	private void addProviderMethod(IMethodBinding method) {
+		if (method == null) return;
+		if (method.getDeclaringClass() != type) return;
+		addProvider(methodNodeGiven(method));
 	}
-
-
-	private void addProviderField(IVariableBinding binding) {
-		if (binding == null) return;
-		if (binding.getDeclaringClass() != type) return;
-		addProvider(fieldNodeGiven(binding));
+	private void addProviderField(IVariableBinding field) {
+		if (field == null) return;
+		if (field.getDeclaringClass() != type) return;
+		addProvider(fieldNodeGiven(field));
 	}
 
 
 	private Node<IBinding> methodNodeGiven(IMethodBinding methodBinding) {
-		return nodeProducer.produceNode(methodBinding, METHOD);
+		return nodeAccumulator.produceNode(methodBinding, METHOD);
 	}
 	private Node<IBinding> fieldNodeGiven(IVariableBinding fieldBinding) {
-		return nodeProducer.produceNode(fieldBinding, FIELD);
+		return nodeAccumulator.produceNode(fieldBinding, FIELD);
 	}
 
 

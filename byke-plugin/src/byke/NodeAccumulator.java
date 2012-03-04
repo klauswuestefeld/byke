@@ -5,7 +5,7 @@ import org.eclipse.jdt.core.dom.IBinding;
 import byke.dependencygraph.Node;
 
 
-public interface NodeProducer {
+public interface NodeAccumulator {
 
 	Node<IBinding> produceNode(IBinding binding, JavaType kind);
 

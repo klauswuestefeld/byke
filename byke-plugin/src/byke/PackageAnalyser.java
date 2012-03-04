@@ -25,17 +25,17 @@ import byke.dependencygraph.Node;
 
 class PackageAnalyser extends ASTVisitor {
 	
-	private final NodeProducer nodeProducer;
+	private final NodeAccumulator nodeAccumulator;
 
-	private Node<IBinding> _currentNode;
+	private Node<IBinding> currentNode;
 
 	private String _currentPackageName;
-	private String _topLevelPackage;
+	private String topLevelPackage;
 
 	
-	public PackageAnalyser(DependencyAnalysis dependencyAnalysis, String topLevelPackage) {
-		nodeProducer = dependencyAnalysis;
-		_topLevelPackage = topLevelPackage;
+	public PackageAnalyser(NodeAccumulator nodeAccumulator, String topLevelPackage) {
+		this.nodeAccumulator = nodeAccumulator;
+		this.topLevelPackage = topLevelPackage;
 	}
 	
 	
@@ -47,20 +47,20 @@ class PackageAnalyser extends ASTVisitor {
 
 	@SuppressWarnings("unchecked")
 	private boolean visitType(AbstractTypeDeclaration node) {
-		Node<IBinding> saved = _currentNode;
+		Node<IBinding> saved = currentNode;
 		String savedPackage = _currentPackageName;
 		ITypeBinding binding = node.resolveBinding();
 		if (ExclusionPatterns.ignoreClass(binding.getQualifiedName()))
 			return false;
 		
-		_currentNode = getNode2(binding);
+		currentNode = getNode2(binding);
 		_currentPackageName = binding.getPackage().getName();
 		addProvider(binding.getSuperclass());
 		for (ITypeBinding superItf : binding.getInterfaces()) {
 			addProvider(superItf);
 		}
 		visitList(node.bodyDeclarations());
-		_currentNode = saved;
+		currentNode = saved;
 		_currentPackageName = savedPackage;
 		return false;
 	}
@@ -89,7 +89,7 @@ class PackageAnalyser extends ASTVisitor {
 		if (null != declaringClass) return getNode2(declaringClass);
 		
 		JavaType type = JavaType.valueOf(binding);
-		return nodeProducer.produceNode(binding, type);
+		return nodeAccumulator.produceNode(binding, type);
 	}
 
 	
@@ -183,10 +183,10 @@ class PackageAnalyser extends ASTVisitor {
 		if (type.getQualifiedName().equals("")) return; // TODO: Check why this happens.
 
 		String packageName = type.getPackage().getName();
-		if (!packageName.startsWith(_topLevelPackage)) return;
+		if (!packageName.startsWith(topLevelPackage)) return;
 
 		if (!packageName.equals(_currentPackageName)) {
-			_currentNode.addProvider(nodeProducer.produceNode(type.getPackage(), JavaType.PACKAGE));
+			currentNode.addProvider(nodeAccumulator.produceNode(type.getPackage(), JavaType.PACKAGE));
 			return;
 		}
 		if (type.isParameterizedType()) { // if Map<K,V>
@@ -196,10 +196,10 @@ class PackageAnalyser extends ASTVisitor {
 			}
 			final ITypeBinding erasure = type.getErasure();
 			if (ExclusionPatterns.ignoreClass(erasure.getQualifiedName())) return;
-			_currentNode.addProvider(getNode2(erasure));
+			currentNode.addProvider(getNode2(erasure));
 		} else {
 			if (ExclusionPatterns.ignoreClass(type.getQualifiedName())) return;
-			_currentNode.addProvider(getNode2(type));
+			currentNode.addProvider(getNode2(type));
 		}
 	}
 	

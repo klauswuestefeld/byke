@@ -28,7 +28,7 @@ import org.eclipse.jdt.core.dom.TypeDeclaration;
 import byke.dependencygraph.Node;
 
 
-public class DependencyAnalysis implements NodeProducer {
+public class DependencyAnalysis implements NodeAccumulator {
 	private final Map<String, Node<IBinding>> _nodes = new HashMap<String, Node<IBinding>>();
 
 	private IJavaElement _subject;
