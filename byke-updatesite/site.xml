@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature url="features/byke_feature_0.5.1.jar" id="byke_feature" version="0.5.1">
+   <feature url="features/byke_feature_0.5.2.jar" id="byke_feature" version="0.5.2">
       <category name="byke_category"/>
    </feature>
    <category-def name="byke_category" label="Byke Category"/>
