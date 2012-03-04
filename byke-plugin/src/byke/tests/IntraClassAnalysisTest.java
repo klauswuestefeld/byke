@@ -56,7 +56,7 @@ public class IntraClassAnalysisTest extends CodeAnalysisTest {
 	
 	@Test
 	public void thisFieldDependsOnMethodThatAssignsIt() throws Exception {
-		assertDepIsDependent("int dep; void main() { this.dep = 3; }");
+		assertDepIsDependent("int dep; void foo() { this.dep = 3; }");
 	}
 
 	
@@ -69,6 +69,12 @@ public class IntraClassAnalysisTest extends CodeAnalysisTest {
 	@Test
 	public void fieldDeclarationDependsOnRightHandSide() throws Exception {
 		assertDepIsDependent("int dep=calc(); int calc() { return 3; }");
+	}
+
+	
+	@Test
+	public void fieldAssignmentDependsOnRightHandSide() throws Exception {
+		assertDepIsDependent("int dep; void foo(){dep=calc();}; int calc() { return 3; }");
 	}
 
 	
