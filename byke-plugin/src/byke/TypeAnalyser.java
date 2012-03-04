@@ -176,7 +176,7 @@ class TypeAnalyser extends ASTVisitor {
 	
 	@Override
 	public void preVisit(ASTNode node) {
-		System.out.println(node.getClass() + ": " + node);
+//		System.out.println(node.getClass() + ": " + node);
 		super.preVisit(node);
 	}
 	
