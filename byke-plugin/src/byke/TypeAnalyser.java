@@ -87,7 +87,7 @@ class TypeAnalyser extends ASTVisitor {
 	private void enterFieldAssignment(IVariableBinding field) {
 		if (fieldBeingAssigned != null) throw new UnsupportedOperationException("Visiting field inside field.");
 		fieldBeingAssigned = fieldNodeGiven(field);
-		addDependent(field);
+		addDependent(fieldBeingAssigned);
 	}
 
 	
@@ -138,8 +138,12 @@ class TypeAnalyser extends ASTVisitor {
 		node.getRightHandSide().accept(this); //Needs test
 		return false;
 	}
-
-
+	@Override
+	public void endVisit(Assignment node) {
+		fieldBeingAssigned = null;
+	}
+	
+	
 	private void addProviderMethod(IMethodBinding method) {
 		if (method == null) return;
 		if (method.getDeclaringClass() != type) return;
@@ -166,9 +170,9 @@ class TypeAnalyser extends ASTVisitor {
 		if (fieldBeingAssigned != null)
 			fieldBeingAssigned.addProvider(provider);
 	}
-	private void addDependent(IVariableBinding field) {
+	private void addDependent(Node<IBinding> dependent) {
 		if (methodBeingVisited != null)
-			fieldNodeGiven(field).addProvider(methodBeingVisited);
+			dependent.addProvider(methodBeingVisited);
 	}
 
 	
