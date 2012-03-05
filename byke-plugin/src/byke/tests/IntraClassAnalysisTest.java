@@ -78,6 +78,12 @@ public class IntraClassAnalysisTest extends CodeAnalysisTest {
 	}
 
 	
+	@Test
+	public void localVariablesDoNotAppearInGraph() throws Exception {
+		assertDepIsDependent("int dep; void main() { dep = 3; int invalid = 3; }");
+	}
+
+	
 	private void assertDepIsDependent(String body) throws CoreException, InvalidElement {
 		ICompilationUnit a = createCompilationUnit("A", "class A { " + body + " }");
 		assertDepends(a, "dep");

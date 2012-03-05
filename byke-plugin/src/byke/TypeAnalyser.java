@@ -86,7 +86,9 @@ class TypeAnalyser extends ASTVisitor {
 	
 	private void enterFieldAssignment(IVariableBinding field) {
 		if (fieldBeingAssigned != null) throw new UnsupportedOperationException("Visiting field inside field.");
-		fieldBeingAssigned = fieldNodeGiven(field);
+		fieldBeingAssigned = field.getDeclaringClass() == null
+			? new LocalVariableNode()
+			: fieldNodeGiven(field);
 		addDependent(fieldBeingAssigned);
 	}
 
