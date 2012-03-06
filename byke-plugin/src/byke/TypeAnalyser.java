@@ -29,15 +29,20 @@ class TypeAnalyser extends ASTVisitor {
 	private final NodeAccumulator nodeAccumulator;
 
 	private Node<IBinding> methodBeingVisited;
-	private Node<IBinding> fieldBeingAssigned;
-
+	private Node<IBinding> variableBeingAssigned;
 	
-	TypeAnalyser(NodeAccumulator nodeAccumulator, ITypeBinding type) {
+	
+	TypeAnalyser(TypeDeclaration node, NodeAccumulator nodeAccumulator, ITypeBinding type) {
 		this.nodeAccumulator = nodeAccumulator;
 		this.type = type;
+		
+		for (Object decl : node.bodyDeclarations())
+			((ASTNode)decl).accept(this);
+		
+		LocalVariableFolder.fold(this.nodeAccumulator);
 	}
 
-	
+
 	@Override
 	public boolean visit(TypeDeclaration ignored) { //Nested type?
 		return false;
@@ -51,10 +56,10 @@ class TypeAnalyser extends ASTVisitor {
 	}
 	@Override
 	public void endVisit(MethodDeclaration method) {
-		methodBeingVisited = null;
+		exitMethod();
 	}
 
-	
+
 	@Override
 	public boolean visit(Initializer node) {
 		enterMethod(nodeAccumulator.produceNode("{initializer}", METHOD));
@@ -62,34 +67,35 @@ class TypeAnalyser extends ASTVisitor {
 	}
 	@Override
 	public void endVisit(Initializer node) {
-		methodBeingVisited = null;
+		exitMethod();
 	}
 	
-	
+
 	private void enterMethod(Node<IBinding> methodNode) {
 		if (methodBeingVisited != null) throw new UnsupportedOperationException("Visiting method inside method.");
 		methodBeingVisited = methodNode;
 	}
+	private void exitMethod() {
+		methodBeingVisited = null;
+	}
 
 
 	@Override
-	public boolean visit(VariableDeclarationFragment field) {
-		IVariableBinding b = field.resolveBinding();
-		enterFieldAssignment(b);
+	public boolean visit(VariableDeclarationFragment variable) {
+		IVariableBinding b = variable.resolveBinding();
+		enterVariableAssignment(b);
 		return true;
 	}
 	@Override
 	public void endVisit(VariableDeclarationFragment field) {
-		fieldBeingAssigned = null;
+		variableBeingAssigned = null;
 	}
 
 	
-	private void enterFieldAssignment(IVariableBinding field) {
-		if (fieldBeingAssigned != null) throw new UnsupportedOperationException("Visiting field inside field.");
-		fieldBeingAssigned = field.getDeclaringClass() == null
-			? new LocalVariableNode()
-			: fieldNodeGiven(field);
-		addDependent(fieldBeingAssigned);
+	private void enterVariableAssignment(IVariableBinding variable) {
+		if (variableBeingAssigned != null) throw new UnsupportedOperationException("Visiting field inside field.");
+		variableBeingAssigned = variableNodeGiven(variable);
+		addDependent(variableBeingAssigned);
 	}
 
 	
@@ -109,7 +115,15 @@ class TypeAnalyser extends ASTVisitor {
 	
 	@Override
 	public boolean visit(FieldAccess fieldAccess) {
-		addProviderField(fieldAccess.resolveFieldBinding());
+		addProviderVariable(fieldAccess.resolveFieldBinding());
+		return true;
+	}
+
+	
+	@Override
+	public boolean visit(SimpleName simpleName) {
+		if (simpleName.resolveBinding() instanceof IVariableBinding)
+			addProviderVariable((IVariableBinding)simpleName.resolveBinding());
 		return true;
 	}
 
@@ -120,20 +134,20 @@ class TypeAnalyser extends ASTVisitor {
 		
 		if (lhs instanceof SimpleName) {
 			IVariableBinding b = (IVariableBinding)(((SimpleName)lhs).resolveBinding());
-			enterFieldAssignment(b);
+			enterVariableAssignment(b);
 		}
 		
 		if (lhs instanceof FieldAccess) {
 			FieldAccess fieldAccess = (FieldAccess)lhs;
 			IVariableBinding b = fieldAccess.resolveFieldBinding();
-			enterFieldAssignment(b);
+			enterVariableAssignment(b);
 			fieldAccess.getExpression().accept(this); //Needs test
 		}
 
 		if (lhs instanceof QualifiedName) {
 			QualifiedName fieldAccess = (QualifiedName)lhs;
 			IVariableBinding b = (IVariableBinding)fieldAccess.resolveBinding();
-			enterFieldAssignment(b);
+			enterVariableAssignment(b);
 			fieldAccess.getQualifier().accept(this); //Needs test
 		}
 		
@@ -142,7 +156,7 @@ class TypeAnalyser extends ASTVisitor {
 	}
 	@Override
 	public void endVisit(Assignment node) {
-		fieldBeingAssigned = null;
+		variableBeingAssigned = null;
 	}
 	
 	
@@ -151,26 +165,32 @@ class TypeAnalyser extends ASTVisitor {
 		if (method.getDeclaringClass() != type) return;
 		addProvider(methodNodeGiven(method));
 	}
-	private void addProviderField(IVariableBinding field) {
-		if (field == null) return;
-		if (field.getDeclaringClass() != type) return;
-		addProvider(fieldNodeGiven(field));
+	private void addProviderVariable(IVariableBinding variable) {
+		if (variable == null) return;
+		if (!isFromSubjectType(variable)) return;
+		addProvider(variableNodeGiven(variable));
+	}
+
+
+	private boolean isFromSubjectType(IVariableBinding variable) {
+		if (LocalVariableFolder.isLocalVariable(variable)) return true;
+		return variable.getDeclaringClass() == type;
 	}
 
 
 	private Node<IBinding> methodNodeGiven(IMethodBinding methodBinding) {
 		return nodeAccumulator.produceNode(methodBinding, METHOD);
 	}
-	private Node<IBinding> fieldNodeGiven(IVariableBinding fieldBinding) {
-		return nodeAccumulator.produceNode(fieldBinding, FIELD);
+	private Node<IBinding> variableNodeGiven(IVariableBinding variableBinding) {
+		return nodeAccumulator.produceNode(variableBinding, FIELD);
 	}
 
 
 	private void addProvider(Node<IBinding> provider) {
 		if (methodBeingVisited != null)
 			methodBeingVisited.addProvider(provider);
-		if (fieldBeingAssigned != null)
-			fieldBeingAssigned.addProvider(provider);
+		if (variableBeingAssigned != null)
+			variableBeingAssigned.addProvider(provider);
 	}
 	private void addDependent(Node<IBinding> dependent) {
 		if (methodBeingVisited != null)

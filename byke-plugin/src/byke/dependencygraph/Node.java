@@ -7,6 +7,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.eclipse.jdt.core.dom.IBinding;
+
 import byke.JavaType;
 
 
@@ -46,6 +48,9 @@ public class Node<PayloadType> {
 	public void addProvider(Node<PayloadType> provider) {
 		if (provider == this) return;
 		_providers.add(provider);
+	}
+	public void removeProvider(Node<IBinding> provider) {
+		_providers.remove(provider);
 	}
 
 	public boolean dependsDirectlyOn(Node<?> other) {
@@ -94,4 +99,5 @@ public class Node<PayloadType> {
 	public String toString() {
 		return name();
 	}
+
 }

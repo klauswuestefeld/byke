@@ -84,6 +84,13 @@ public class IntraClassAnalysisTest extends CodeAnalysisTest {
 	}
 
 	
+	@Test
+	public void localVariableProvidersAreTransitive() throws Exception {
+		assertDepIsDependent("int dep; void main() { int local = calc(); dep = local; } int calc() { return 3; }");
+	}
+
+	
+	
 	private void assertDepIsDependent(String body) throws CoreException, InvalidElement {
 		ICompilationUnit a = createCompilationUnit("A", "class A { " + body + " }");
 		assertDepends(a, "dep");

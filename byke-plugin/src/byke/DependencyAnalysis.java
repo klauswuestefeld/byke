@@ -17,7 +17,6 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.AST;
-import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -29,7 +28,11 @@ import byke.dependencygraph.Node;
 
 
 public class DependencyAnalysis implements NodeAccumulator {
-	private final Map<String, Node<IBinding>> _nodes = new HashMap<String, Node<IBinding>>();
+	
+	@SuppressWarnings("unchecked")
+	private static final Node<IBinding>[] NODE_ARRAY = new Node[0];
+
+	private final Map<String, Node<IBinding>> _nodesByKey = new HashMap<String, Node<IBinding>>();
 
 	private IJavaElement _subject;
 
@@ -79,7 +82,7 @@ public class DependencyAnalysis implements NodeAccumulator {
 		} catch (Exception x) {
 			x.printStackTrace();
 		}
-		return _nodes.values();
+		return _nodesByKey.values();
 	}
 
 	
@@ -122,23 +125,24 @@ public class DependencyAnalysis implements NodeAccumulator {
 
 	@Override
 	public Node<IBinding> produceNode(IBinding binding, JavaType kind) {
-		String name = binding.getName();
-		return produceNode(name, binding, kind);
+		String key = binding.getKey();
+		return produceNode(key, binding, kind);
 	}
 
 	
 	@Override
-	public Node<IBinding> produceNode(String name, JavaType kind) {
-		return produceNode(name, null, kind);
+	public Node<IBinding> produceNode(String key, JavaType kind) {
+		return produceNode(key, null, kind);
 	}
 
 	
-	private Node<IBinding> produceNode(String name, IBinding binding, JavaType kind) {
-		Node<IBinding> node = _nodes.get(name);
+	private Node<IBinding> produceNode(String key, IBinding binding, JavaType kind) {
+		Node<IBinding> node = _nodesByKey.get(key);
 		if (null == node) {
+			String name = binding == null ? key : binding.getName();
 			node = new Node<IBinding>(name, kind);
 			node.payload(binding);
-			_nodes.put(name, node);
+			_nodesByKey.put(key, node);
 		}
 		return node;
 	}
@@ -152,9 +156,8 @@ public class DependencyAnalysis implements NodeAccumulator {
 			IJavaElement javaElement = binding.getJavaElement();
 			if (!javaElement.getHandleIdentifier().equals(_subject.getHandleIdentifier()))
 				return true;
-			TypeAnalyser typeVisitor = new TypeAnalyser(DependencyAnalysis.this, binding);
-			for (Object decl : node.bodyDeclarations())
-				((ASTNode)decl).accept(typeVisitor);
+			
+			new TypeAnalyser(node, DependencyAnalysis.this, binding);
 			return false;
 		}
 	}
@@ -162,6 +165,19 @@ public class DependencyAnalysis implements NodeAccumulator {
 		
 	public IJavaElement subject() {
 		return _subject;
+	}
+
+
+	@Override
+	public void remove(Node<IBinding> node) {
+		Node<IBinding> removed = _nodesByKey.remove(node.payload().getKey());
+		if (removed != node) throw new IllegalStateException("Node to be removed not found: " + node.name());
+	}
+
+
+	@Override
+	public Node<IBinding>[] nodes() {
+		return _nodesByKey.values().toArray(NODE_ARRAY);
 	}
 
 }

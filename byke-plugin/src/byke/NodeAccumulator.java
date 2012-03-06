@@ -11,4 +11,9 @@ public interface NodeAccumulator {
 
 	Node<IBinding> produceNode(String name, JavaType kind);
 
+	void remove(Node<IBinding> node);
+
+	Node<IBinding>[] nodes();
+
+
 }
