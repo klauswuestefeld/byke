@@ -8,6 +8,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jface.viewers.ISelection;
@@ -204,7 +205,14 @@ public class BykeView extends ViewPart implements IBykeView {
 	}
 
 	private void drillUp() { // FIXME: drillUp is apparently not being called.
-		showJavaDependencies(_selectedElement.getParent());
+		showJavaDependencies(drillUpTarget());
+	}
+
+	private IJavaElement drillUpTarget() {
+		IJavaElement current = _selectedElement.getParent();
+		return current instanceof ICompilationUnit
+			? current.getParent()
+			: current;
 	}
 
 	@Override

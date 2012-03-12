@@ -20,7 +20,6 @@ import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.swt.widgets.Composite;
 
-import byke.JavaType;
 import byke.dependencygraph.Node;
 import byke.views.layout.CartesianLayout;
 import byke.views.layout.Coordinates;
@@ -168,10 +167,7 @@ public class GraphCanvas<T> extends FigureCanvas implements NodeSizeProvider {
 		_nodeFiguresByNode.put(node, result);
 		final IFigure figure = result.figure();
 
-		if (node.kind() == JavaType.PACKAGE) {
-			figure.addMouseListener(_nodeDoubleClickListener);
-		}
-
+		figure.addMouseListener(_nodeDoubleClickListener);
 		figure.addMouseListener(_nodeSingleClickListener);
 		_nodeByFigure.put(figure, node);
 		return result;
