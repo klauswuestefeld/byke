@@ -44,7 +44,7 @@ public class IntraClassAnalysisTest extends CodeAnalysisTest {
 	@Test
 	public void initializerCallsMethod() throws Exception {
 		ICompilationUnit a = createCompilationUnit("A", "class A { { main(); } static void main() {} }");
-		assertDepends(a, "{initializer}");
+		assertDepends(a, "<init>");
 	}
 
 	

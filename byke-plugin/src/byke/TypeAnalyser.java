@@ -51,8 +51,7 @@ class TypeAnalyser extends ASTVisitor {
 	
 	@Override
 	public boolean visit(MethodDeclaration method) {
-		enterMethod(methodNodeGiven(method.resolveBinding()));
-		return true;
+		return enterMethod(methodNodeGiven(method.resolveBinding()));
 	}
 	@Override
 	public void endVisit(MethodDeclaration method) {
@@ -62,8 +61,7 @@ class TypeAnalyser extends ASTVisitor {
 
 	@Override
 	public boolean visit(Initializer node) {
-		enterMethod(nodeAccumulator.produceNode("{initializer}", METHOD));
-		return true;
+		return enterMethod(nodeAccumulator.produceNode("<init>", METHOD));
 	}
 	@Override
 	public void endVisit(Initializer node) {
@@ -71,9 +69,13 @@ class TypeAnalyser extends ASTVisitor {
 	}
 	
 
-	private void enterMethod(Node<IBinding> methodNode) {
-		if (methodBeingVisited != null) throw new UnsupportedOperationException("Visiting method inside method.");
+	private boolean enterMethod(Node<IBinding> methodNode) {
+		if (methodBeingVisited != null) {
+			System.out.println("Method inside method will not be visited: " + methodNode);
+			return false;
+		}
 		methodBeingVisited = methodNode;
+		return true;
 	}
 	private void exitMethod() {
 		methodBeingVisited = null;
@@ -83,8 +85,7 @@ class TypeAnalyser extends ASTVisitor {
 	@Override
 	public boolean visit(VariableDeclarationFragment variable) {
 		IVariableBinding b = variable.resolveBinding();
-		enterVariableAssignment(b);
-		return true;
+		return enterVariableAssignment(b);
 	}
 	@Override
 	public void endVisit(VariableDeclarationFragment field) {
@@ -92,10 +93,14 @@ class TypeAnalyser extends ASTVisitor {
 	}
 
 	
-	private void enterVariableAssignment(IVariableBinding variable) {
-		if (variableBeingAssigned != null) throw new UnsupportedOperationException("Visiting field inside field.");
+	private boolean enterVariableAssignment(IVariableBinding variable) {
+		if (variableBeingAssigned != null){
+			System.out.println("Variable assignment inside variable assignment will not be visited: " + variable);
+			return false;
+		}
 		variableBeingAssigned = variableNodeGiven(variable);
 		addDependent(variableBeingAssigned);
+		return true;
 	}
 
 	
@@ -129,29 +134,30 @@ class TypeAnalyser extends ASTVisitor {
 
 	
 	@Override
-	public boolean visit(Assignment node) {
-		Expression lhs = node.getLeftHandSide();
+	public boolean visit(Assignment assignment) {
+		Expression lhs = assignment.getLeftHandSide();
+		boolean shouldVisit = false;
 		
 		if (lhs instanceof SimpleName) {
 			IVariableBinding b = (IVariableBinding)(((SimpleName)lhs).resolveBinding());
-			enterVariableAssignment(b);
+			shouldVisit = enterVariableAssignment(b);
 		}
 		
 		if (lhs instanceof FieldAccess) {
 			FieldAccess fieldAccess = (FieldAccess)lhs;
 			IVariableBinding b = fieldAccess.resolveFieldBinding();
-			enterVariableAssignment(b);
-			fieldAccess.getExpression().accept(this); //Needs test
+			shouldVisit = enterVariableAssignment(b);
+			if (shouldVisit) fieldAccess.getExpression().accept(this); //Needs test
 		}
 
 		if (lhs instanceof QualifiedName) {
 			QualifiedName fieldAccess = (QualifiedName)lhs;
 			IVariableBinding b = (IVariableBinding)fieldAccess.resolveBinding();
-			enterVariableAssignment(b);
-			fieldAccess.getQualifier().accept(this); //Needs test
+			shouldVisit = enterVariableAssignment(b);
+			if (shouldVisit) fieldAccess.getQualifier().accept(this); //Needs test
 		}
 		
-		node.getRightHandSide().accept(this); //Needs test
+		if (shouldVisit) assignment.getRightHandSide().accept(this); //Needs test
 		return false;
 	}
 	@Override
