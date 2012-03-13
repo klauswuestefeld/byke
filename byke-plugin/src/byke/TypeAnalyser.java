@@ -21,6 +21,7 @@ import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 
+import sneer.foundation.lang.Producer;
 import byke.dependencygraph.Node;
 
 class TypeAnalyser extends ASTVisitor {
@@ -50,8 +51,10 @@ class TypeAnalyser extends ASTVisitor {
 
 	
 	@Override
-	public boolean visit(MethodDeclaration method) {
-		return enterMethod(methodNodeGiven(method.resolveBinding()));
+	public boolean visit(final MethodDeclaration method) {
+		return enterMethod(new Producer<Node<IBinding>>() {  @Override public Node<IBinding> produce() {
+			return methodNodeGiven(method.resolveBinding());
+		}});
 	}
 	@Override
 	public void endVisit(MethodDeclaration method) {
@@ -61,7 +64,9 @@ class TypeAnalyser extends ASTVisitor {
 
 	@Override
 	public boolean visit(Initializer node) {
-		return enterMethod(nodeAccumulator.produceNode("<init>", METHOD));
+		return enterMethod(new Producer<Node<IBinding>>() {  @Override public Node<IBinding> produce() {
+			return nodeAccumulator.produceNode("<init>", METHOD);
+		}});
 	}
 	@Override
 	public void endVisit(Initializer node) {
@@ -69,12 +74,12 @@ class TypeAnalyser extends ASTVisitor {
 	}
 	
 
-	private boolean enterMethod(Node<IBinding> methodNode) {
+	private boolean enterMethod(Producer<Node<IBinding>> producer) {
 		if (methodBeingVisited != null) {
-			System.out.println("Method inside method will not be visited: " + methodNode);
+			System.out.println("Method inside method will not be visited.");
 			return false;
 		}
-		methodBeingVisited = methodNode;
+		methodBeingVisited = producer.produce();
 		return true;
 	}
 	private void exitMethod() {
