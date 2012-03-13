@@ -171,11 +171,13 @@ public class BykeView extends ViewPart implements IBykeView {
 		}
 		if (a.subject() == _selectedElement) return;
 
+		
 		synchronized (_graphChangeMonitor) {
 			_selectedElement = a.subject();
 			_selectedGraph = null;
 		}
 
+		setContentDescription(_selectedElement.getElementName());
 		generateGraph(a);
 	}
 
