@@ -11,13 +11,17 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.dom.IBinding;
+import org.eclipse.jdt.internal.ui.actions.SimpleSelectionProvider;
 import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.part.ISetSelectionTarget;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.progress.UIJob;
 
@@ -52,6 +56,7 @@ public class BykeView extends ViewPart implements IBykeView {
 
 	private boolean _paused;
 	private IJavaElement _deferredSelection;
+	private ISelectionProvider _selectionProvider = new SimpleSelectionProvider();
 
 
 	@Override
@@ -109,6 +114,7 @@ public class BykeView extends ViewPart implements IBykeView {
 		_layoutJob.setPriority(Job.DECORATE); // Low priority;
 	}
 
+
 	private void newCanvas(Collection<Node<IBinding>> graph, CartesianLayout initialLayout) {
 		if (_canvas != null) _canvas.dispose();
 
@@ -134,10 +140,12 @@ public class BykeView extends ViewPart implements IBykeView {
 	@Override
 	public void createPartControl(Composite parent) {
 		_parent = parent;
+		getSite().setSelectionProvider(_selectionProvider);
 	}
 
 	@Override
-	public void selectionChanged(IWorkbenchPart ignored, ISelection selectionCandidate) { // FIXME: After the "Show Dependencies" popup menu action, this method is no longer called (Byke is no longer notified of selections changes and no longer changes the graph display). If focus is changed to another View and back, for example, everything comes back to normal. Is this an Eclipse bug?
+	public void selectionChanged(IWorkbenchPart ignored, ISelection selectionCandidate) {
+		// FIXME: After the "Show Dependencies" popup menu action, this method is no longer called (Byke is no longer notified of selections changes and no longer changes the graph display). If focus is changed to another View and back, for example, everything comes back to normal. Is this an Eclipse bug?
 		IJavaElement newSelection = asJavaElement(selectionCandidate);
 		if (_paused) {
 			_deferredSelection = newSelection;
@@ -199,14 +207,24 @@ public class BykeView extends ViewPart implements IBykeView {
 	private void drillDown(Node<IBinding> selection) {
 		IBinding binding = selection.payload();
 		IJavaElement element = binding.getJavaElement();
-		if (null != element) {
-			selectionChanged(null, new StructuredSelection(element));
-		}
+		setSelection(element);
 	}
 
-	private void drillUp() { // FIXME: drillUp is apparently not being called.
-		showJavaDependencies(drillUpTarget());
+
+	private void drillUp() {
+		setSelection(drillUpTarget());
 	}
+
+	
+	private void setSelection(IJavaElement element) {
+		if (element == null) return;
+		StructuredSelection selection = new StructuredSelection(element);
+		getSite().getSelectionProvider().setSelection(selection);
+
+		ISetSelectionTarget selectionSetter = (ISetSelectionTarget)PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().findView("org.eclipse.ui.navigator.ProjectExplorer");
+		selectionSetter.selectReveal(selection);
+	}
+
 
 	private IJavaElement drillUpTarget() {
 		IJavaElement current = _selectedElement.getParent();
