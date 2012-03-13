@@ -17,11 +17,11 @@ import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.part.ISetSelectionTarget;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.progress.UIJob;
 
@@ -222,9 +222,9 @@ public class BykeView extends ViewPart implements IBykeView {
 		if (element == null) return;
 		StructuredSelection selection = new StructuredSelection(element);
 		getSite().getSelectionProvider().setSelection(selection);
-
-		ISetSelectionTarget selectionSetter = (ISetSelectionTarget)PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().findView("org.eclipse.ui.navigator.ProjectExplorer");
-		selectionSetter.selectReveal(selection);
+		
+		IViewPart view = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().findView("org.eclipse.ui.navigator.ProjectExplorer");
+		view.getSite().getSelectionProvider().setSelection(selection);
 	}
 
 
