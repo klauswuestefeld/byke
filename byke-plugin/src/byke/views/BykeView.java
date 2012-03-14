@@ -223,14 +223,15 @@ public class BykeView extends ViewPart implements IBykeView {
 		StructuredSelection selection = new StructuredSelection(element);
 		getSite().getSelectionProvider().setSelection(selection);
 
-//		ISetSelectionTarget selectionSetter = (ISetSelectionTarget)PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().findView("org.eclipse.ui.navigator.ProjectExplorer");
-//		selectionSetter.selectReveal(new StructuredSelection(element));
+		setSelection("org.eclipse.ui.navigator.ProjectExplorer", selection);
+		setSelection("org.eclipse.jdt.ui.PackageExplorer", selection);
+	}
 
-		IViewPart view = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().findView("org.eclipse.ui.navigator.ProjectExplorer");
-		view.getSite().getSelectionProvider().setSelection(selection);
 
-		IViewPart view2 = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().findView("org.eclipse.jdt.ui.PackageExplorer");
-		view2.getSite().getSelectionProvider().setSelection(selection);
+	private void setSelection(String viewId, StructuredSelection selection) {
+		IViewPart view = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().findView(viewId);
+		if (view != null)
+			view.getSite().getSelectionProvider().setSelection(selection);
 	}
 
 
