@@ -13,9 +13,15 @@ public abstract class DistanceDefinedForce extends CenterAllignedForce {
 		Coordinates p2 = node2Position(n2);
 		
 		float distance = p1.getDistance(p2);
-		return intensityGiven(safe(distance));
+		return intensityGiven(n1, n2, safe(distance));
 	}
 
+	
+	protected float intensityGiven(NodeElement n1, NodeElement n2, float distance) {
+		return intensityGiven(distance);
+	}
+
+	
 	private float safe(float distance) {
 		return Math.max(distance, 0.1f);
 	}

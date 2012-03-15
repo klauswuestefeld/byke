@@ -74,30 +74,58 @@ public class StandAlone {
 
 	
 	private Collection<Node<String>> graph() {
-		String[] names = new String[12];
+		
+		String[] names = new String[16];
 		for (int i = 0; i < names.length; i++)
 			names[i] = "Node " + i;
-
 		return createGraph(names);
 
 		
-		// return Node.createGraph(new String[]{"1 234", "12 34", "123 4"});
+//		Collection<Node<String>> result = new ArrayList<Node<String>>();
+//		Node<String> n1 = new Node<String>("1");
+//		Node<String> n2 = new Node<String>("2");
+//		Node<String> n3 = new Node<String>("3");
+//		Node<String> n4 = new Node<String>("4");
+//		Node<String> n5 = new Node<String>("5");
+//		Node<String> n6 = new Node<String>("6");
+//		Node<String> n7 = new Node<String>("7");
+//		n1.addProvider(n2);
+//		n2.addProvider(n3);
+//		n3.addProvider(n4);
+//		n4.addProvider(n5);
+//		n5.addProvider(n6);
+//		n6.addProvider(n7);
+//		n1.addProvider(n3);
+//		n1.addProvider(n4);
+//		n1.addProvider(n5);
+//		n1.addProvider(n6);
+//		n1.addProvider(n7);
+//		result.add(n1);
+//		result.add(n2);
+//		result.add(n3);
+//		result.add(n4);
+//		result.add(n5);
+//		result.add(n6);
+//		return result;
+
+		
+//		return Node.createGraph(new String[]{"1 234", "12 34", "123 4"});
+
+		
+//		Collection<Node<String>> result = new ArrayList<Node<String>>();
+//		Node<String> nodeA = new Node<String>("main");
+//		Node<String> nodeB = new Node<String>("banana");
+//		Node<String> nodeC = new Node<String>("abacaxi");
+//		nodeA.addProvider(nodeB);
+//		nodeB.addProvider(nodeC);
+//		nodeC.addProvider(nodeA);
+//		result.add(nodeA);
+//		result.add(nodeB);
+//		result.add(nodeC);
+//		return result;
 
 		
 //		 Collection<Node<String>> result = new ArrayList<Node<String>>();
-//		 Node<String> nodeA = new Node<String>("main");
-//		 Node<String> nodeB = new Node<String>("banana");
-//		 Node<String> nodeC = new Node<String>("abacaxi");
-//		 nodeA.addProvider(nodeB);
-//		 nodeB.addProvider(nodeC);
-//		 nodeC.addProvider(nodeA);
-//		 result.add(nodeA);
-//		 result.add(nodeB);
-//		 result.add(nodeC);
-//		 return result;
-
-		
-		//		 Collection<Node<String>> result = new ArrayList<Node<String>>();
 //		 Node<String> nodeA = new Node<String>("Agua");
 //		 Node<String> nodeB = new Node<String>("Luz");
 //		 Node<String> nodeC = new Node<String>("Gás");
@@ -133,7 +161,7 @@ public class StandAlone {
 
 	
 	private static <T> void produceRandomDependencies(List<Node<T>> graph) {
-		int dependenciesToCreate = (int)(graph.size() * 1.3);
+		int dependenciesToCreate = (int)(graph.size() * 1.8);
 	
 		while (dependenciesToCreate-- > 0) {
 			Node<T> node1 = drawOneFrom(graph);
