@@ -76,7 +76,7 @@ class TypeAnalyser extends ASTVisitor {
 
 	private boolean enterMethod(Producer<Node<IBinding>> producer) {
 		if (methodBeingVisited != null) {
-			System.out.println("Method inside method will not be visited.");
+			System.out.println("Method inside method '"+methodBeingVisited+"' will not be visited.");
 			return false;
 		}
 		methodBeingVisited = producer.produce();
@@ -100,7 +100,7 @@ class TypeAnalyser extends ASTVisitor {
 	
 	private boolean enterVariableAssignment(IVariableBinding variable) {
 		if (variableBeingAssigned != null){
-			System.out.println("Variable assignment inside variable assignment will not be visited: " + variable);
+			System.out.println("Assignment inside assignment '"+variableBeingAssigned+"' will not be visited: " + variable);
 			return false;
 		}
 		variableBeingAssigned = variableNodeGiven(variable);

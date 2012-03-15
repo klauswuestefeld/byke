@@ -3,7 +3,6 @@ package byke.views;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
@@ -20,6 +19,7 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 
 import byke.views.layout.CartesianLayout;
@@ -30,33 +30,30 @@ public class LayoutMap {
 
 	private static final String FILE_EXTENSION = "properties";
 
-	private final WorkspaceJob _saveJob = createSaveJob();
-	private Map<IPackageFragment, CartesianLayout> _scheduledSaves;
-	private final Object _scheduledSavesMonitor = new Object();
+	private final WorkspaceJob saveJob = createSaveJob();
+	private IJavaElement elementToSave;
+	private CartesianLayout mementoToSave;
 
 
+	synchronized
+	public void keep(IJavaElement element, CartesianLayout memento) {
+		elementToSave = element;
+		mementoToSave = memento;
+		saveJob.schedule(1000 * 3);
+	}
+	
+	
+	synchronized
 	public CartesianLayout getLayoutFor(IJavaElement element) {
-		if (!(element instanceof IPackageFragment)) {
-			System.out.println("Cannot yet read layout for " + element.getClass());
-			return null;
-		}
-		CartesianLayout newest = mementoToBeWrittenFor((IPackageFragment)element);
-		if (newest != null) return newest;
-
-		return read((IPackageFragment)element);
-		// TODO: Optimize: Use an LRU cache. This is not so urgent because Eclipse apparently does a lot of caching of the workspace files.
+		return element.equals(elementToSave)
+			? mementoToSave
+			: read(element);
 	}
 
-	private CartesianLayout mementoToBeWrittenFor(IPackageFragment aPackage) {
-		synchronized (_scheduledSavesMonitor) {
-			if (_scheduledSaves == null) return null;
-			return _scheduledSaves.get(aPackage);
-		}
-	}
 
-	private CartesianLayout read(IPackageFragment aPackage) {
+	private CartesianLayout read(IJavaElement element) {
 		try {
-			IFile file = fileForReading(aPackage);
+			IFile file = fileForReading(element);
 			if (file == null) return null;
 
 			InputStream contents = file.getContents();
@@ -69,7 +66,7 @@ public class LayoutMap {
 			}
 		} catch (CoreException e) {  // Normally caused by folder out of sync
 			try {
-				bykeFolderFor(aPackage).refreshLocal(IResource.DEPTH_INFINITE, null);
+				bykeFolderFor(element).refreshLocal(IResource.DEPTH_INFINITE, null);
 			} catch (CoreException e1) {
 				e = e1;
 			}
@@ -81,6 +78,7 @@ public class LayoutMap {
 		}
 	}
 
+	
 	private CartesianLayout produceCartesianLayoutGiven(Properties properties) {
 		CartesianLayout _cartesianLayout = new CartesianLayout();
 		for (Map.Entry<Object, Object> e : properties.entrySet()) {
@@ -92,28 +90,26 @@ public class LayoutMap {
 		return _cartesianLayout;
 	}
 
-	public void keep(IJavaElement element, CartesianLayout memento) {
-		if (element instanceof IPackageFragment)
-			scheduleSave((IPackageFragment)element, memento);
-		
-		int todo;
-//		else
-//			System.out.println("Cannot yet save " + element.getClass());
-	}
-
-	private void scheduleSave(IPackageFragment aPackage, CartesianLayout memento) {
-		synchronized (_scheduledSavesMonitor) {
-			scheduledSaves().put(aPackage, memento);
+	
+	private void performScheduledSaves() {
+		IJavaElement element;
+		CartesianLayout memento;
+		synchronized (this) {
+			element = elementToSave;
+			memento = mementoToSave;
+			elementToSave = null;
+			mementoToSave = null;
 		}
-		_saveJob.schedule(1000 * 3);
+
+		save(element, memento);
 	}
 
-	private void save(IPackageFragment aPackage, CartesianLayout memento) {
+	
+	private void save(IJavaElement element, CartesianLayout memento) {
 		try {
-			IFile file = createTimestampedFileToAvoidScmMergeConflicts(aPackage);
-
+			IFile file = createTimestampedFileToAvoidScmMergeConflicts(element);
+			
 			ByteArrayOutputStream serialization = new ByteArrayOutputStream();
-			// new ObjectOutputStream(serialization).writeObject(memento); // TODO: Use readable format (properties file) instead of serialization.
 			Properties prop = new Properties();
 			for (String name : memento.nodeNames()) {
 				Coordinates coordinates = memento.coordinatesFor(name);
@@ -125,25 +121,16 @@ public class LayoutMap {
 			e.printStackTrace();
 		}
 	}
-
-	private void performScheduledSaves() {
-		Map<IPackageFragment, CartesianLayout> mySaves;
-		synchronized (_scheduledSavesMonitor) {
-			mySaves = scheduledSaves();
-			_scheduledSaves = null;
-		}
-
-		for (IPackageFragment aPackage : mySaves.keySet())
-			save(aPackage, mySaves.get(aPackage));
-	}
-
-	static private IFile fileForReading(IPackageFragment aPackage) throws CoreException, JavaModelException {
-		IFolder cacheFolder = produceCacheFolder(aPackage);
-		final String baseName = baseNameFor(aPackage);
+	
+	
+	static private IFile fileForReading(IJavaElement element) throws CoreException, JavaModelException {
+		IFolder cacheFolder = produceCacheFolder(element);
+		final String baseName = baseNameFor(element);
 
 		return matchingFile(cacheFolder, baseName);
 	}
 
+	
 	private static IFile matchingFile(IFolder cacheFolder, String baseName) throws CoreException {
 		for (IResource candidate : cacheFolder.members()) {
 			if (!candidate.getName().startsWith(baseName)) continue;
@@ -154,9 +141,10 @@ public class LayoutMap {
 		return null;
 	}
 
-	static private IFile createTimestampedFileToAvoidScmMergeConflicts(IPackageFragment aPackage) throws CoreException, JavaModelException {
-		IFolder cacheFolder = produceCacheFolder(aPackage);
-		String baseName = baseNameFor(aPackage);
+	
+	static private IFile createTimestampedFileToAvoidScmMergeConflicts(IJavaElement element) throws CoreException, JavaModelException {
+		IFolder cacheFolder = produceCacheFolder(element);
+		String baseName = baseNameFor(element);
 
 		deleteOldFiles(cacheFolder, baseName);
 
@@ -164,6 +152,7 @@ public class LayoutMap {
 		return cacheFolder.getFile(newName);
 	}
 
+	
 	private static void deleteOldFiles(IFolder cacheFolder, String baseName) throws CoreException {
 		while (true) {
 			IFile oldFile = matchingFile(cacheFolder, baseName);
@@ -172,8 +161,9 @@ public class LayoutMap {
 		}
 	}
 
-	static private String baseNameFor(IPackageFragment aPackage) throws JavaModelException {
-		IPackageFragmentRoot root = getPackageFragmentRoot(aPackage);
+	
+	static private String baseNameFor(IJavaElement element) throws JavaModelException {
+		IPackageFragmentRoot root = getPackageFragmentRoot(element);
 		if (root == null) return "";
 
 		IResource correspondingResource;
@@ -187,34 +177,60 @@ public class LayoutMap {
 		String rootNameIncludingSlashes = correspondingResource.getProjectRelativePath().toString();
 		String validRootName = rootNameIncludingSlashes.replaceAll("/", "__");
 
-		String packageName = aPackage.isDefaultPackage() ? "(default package)" : aPackage.getElementName();
-
-		return validRootName + "__" + packageName + "__timestamp";
+		return validRootName + "__" + nameFor(element) + "__timestamp";
 	}
 
-	static private IFolder produceCacheFolder(IPackageFragment aPackage) throws CoreException {
-		IFolder bykeFolder = bykeFolderFor(aPackage);
-		if (!bykeFolder.exists()) bykeFolder.create(false, true, null);
+	
+	static private String nameFor(IJavaElement element) throws JavaModelException {
+		if (element instanceof IPackageFragment) return nameForPackage((IPackageFragment)element);
+		if (element instanceof IType) return nameForType((IType)element);
+		throw new UnsupportedOperationException("Unable to save layout for " + element + " " + element.getClass());
+	}
+
+	
+	private static String nameForType(IType element) {
+		return element.getFullyQualifiedName();
+	}
+
+
+	private static String nameForPackage(IPackageFragment element) {
+		return element.isDefaultPackage()
+			? "(default package)"
+			: element.getElementName();
+	}
+
+
+	static private IFolder produceCacheFolder(IJavaElement element) throws CoreException {
+		IFolder bykeFolder = bykeFolderFor(element);
+		produce(bykeFolder);
 
 		IFolder result = bykeFolder.getFolder("layoutcache");
-		if (!result.exists()) result.create(false, true, null);
+		produce(result);
 
 		return result;
 	}
 
-	private static IFolder bykeFolderFor(IPackageFragment aPackage) {
-		IProject project = aPackage.getJavaProject().getProject();
+
+	private static void produce(IFolder folder) throws CoreException {
+		if (!folder.exists()) folder.create(false, true, null);
+	}
+
+	
+	private static IFolder bykeFolderFor(IJavaElement element) {
+		IProject project = element.getJavaProject().getProject();
 		return project.getFolder(".byke");
 	}
 
-	/**
-	 * @return a IPackageFragmentRoot representing a source folder, jar file, zip file or null if the package is directly in the root of an Eclipse project.
-	 */
+	
+	/** @return a IPackageFragmentRoot representing a source folder, jar file, zip file or null if the package is directly in the root of an Eclipse project.*/
 	static private IPackageFragmentRoot getPackageFragmentRoot(IJavaElement element) {
 		if (element == null) return null;
-		return element instanceof IPackageFragmentRoot ? (IPackageFragmentRoot)element : getPackageFragmentRoot(element.getParent());
+		return element instanceof IPackageFragmentRoot
+			? (IPackageFragmentRoot)element
+			: getPackageFragmentRoot(element.getParent());
 	}
 
+	
 	private WorkspaceJob createSaveJob() {
 		WorkspaceJob job = new WorkspaceJob("Writing Byke layout cache") { @Override public IStatus runInWorkspace(IProgressMonitor monitor) {
 			performScheduledSaves();
@@ -223,13 +239,6 @@ public class LayoutMap {
 		job.setSystem(true);
 		job.setPriority(Job.DECORATE); // Low priority.
 		return job;
-	}
-
-	private Map<IPackageFragment, CartesianLayout> scheduledSaves() {
-		synchronized (_scheduledSavesMonitor) {
-			if (_scheduledSaves == null) _scheduledSaves = new HashMap<IPackageFragment, CartesianLayout>();
-			return _scheduledSaves;
-		}
 	}
 
 }

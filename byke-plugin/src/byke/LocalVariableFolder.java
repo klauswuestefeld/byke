@@ -41,8 +41,6 @@ class LocalVariableFolder {
 		}
 
 		private void foldLocalProviders(Node<IBinding> toFold) {
-			System.out.println("Field: " + toFold.payload());
-			
 			if (foldedProviders.contains(toFold)) return;
 			foldedProviders.add(toFold);
 			
