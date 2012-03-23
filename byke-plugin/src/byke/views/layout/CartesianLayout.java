@@ -11,8 +11,6 @@ public class CartesianLayout implements Serializable {
 
 	private final Map<String, Coordinates> _coordinatesByName = new HashMap<String, Coordinates>();
 
-	private int next;
-
 
 	public void keep(String name, Coordinates coordinates) {
 		_coordinatesByName.put(name, coordinates);
@@ -20,7 +18,7 @@ public class CartesianLayout implements Serializable {
 
 	public Coordinates coordinatesFor(String name) {
 		Coordinates result = _coordinatesByName.get(name);
-		return result == null ? new Coordinates((next * 50), (next++ * 50)) : result;
+		return result == null ? new Coordinates(0, 0) : result;
 	}
 
 	public Iterable<String> nodeNames() {
