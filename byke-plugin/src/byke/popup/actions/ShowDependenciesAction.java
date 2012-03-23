@@ -20,15 +20,17 @@ public class ShowDependenciesAction implements IViewActionDelegate {
 
 	@Override
 	public void init(IViewPart view) {
-	// Apparently never called.
+		// Apparently never called.
 	}
 
+	
 	@Override
 	public void run(IAction ignored) {
 		if (_selection == null) return;
 		bykeView().showDependencies(_selection);
 	}
 
+	
 	private IBykeView bykeView() {
 		IWorkbenchPage activePage = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 
@@ -36,14 +38,14 @@ public class ShowDependenciesAction implements IViewActionDelegate {
 		try {
 			result = (IBykeView)activePage.showView(IBykeView.PERSPECTIVE_ID);
 		} catch (PartInitException e) {
-			e.printStackTrace();
-			return null;
+			throw new IllegalStateException(e);
 		}
 
 		activePage.activate(result);
 		return result;
 	}
 
+	
 	@Override
 	public void selectionChanged(IAction ignored, ISelection selection) {
 		_selection = selection;
