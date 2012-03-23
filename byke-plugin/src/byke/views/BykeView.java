@@ -35,27 +35,105 @@ import byke.views.layout.ui.GraphCanvas;
 
 public class BykeView extends ViewPart implements IBykeView {
 
+	private final class LayoutJob extends UIJob {
+		
+		private IJavaElement _elementBeingDisplayed;
+
+		private LayoutAlgorithm<IBinding> _algorithm;
+
+		private final Composite _parent2;
+		private GraphCanvas<IBinding> _canvas;
+
+		
+		private LayoutJob(Composite parent) {
+			super("Byke Diagram Layout");
+			setSystem(true);
+			setPriority(Job.DECORATE); // Low priority;
+
+			this._parent2 = parent;
+		}
+
+		
+		@Override
+		public IStatus runInUIThread(IProgressMonitor monitor) {
+			if (monitor.isCanceled()) return Status.OK_STATUS;
+			if (_paused) return Status.OK_STATUS;
+			if (_parent2 == null || _parent2.isDisposed()) return Status.OK_STATUS;
+			checkForNewGraph();
+			if (_canvas == null || _canvas.isDisposed()) return Status.OK_STATUS;
+
+			_timeLastLayoutJobStarted = System.nanoTime();
+			_canvas.animationStep();
+			boolean improved = _algorithm.improveLayoutForAWhile();
+			this.schedule(nanosecondsToSleep() / 1000000);
+
+			if (improved) {
+				CartesianLayout bestSoFar = _algorithm.layoutMemento();
+				_canvas.useLayout(bestSoFar);
+				_layoutCache.keep(_elementBeingDisplayed, bestSoFar);
+			}
+
+			return Status.OK_STATUS;
+		}
+
+		private void checkForNewGraph() {
+			if (_selectedGraph == null) return;
+
+			Collection<Node<IBinding>> myGraph;
+			synchronized (_graphChangeMonitor) {
+				_elementBeingDisplayed = _selectedElement;
+				myGraph = _selectedGraph;
+				_selectedGraph = null;
+			}
+			CartesianLayout bestSoFar = _layoutCache.getLayoutFor(_elementBeingDisplayed);
+			if (bestSoFar == null) bestSoFar = new CartesianLayout();
+
+			newCanvas((Collection<Node<IBinding>>)myGraph, bestSoFar);
+			newAlgorithm((Collection<Node<IBinding>>)myGraph, bestSoFar);
+		}
+		
+		
+		private void newCanvas(Collection<Node<IBinding>> graph, CartesianLayout initialLayout) {
+			if (_canvas != null) _canvas.dispose();
+
+			_canvas = new GraphCanvas<IBinding>(_parent2, graph, initialLayout, new GraphCanvas.Listener<IBinding>() {
+				@Override
+				public void nodeSelected(Node<IBinding> node) {
+					selectNode(node);
+				}
+			});
+			_parent2.layout();
+		}
+		
+		
+		private void newAlgorithm(Collection<Node<IBinding>> graph, CartesianLayout initialLayout) {
+			_algorithm = new LayoutAlgorithm<IBinding>(graph, initialLayout, _canvas);
+		}
+
+		void togglePaused(boolean pause) {
+			_paused = pause;
+			if (!_paused) _layoutJob.schedule();
+		}
+
+	}
+
+	private boolean _animate;
+	private boolean _paused;
+	
 	private static final int ONE_MILLISECOND = 1000000;
 	private static final int TEN_SECONDS = 10 * 1000000000;
 
 	private IViewSite _site;
 
-	private LayoutAlgorithm<IBinding> _algorithm;
-
-	private Composite _parent;
-	private GraphCanvas<IBinding> _canvas;
-
+	private final Object _graphChangeMonitor = new Object();
 	private IJavaElement _selectedElement;
 	private Collection<Node<IBinding>> _selectedGraph;
 
-	private final Object _graphChangeMonitor = new Object();
-
-	private UIJob _layoutJob;
+	private Composite _parent;
+	private LayoutJob _layoutJob;
 	private long _timeLastLayoutJobStarted;
 	private final LayoutMap _layoutCache = new LayoutMap();
 
-	private boolean _paused;
-	private IJavaElement _deferredSelection;
 	private ISelectionProvider _selectionProvider = new SimpleSelectionProvider();
 
 
@@ -64,72 +142,8 @@ public class BykeView extends ViewPart implements IBykeView {
 		super.init(site);
 		_site = site;
 		_site.getPage().addSelectionListener(this);
-		_layoutJob = new UIJob("Code structure layout") {
-
-			private IJavaElement _elementBeingDisplayed;
-
-
-			@Override
-			public IStatus runInUIThread(IProgressMonitor monitor) {
-				if (monitor.isCanceled()) return Status.OK_STATUS;
-
-				if (_paused) return Status.OK_STATUS;
-
-				if (_parent == null || _parent.isDisposed()) return Status.OK_STATUS;
-				checkForNewGraph();
-				if (_canvas == null || _canvas.isDisposed()) return Status.OK_STATUS;
-
-				_timeLastLayoutJobStarted = System.nanoTime();
-				_canvas.animationStep();
-				boolean improved = _algorithm.improveLayoutForAWhile();
-				this.schedule(nanosecondsToSleep() / 1000000);
-
-				if (improved) {
-					CartesianLayout bestSoFar = _algorithm.layoutMemento();
-					_canvas.useLayout(bestSoFar);
-					_layoutCache.keep(_elementBeingDisplayed, bestSoFar);
-				}
-
-				return Status.OK_STATUS;
-			}
-
-			private void checkForNewGraph() {
-				if (_selectedGraph == null) return;
-
-				Collection<Node<IBinding>> myGraph;
-				synchronized (_graphChangeMonitor) {
-					_elementBeingDisplayed = _selectedElement;
-					myGraph = _selectedGraph;
-					_selectedGraph = null;
-				}
-				CartesianLayout bestSoFar = _layoutCache.getLayoutFor(_elementBeingDisplayed);
-				if (bestSoFar == null) bestSoFar = new CartesianLayout();
-
-				newCanvas((Collection<Node<IBinding>>)myGraph, bestSoFar);
-				newAlgorithm((Collection<Node<IBinding>>)myGraph, bestSoFar);
-			}
-
-		};
-		_layoutJob.setSystem(true);
-		_layoutJob.setPriority(Job.DECORATE); // Low priority;
 	}
 
-
-	private void newCanvas(Collection<Node<IBinding>> graph, CartesianLayout initialLayout) {
-		if (_canvas != null) _canvas.dispose();
-
-		_canvas = new GraphCanvas<IBinding>(_parent, graph, initialLayout, new GraphCanvas.Listener<IBinding>() {
-			@Override
-			public void nodeSelected(Node<IBinding> node) {
-				selectNode(node);
-			}
-		});
-		_parent.layout();
-	}
-
-	private void newAlgorithm(Collection<Node<IBinding>> graph, CartesianLayout initialLayout) {
-		_algorithm = new LayoutAlgorithm<IBinding>(graph, initialLayout, _canvas);
-	}
 
 	@Override
 	public void dispose() {
@@ -137,26 +151,25 @@ public class BykeView extends ViewPart implements IBykeView {
 		super.dispose();
 	}
 
+	
 	@Override
 	public void createPartControl(Composite parent) {
-		_parent = parent;
+		System.out.println("> > > > > > > > > CREATE PART CONTROL");
+		System.out.println("parent: " + parent.hashCode());
+		System.out.println(_parent == null ? "previous: null" : "Previous parent disposed"+_parent.isDisposed());
 		getSite().setSelectionProvider(_selectionProvider);
+		_parent = parent;
+		_layoutJob = new LayoutJob(_parent);
 	}
 
 	@Override
-	public void selectionChanged(IWorkbenchPart ignored, ISelection selectionCandidate) {
-		// FIXME: After the "Show Dependencies" popup menu action, this method is no longer called (Byke is no longer notified of selections changes and no longer changes the graph display). If focus is changed to another View and back, for example, everything comes back to normal. Is this an Eclipse bug?
-		IJavaElement newSelection = asJavaElement(selectionCandidate);
-		if (_paused) {
-			_deferredSelection = newSelection;
-			return;
-		}
-		showJavaDependencies(newSelection);
+	public void selectionChanged(IWorkbenchPart ignored, ISelection selection) {
+		showDependencies(selection);
 	}
 
 	@Override
-	public void showDependencies(ISelection selectionCandidate) {
-		showJavaDependencies(asJavaElement(selectionCandidate));
+	public void showDependencies(ISelection selection) {
+		showJavaDependencies(asJavaElement(selection));
 	}
 
 	private void showJavaDependencies(IJavaElement javaElement) {
@@ -244,11 +257,13 @@ public class BykeView extends ViewPart implements IBykeView {
 
 	@Override
 	public void togglePaused(boolean pause) {
-		assert pause != _paused;
-		_paused = pause;
-		if (!_paused) showJavaDependencies(_deferredSelection);
-		_layoutJob.schedule();
+		_layoutJob.togglePaused(pause);
 	}
+	@Override
+	public void toggleAnimation(boolean animate) {
+		_animate = animate;
+	}
+
 
 	private IJavaElement asJavaElement(ISelection candidate) {
 		if (!(candidate instanceof IStructuredSelection)) return null;

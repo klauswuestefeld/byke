@@ -85,6 +85,15 @@
                toolbarPath="Toggle"
                tooltip="Pause diagram layout thread">
          </action>
+         <action
+               class="byke.views.actions.ToggleAnimationAction"
+               icon="icons/animate.gif"
+               id="byke.toggleAnimateAction"
+               label="Animate"
+               style="toggle"
+               toolbarPath="Animate"
+               tooltip="Show layout algorithm animation">
+         </action>
       </viewContribution>
    </extension>
 </plugin>
