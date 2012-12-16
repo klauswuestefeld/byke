@@ -89,7 +89,7 @@ public class DependencyAnalysis implements NodeAccumulator {
 	private void populateNodes(IProgressMonitor monitor) throws JavaModelException {
 		if (monitor == null) monitor = new NullProgressMonitor();
 		
-		ASTParser parser = ASTParser.newParser(AST.JLS3);
+		ASTParser parser = ASTParser.newParser(AST.JLS4);
 		
 		ASTVisitor visitor = _subject instanceof IType
 			? new TypeVisitor()
