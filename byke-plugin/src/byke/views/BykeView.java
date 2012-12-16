@@ -117,7 +117,6 @@ public class BykeView extends ViewPart implements IBykeView {
 
 	}
 
-	private boolean _animate;
 	private boolean _paused;
 	
 	private static final int ONE_MILLISECOND = 1000000;
@@ -154,9 +153,6 @@ public class BykeView extends ViewPart implements IBykeView {
 	
 	@Override
 	public void createPartControl(Composite parent) {
-		System.out.println("> > > > > > > > > CREATE PART CONTROL");
-		System.out.println("parent: " + parent.hashCode());
-		System.out.println(_parent == null ? "previous: null" : "Previous parent disposed"+_parent.isDisposed());
 		getSite().setSelectionProvider(_selectionProvider);
 		_parent = parent;
 		_layoutJob = new LayoutJob(_parent);
@@ -258,10 +254,6 @@ public class BykeView extends ViewPart implements IBykeView {
 	@Override
 	public void togglePaused(boolean pause) {
 		_layoutJob.togglePaused(pause);
-	}
-	@Override
-	public void toggleAnimation(boolean animate) {
-		_animate = animate;
 	}
 
 
