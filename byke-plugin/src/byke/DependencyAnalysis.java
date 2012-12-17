@@ -3,9 +3,13 @@
 package byke;
 
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -82,10 +86,41 @@ public class DependencyAnalysis implements NodeAccumulator {
 		} catch (Exception x) {
 			x.printStackTrace();
 		}
+		
+		Collection<Node<IBinding>> finalGraph = _nodesByKey.values();
+		
+		if(MergeClassPatterns.existsMergeClassValue())
+			finalGraph = mergeDependencies();
+		
+		return finalGraph;
+	}
+
+
+	private Collection<Node<IBinding>> mergeDependencies() {
+		List<Node<IBinding>> toRemove = new ArrayList<Node<IBinding>>();
+		List<Pattern> patterns = MergeClassPatterns.getPatterns();
+		for (Pattern pattern : patterns)
+			for(Node<IBinding> node : _nodesByKey.values()) {
+				Matcher matcher = pattern.matcher(node.name());
+				if(matcher.find())
+					for(Node<IBinding> nodeToMerge : _nodesByKey.values())
+						if(nodeToMerge.name().equals(matcher.group(1))) {
+							switchProvider(node, nodeToMerge);
+							toRemove.add(node);
+						}
+			}
+
+		_nodesByKey.values().removeAll(toRemove);
 		return _nodesByKey.values();
 	}
 
 	
+	private void switchProvider(Node<IBinding> node, Node<IBinding> nodeToSwitch) {
+		for(Node<IBinding> nodeToMerge : _nodesByKey.values())
+			if(nodeToMerge.providers().remove(node))
+				nodeToMerge.addProvider(nodeToSwitch);
+	}
+
 	private void populateNodes(IProgressMonitor monitor) throws JavaModelException {
 		if (monitor == null) monitor = new NullProgressMonitor();
 		

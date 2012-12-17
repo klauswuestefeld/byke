@@ -15,6 +15,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 	public void initializeDefaultPreferences() {
 		IPreferenceStore store = BykePlugin.getDefault().getPreferenceStore();
 		store.setDefault(PreferenceConstants.P_PATTERN_EXCLUDES, ".*Exception$");
+		store.setDefault(PreferenceConstants.P_PATTERN_MERGE_CLASS, "*Class");
 	}
 
 }

@@ -19,15 +19,12 @@ public class BykePreferencePage extends FieldEditorPreferencePage implements IWo
 		setPreferenceStore(BykePlugin.getDefault().getPreferenceStore());
 	}
 
-	/**
-	 * Creates the package exclude list field editor.
-	 */
 	@Override
 	public void createFieldEditors() {
-		addField(new PatternExcludeListEditor(PreferenceConstants.P_PATTERN_EXCLUDES, "&Classes excluded from dependency graphs: (regex patterns)", getFieldEditorParent()));
+		addField(new PatternExcludeListEditor(PreferenceConstants.P_PATTERN_EXCLUDES, "&Classes excluded from dependency graphs: (regex patterns)", getFieldEditorParent()));		
+		addField(new MergeClassListEditor(PreferenceConstants.P_PATTERN_MERGE_CLASS, "&Merge classes with similar names. Example: Customer and CustomerClass", getFieldEditorParent()));
 	}
 
 	@Override
 	public void init(IWorkbench workbench) {}
-
 }
