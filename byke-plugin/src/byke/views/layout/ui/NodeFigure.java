@@ -12,6 +12,7 @@ import org.eclipse.draw2d.Label;
 import org.eclipse.draw2d.LineBorder;
 import org.eclipse.draw2d.ToolbarLayout;
 import org.eclipse.draw2d.geometry.Point;
+import org.eclipse.draw2d.text.TextFlow;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 
@@ -38,14 +39,12 @@ public class NodeFigure<T> extends GraphFigure {
 		
 		String name = simplifiedName();
 		final Image imageForNode = imageForNode(_node);
-		if (name.length() < 20) {
-			result = label(name, imageForNode);
-		} else {
-			result = new CompartmentFigure();
+		
+		if (name.length() > 20) {
 			int cut = (name.length() / 2) - 1;
-			result.add(label(name.substring(0, cut), imageForNode));
-			result.add(label(name.substring(cut), null));
+			name = name.substring(0, cut) + "\n " + name.substring(cut);
 		}
+		result = label(name, imageForNode);
 		result.setBorder(new LineBorder());
 		result.setBackgroundColor(pastelColorDeterminedBy(name));
 		result.setOpaque(true);

@@ -16,6 +16,10 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.KeyListener;
+import org.eclipse.swt.events.MouseWheelListener;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IViewSite;
@@ -43,6 +47,9 @@ public class BykeView extends ViewPart implements IBykeView {
 
 		private final Composite _parent2;
 		private GraphCanvas<IBinding> _canvas;
+		
+		private final MouseWheelListener _canvasMouseWheelListener = canvasMouseWheelListener();
+		private final KeyListener _canvasKeyPressedListener = keyPressedListener();
 
 		
 		private LayoutJob(Composite parent) {
@@ -102,10 +109,35 @@ public class BykeView extends ViewPart implements IBykeView {
 					selectNode(node);
 				}
 			});
+			_canvas.addMouseWheelListener(_canvasMouseWheelListener);
+			_canvas.addKeyListener(_canvasKeyPressedListener);
+			
 			_parent2.layout();
 		}
 		
-		
+		private MouseWheelListener canvasMouseWheelListener() {
+			return new MouseWheelListener() {
+				@Override public void mouseScrolled(org.eclipse.swt.events.MouseEvent e) {
+					if (e.stateMask == SWT.CTRL)
+						if(e.count > 0)
+							_canvas.zoom(e.x, e.y, -5);
+						else
+							_canvas.zoom(e.x, e.y, 5);
+				}
+			};
+		}
+				
+		private KeyListener keyPressedListener() {
+			return new KeyListener() {			
+				@Override public void keyReleased(KeyEvent e) {
+					if(e.stateMask == SWT.CTRL && e.keyCode == SWT.KEYPAD_0)
+						_canvas.useLayout(_layoutCache.getLayoutFor(_elementBeingDisplayed));
+				}
+				
+				@Override public void keyPressed(KeyEvent e) {}
+			};
+		}
+
 		private void newAlgorithm(Collection<Node<IBinding>> graph, CartesianLayout initialLayout) {
 			_algorithm = new LayoutAlgorithm<IBinding>(graph, initialLayout, _canvas);
 		}
@@ -194,7 +226,7 @@ public class BykeView extends ViewPart implements IBykeView {
 		(new Job("'" + analysis.subject().getElementName() + "' analysis") { @Override protected IStatus run(IProgressMonitor monitor) {
 			try {
 				Collection<Node<IBinding>> nextGraph = analysis.dependencyGraph(monitor);
-
+				
 				synchronized (_graphChangeMonitor) {
 					if (analysis.subject() != _selectedElement) return Status.OK_STATUS;
 					_selectedGraph = nextGraph;

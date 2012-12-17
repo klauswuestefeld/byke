@@ -96,8 +96,8 @@ public class GraphCanvas<T> extends FigureCanvas implements NodeSizeProvider {
 			event.consume();
 		}};
 	}	
-	
 
+		
 	private void selectNode(IFigure figure) {
 		if (figure == null) throw new IllegalStateException(); //TODO Delete if this never happens.				
 
@@ -208,7 +208,7 @@ public class GraphCanvas<T> extends FigureCanvas implements NodeSizeProvider {
 
 		int dx = -smallestX + MARGIN_PIXELS;
 		int dy = -smallestY + MARGIN_PIXELS;
-
+		
 		CartesianLayout result = new CartesianLayout();
 		for (String nodeName : layout.nodeNames()) {
 			Coordinates coordinates = layout.coordinatesFor(nodeName);
@@ -216,7 +216,6 @@ public class GraphCanvas<T> extends FigureCanvas implements NodeSizeProvider {
 		}
 		return result;
 	}
-
 	
 	public void animationStep(int size) {
 		if (_morpher == null) return;
@@ -243,4 +242,20 @@ public class GraphCanvas<T> extends FigureCanvas implements NodeSizeProvider {
 		_graphFigure.setPreferredSize(_graphFigure.getSize());
 	}
 
+	public void zoom(int x, int y, int factor) {
+		for(Map.Entry<IFigure, Node<T>> entry : _nodeByFigure.entrySet()) {
+			IFigure key = entry.getKey();
+
+			key.getBounds().x = calculateZoom(key.getBounds().x, x, factor);
+			key.getBounds().y = calculateZoom(key.getBounds().y, y, factor);
+			
+			recomputeGraphFigureSize();
+		}
+	}
+
+	private int calculateZoom(int figurePosition, int mousePosition, int factor) {
+		if(mousePosition > figurePosition)
+			return figurePosition + 1 * factor;
+		return figurePosition - 1 * factor;
+	}
 }

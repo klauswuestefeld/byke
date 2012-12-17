@@ -35,6 +35,7 @@ public class LayoutAlgorithm<T> {
 
 	public LayoutAlgorithm(Iterable<Node<T>> graph, CartesianLayout initialLayout, NodeSizeProvider sizeProvider) {
 		_sizeProvider = sizeProvider;
+		
 		initGraphElements(graph);
 
 		applyLayout(initialLayout == null ? new CartesianLayout() : initialLayout);
@@ -48,7 +49,7 @@ public class LayoutAlgorithm<T> {
 		
 		long start = System.currentTimeMillis();
 		do {
-			if (	improveLayoutStep()) return true;
+			if (improveLayoutStep()) return true;
 		} while (System.currentTimeMillis() - start < ONE_TENTH_OF_A_SECOND);
 		
 		return false;
