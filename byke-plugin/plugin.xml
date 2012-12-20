@@ -29,62 +29,77 @@
       <import plugin="org.eclipse.jdt.launching" version="3.5.100"/>
    </requires>
 
-   <extension
-         point="org.eclipse.ui.views">
-      <category
-            name="Byke"
-            id="byke">
-      </category>
-      <view
+   	<extension point="org.eclipse.ui.views">
+      	<category name="Byke" id="byke"></category>
+      	<view
             name="Dependencies"
             icon="icons/byke.gif"
             category="byke"
             class="byke.views.BykeView"
             id="byke.views.BykeView">
-      </view>
-   </extension>
+  		</view>
+   	</extension>
+
+	<extension point="org.eclipse.ui.perspectiveExtensions">
+		<perspectiveExtension targetID="org.eclipse.jdt.ui.JavaPerspective">
+			<view id="byke.views.BykeView" relative="org.eclipse.ui.views.ProblemView" relationship="stack"/>
+   		</perspectiveExtension>
+	</extension>
+   	
+   	<extension point="org.eclipse.ui.preferencePages">
+    	<page class="byke.preferences.BykePreferencePage" id="byke.preferences.BykePreferencePage" name="Byke"/>
+   	</extension>
    
-   <extension point="org.eclipse.ui.perspectiveExtensions">
-          <perspectiveExtension targetID="org.eclipse.jdt.ui.JavaPerspective">
-               <view id="byke.views.BykeView"
-                    relative="org.eclipse.ui.views.ProblemView"
-                    relationship="stack"/>
-   </perspectiveExtension>
-</extension>
-   <extension
-         point="org.eclipse.ui.preferencePages">
-      <page
-            class="byke.preferences.BykePreferencePage"
-            id="byke.preferences.BykePreferencePage"
-            name="Byke"/>
-   </extension>
-   <extension
-         point="org.eclipse.core.runtime.preferences">
-      <initializer class="byke.preferences.PreferenceInitializer"/>
-   </extension>
-   <extension point="org.eclipse.ui.popupMenus">
-   <objectContribution objectClass="org.eclipse.jdt.core.IPackageFragment" id="byke.ShowDependencies">
-	<action label="Show Dependencies" class="byke.popup.actions.ShowDependenciesAction" menubarPath="additions" id="byke.ShowDependenciesAction" icon="icons/byke.gif">
-	</action>
-</objectContribution>
-   </extension>
-   <extension
-         point="org.eclipse.ui.viewActions">
-      <viewContribution
-            id="byke.toggleActive"
-            targetID="byke.views.BykeView">
-         <menu
-               id="byke.toggleActiveMenu"
-               label="Toggle"/>
-         <action
-               class="byke.views.actions.ToggleActiveAction"
-               icon="icons/pause.gif"
-               id="byke.toggleActiveAction"
-               label="Toggle Active"
-               style="toggle"
-               toolbarPath="Toggle"
-               tooltip="Pause diagram layout thread">
-         </action>
-      </viewContribution>
-   </extension>
+   	<extension point="org.eclipse.core.runtime.preferences">
+      	<initializer class="byke.preferences.PreferenceInitializer"/>
+   	</extension>
+   
+   	<extension point="org.eclipse.ui.commands">
+		<command
+            name="Pause diagram layout thread"
+            id="byke.views.actions.ToggleActiveAction"
+            defaultHandler="byke.views.handlers.ToggleActiveHandler">
+            
+            <state id="org.eclipse.ui.commands.toggleState">
+        		<class class="org.eclipse.ui.handlers.RegistryToggleState"> 
+         			<parameter name="default" value="false"/> 
+      			</class> 
+        	</state>
+     	</command>
+     	
+     	<command
+            name="Show Dependencies"
+            id="byke.popup.actions.ShowDependenciesAction"
+            defaultHandler="byke.popup.handlers.ShowDependenciesHandler">
+     	</command>
+   	</extension>
+   	
+	<extension point="org.eclipse.ui.menus">
+		<menuContribution locationURI="toolbar:byke.views.BykeView?after=additions">
+          	<command
+                 commandId="byke.views.actions.ToggleActiveAction"
+                 icon="icons/pause.gif"
+                 label="Toggle Active"
+                 style="toggle"
+                 tooltip="Pause diagram layout thread">
+          	</command>
+		</menuContribution>
+
+		<menuContribution locationURI="popup:org.eclipse.ui.popup.any?before=additions">
+          	<command
+                 commandId="byke.popup.actions.ShowDependenciesAction"
+                 icon="icons/byke.gif"
+                 label="Show Dependencies">
+                 
+                 <visibleWhen>
+                	<with variable="activeMenuSelection">
+                    	<iterate>
+                        	<adapt type="org.eclipse.jdt.core.IPackageFragment"></adapt>
+                    	</iterate>
+                	</with>
+            	</visibleWhen>
+          	</command>
+		</menuContribution>		
+	</extension>
+   
 </plugin>

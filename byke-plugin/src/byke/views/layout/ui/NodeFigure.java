@@ -12,7 +12,6 @@ import org.eclipse.draw2d.Label;
 import org.eclipse.draw2d.LineBorder;
 import org.eclipse.draw2d.ToolbarLayout;
 import org.eclipse.draw2d.geometry.Point;
-import org.eclipse.draw2d.text.TextFlow;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 
