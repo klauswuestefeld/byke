@@ -41,6 +41,8 @@ public class BykeView extends ViewPart implements IBykeView {
 
 	private final class LayoutJob extends UIJob {
 		
+		private static final int ONE_TENTH_OF_A_SECOND = 100;
+
 		private IJavaElement _elementBeingDisplayed;
 
 		private LayoutAlgorithm<IBinding> _algorithm;
@@ -71,7 +73,7 @@ public class BykeView extends ViewPart implements IBykeView {
 
 			_timeLastLayoutJobStarted = System.nanoTime();
 			_canvas.animationStep();
-			boolean improved = _algorithm.improveLayoutForAWhile();
+			boolean improved = improveLayoutForAWhile();
 			this.schedule(nanosecondsToSleep() / 1000000);
 
 			if (improved) {
@@ -83,6 +85,17 @@ public class BykeView extends ViewPart implements IBykeView {
 			return Status.OK_STATUS;
 		}
 
+		
+		private boolean improveLayoutForAWhile() {
+			long start = System.currentTimeMillis();
+			do {
+				if (_algorithm.improveLayoutStep()) return true;
+			} while (System.currentTimeMillis() - start < ONE_TENTH_OF_A_SECOND);
+			
+			return false;
+		}
+		
+		
 		private void checkForNewGraph() {
 			if (_selectedGraph == null) return;
 
@@ -152,7 +165,7 @@ public class BykeView extends ViewPart implements IBykeView {
 	private boolean _paused;
 	
 	private static final int ONE_MILLISECOND = 1000000;
-	private static final int TEN_SECONDS = 10 * 1000000000;
+	private static final int FIVE_SECONDS = 5 * 1000000000;
 
 	private IViewSite _site;
 
@@ -207,7 +220,7 @@ public class BykeView extends ViewPart implements IBykeView {
 		try {
 			a = new DependencyAnalysis(javaElement);
 		} catch (InvalidElement e) {
-			System.err.println(e.getMessage());
+			System.err.println("" + javaElement.getElementName() + ": " + e.getMessage());
 			return;
 		}
 		if (a.subject() == _selectedElement) return;
@@ -305,7 +318,7 @@ public class BykeView extends ViewPart implements IBykeView {
 		if (timeLastLayoutJobTook < 0) timeLastLayoutJobTook = 0; // This can happen due to rounding from nanos to millis.
 
 		long timeToSleep = timeLastLayoutJobTook * 4; // The more things run in parallel with byke, the less greedy byke will be. Byke is proud to be a very good citizen. :)
-		if (timeToSleep > TEN_SECONDS) timeToSleep = TEN_SECONDS;
+		if (timeToSleep > FIVE_SECONDS) timeToSleep = FIVE_SECONDS;
 		if (timeToSleep < ONE_MILLISECOND) timeToSleep = ONE_MILLISECOND;
 
 		_timeLastLayoutJobStarted = currentTime + timeToSleep;

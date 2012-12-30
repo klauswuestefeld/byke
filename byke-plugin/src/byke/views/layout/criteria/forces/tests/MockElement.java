@@ -11,7 +11,7 @@ public class MockElement extends NodeElement {
 	private final Coordinates position;
 
 	MockElement(int x, int y) {
-		super(null, new Rectangle(0,0,0,0), null);
+		super(null, new Rectangle(0,0,0,0));
 		position = new Coordinates(x, y);
 	}
 	
@@ -21,7 +21,7 @@ public class MockElement extends NodeElement {
 	}
 
 	@Override
-	public void addForceComponents(float x, float y) {
+	protected void addForceComponents(float x, float y) {
 		forces += "x=" + x + " y=" + y + ";";
 	}
 

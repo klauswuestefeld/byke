@@ -20,10 +20,8 @@ public class StressMeter {
 	private static final Force NON_OVERLAPPING = new NonOverlapping();
 	private static final Force NON_CLUTTERING = new NonCluttering();
 	
-	private float _reading;
-
 	
-	private void applyForces(NodeElement n1, NodeElement n2) {
+	private static void applyForces(NodeElement n1, NodeElement n2) {
 		// Symmetry breakers: (important for RandomAverage algorithm)
 //		ALPHABETICAL_ORDER.applyTo(n1, n2);
 		
@@ -37,28 +35,21 @@ public class StressMeter {
 	}
 
 	
-	void addStress(float stress) {
-		if (Float.isNaN(stress)) throw new IllegalArgumentException("Stress cannot be NaN.");
-		_reading += stress;
-	}
+	public static float applyForcesTo(List<? extends NodeElement> nodes) {
+		for (NodeElement n : nodes) n.clearForces();
 
-	
-	public float applyForcesTo(List<? extends NodeElement> nodes) {
-		_reading = 0;
-
-		for (NodeElement n : nodes) n.clearPendingForces();
-
+		float stress = 0;
 		for (int i = 0; i < nodes.size(); i++) {
 			NodeElement n1 = nodes.get(i);
 			for (int j = i + 1; j < nodes.size(); j++) {
 				NodeElement n2 = nodes.get(j);
 
 				applyForces(n1, n2);
-				
 			}
+			stress += n1.stress();
 		}
 
-		return _reading;
+		return stress;
 	}
 
 }
