@@ -19,7 +19,7 @@ public class LayoutAlgorithm<T> {
 	
 	private final List<NodeElement> _nodeElements = new ArrayList<NodeElement>();
 
-	private float _lowestStressEver = Float.MAX_VALUE;
+	private float _lowestStressEver;
 
 	private boolean localMinimumReached;
 
@@ -27,6 +27,7 @@ public class LayoutAlgorithm<T> {
 	public LayoutAlgorithm(Iterable<Node<T>> graph, CartesianLayout initialLayout, NodeSizeProvider sizeProvider) {
 		initGraphElements(graph, sizeProvider);
 		applyLayout(initialLayout == null ? new CartesianLayout() : initialLayout);
+		_lowestStressEver = relaxTowardLocalMinimum();
 	}
 
 	
