@@ -35,21 +35,14 @@ public class StressMeter {
 	}
 
 	
-	public static float applyForcesTo(List<? extends NodeElement> nodes) {
-		for (NodeElement n : nodes) n.clearForces();
-
-		float stress = 0;
-		for (int i = 0; i < nodes.size(); i++) {
-			NodeElement n1 = nodes.get(i);
-			for (int j = i + 1; j < nodes.size(); j++) {
-				NodeElement n2 = nodes.get(j);
-
-				applyForces(n1, n2);
-			}
-			stress += n1.stress();
+	public static float applyForcesTo(NodeElement chosen, List<NodeElement> all) {
+		chosen.clearForces();
+		
+		for (NodeElement other : all) {
+			if (other == chosen) continue;
+			applyForces(chosen, other);
 		}
-
-		return stress;
+		return chosen.stress();
 	}
 
 }

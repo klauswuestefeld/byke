@@ -1,7 +1,5 @@
 package byke.views.layout.algorithm;
 
-import static java.lang.Math.abs;
-import static java.lang.Math.max;
 import static java.lang.Math.signum;
 
 import java.util.ArrayList;
@@ -21,63 +19,79 @@ public class LayoutAlgorithm<T> {
 	
 	private final List<NodeElement> _nodeElements = new ArrayList<NodeElement>();
 
-	private float _lowestStressEver;
+	private float _lowestStressEver = Float.MAX_VALUE;
 
-	private int nodeJoltContdown = 0;
+	private boolean localMinimumReached;
 
 
 	public LayoutAlgorithm(Iterable<Node<T>> graph, CartesianLayout initialLayout, NodeSizeProvider sizeProvider) {
 		initGraphElements(graph, sizeProvider);
 		applyLayout(initialLayout == null ? new CartesianLayout() : initialLayout);
-		_lowestStressEver = measureStress();
 	}
 
 	
 	public boolean improveLayoutStep() {
 		if (_nodeElements.size() <= 1) return false;
+
+		if (localMinimumReached)
+			jolt();
 		
+		localMinimumReached = true;
+		float stress = relaxTowardLocalMinimum();
+		if (!localMinimumReached) return false;
+		
+		return hasImproved(stress);
+	}
+
+
+	private float relaxTowardLocalMinimum() {
+		float stress = 0;
 		for (NodeElement node : _nodeElements)
-			relaxByOnePixel(node);
-
-		joltSomeNodeIfNecessary();
-		
-		return hasImproved();
+			stress += stressOnNodeAfterTryingToRelaxByOnePixel(node);
+		return stress;
 	}
 
 
-	private void joltSomeNodeIfNecessary() {
-		if (nodeJoltContdown-- != 0) return;
-		
-		int rx = RANDOM.nextInt(1000) - 500;
-		int ry = RANDOM.nextInt(1000) - 500;
-		NodeElement node = _nodeElements.get(RANDOM.nextInt(_nodeElements.size()));
-		node.move(rx, ry);
-		nodeJoltContdown = max(abs(rx), abs(ry));
+	private void jolt() {
+		for (NodeElement node : _nodeElements) {
+			int rx = RANDOM.nextInt(300) - 150;
+			int ry = RANDOM.nextInt(300) - 150;
+			node.move(rx, ry);
+		}
 	}
 
 
-	private boolean hasImproved() {
-		float stress = measureStress();
-		if (stress < _lowestStressEver) {
-			_lowestStressEver = stress;
+	private boolean hasImproved(float currentStress) {
+		if (currentStress < _lowestStressEver) {
+			_lowestStressEver = currentStress;
 			return true;
 		}
 		return false;
 	}
 
 
-	private void relaxByOnePixel(NodeElement node) {
+	private float stressOnNodeAfterTryingToRelaxByOnePixel(NodeElement node) {
+		float stressOnNode = StressMeter.applyForcesTo(node, _nodeElements);
 		int dx = (int)signum(node.resultingForceX());
+		stressOnNode = stressAfterTryingMove(node, stressOnNode, dx, 0);
 		int dy = (int)signum(node.resultingForceY());
+		stressOnNode = stressAfterTryingMove(node, stressOnNode, 0, dy);
+		return stressOnNode;
+	}
+
+
+	private float stressAfterTryingMove(NodeElement node, float previousStress, int dx, int dy) {
 		node.move(dx, dy);
+		float newStress = StressMeter.applyForcesTo(node, _nodeElements);
+		if (newStress < previousStress) {
+			previousStress = newStress;
+			localMinimumReached = false;
+		} else
+			node.move(-dx, -dy);
+		return previousStress;
 	}
 
 
-	private float measureStress() {
-		return StressMeter.applyForcesTo(_nodeElements);
-	}
-
-	
 	public CartesianLayout layoutMemento() {
 		CartesianLayout result = new CartesianLayout();
 		for (NodeElement node : _nodeElements)
