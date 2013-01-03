@@ -187,7 +187,6 @@ class PackageAnalyser extends ASTVisitor {
 
 		if (!packageName.equals(_currentPackageName)) {
 			currentNode.addProvider(nodeAccumulator.produceNode(type.getPackage(), JavaType.PACKAGE));
-			return;
 		}
 		if (type.isParameterizedType()) { // if Map<K,V>
 			for (ITypeBinding subtype : type.getTypeArguments()) { // <K,V>
