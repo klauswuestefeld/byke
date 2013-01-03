@@ -4,6 +4,7 @@ package byke;
 
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -88,16 +89,52 @@ public class DependencyAnalysis implements NodeAccumulator {
 			x.printStackTrace();
 		}
 		
-		Collection<Node<IBinding>> finalGraph = _nodesByKey.values();
-		
 		if(MergeClassPatterns.existsMergeClassValue())
-			finalGraph = mergeDependencies();
+			mergeDependencies();
 		
-		return finalGraph;
+		mergeSubpackagesDependencies();
+		
+		return _nodesByKey.values();
 	}
 
 
-	private Collection<Node<IBinding>> mergeDependencies() {
+	private void mergeSubpackagesDependencies() {
+		if(!(_subject instanceof IPackageFragment))
+			return;
+		
+		removeSubjectNode();
+
+		List<Node<IBinding>> toRemove = new ArrayList<Node<IBinding>>();
+
+		for(Node<IBinding> node : _nodesByKey.values()) {
+			if(node.kind().equals(JavaType.PACKAGE))
+				continue;
+			
+			ITypeBinding payload = (ITypeBinding)node.payload();
+			if(!payload.getPackage().equals( _subject))
+				for(Node<IBinding> packageToMerge : _nodesByKey.values())
+					if(packageToMerge.name().equals(payload.getPackage().getName())) {
+						switchProvider(node, packageToMerge);
+						packageToMerge.addProviders(node.providers());
+						toRemove.add(node);
+					}
+		}
+		
+		_nodesByKey.values().removeAll(toRemove);
+	}
+
+	private void removeSubjectNode() {
+		for(Node<IBinding> node : _nodesByKey.values()) 
+			if(_subject.getElementName().equals(node.name())) { 
+				_nodesByKey.values().remove(node);
+				for(Node<IBinding> nodeToRemoveSubjectNode : _nodesByKey.values())
+					nodeToRemoveSubjectNode.providers().remove(node);
+				return;
+			}
+	}
+
+
+	private void mergeDependencies() {
 		List<Node<IBinding>> toRemove = new ArrayList<Node<IBinding>>();
 		List<Pattern> patterns = MergeClassPatterns.getPatterns();
 		for (Pattern pattern : patterns)
@@ -112,7 +149,6 @@ public class DependencyAnalysis implements NodeAccumulator {
 			}
 
 		_nodesByKey.values().removeAll(toRemove);
-		return _nodesByKey.values();
 	}
 
 	
@@ -131,13 +167,14 @@ public class DependencyAnalysis implements NodeAccumulator {
 			? new TypeVisitor()
 			: new PackageAnalyser(this, _subject.getElementName());
 
-		ICompilationUnit[] compilationUnits = compilationUnits();
-		monitor.beginTask("dependency analysis", compilationUnits.length);
+		List<ICompilationUnit> compilationUnits = compilationUnits();
+		monitor.beginTask("dependency analysis", compilationUnits.size());
 		
 		for (ICompilationUnit each : compilationUnits) {
 			if (monitor.isCanceled()) break;
 			populateNodes(monitor, parser, visitor, each);
 		}
+		
 	}
 
 
@@ -152,10 +189,43 @@ public class DependencyAnalysis implements NodeAccumulator {
 	}
 
 
-	private ICompilationUnit[] compilationUnits() throws JavaModelException {
-		return _subject instanceof IPackageFragment
-			? ((IPackageFragment)_subject).getCompilationUnits()
-			: new ICompilationUnit[] { ((ICompilationUnit)_subject.getAncestor(IJavaElement.COMPILATION_UNIT)) };
+	public List<IPackageFragment> getSubpackages() throws JavaModelException {
+		if(!(_subject instanceof IPackageFragment)) return null;
+		
+		List<IPackageFragment> subPackages = new ArrayList<IPackageFragment>();
+		
+		IJavaElement[] packages = ((IPackageFragmentRoot)_subject.getParent()).getChildren();
+		String[] names = _subject.getElementName().split("\\.");
+		int namesLength = names.length;
+		nextPackage: for (int i= 0, length = packages.length; i < length; i++) {
+			String[] otherNames = ((IPackageFragment) packages[i]).getElementName().split("\\.");
+			if (otherNames.length <= namesLength) continue nextPackage;
+			
+			for (int j = 0; j < namesLength; j++)
+				if (!names[j].equals(otherNames[j]))
+					continue nextPackage;
+			subPackages.add((IPackageFragment)packages[i]);
+		}
+		
+		return subPackages;
+	}
+
+	
+	private List<ICompilationUnit> compilationUnits() throws JavaModelException {
+		
+		List<IPackageFragment> subpackages = getSubpackages();
+		if(subpackages == null)
+			return Arrays.asList( ((ICompilationUnit)_subject.getAncestor(IJavaElement.COMPILATION_UNIT)));
+
+		IPackageFragment subject = (IPackageFragment)_subject;
+		List<ICompilationUnit> compilationsUnits = new ArrayList<ICompilationUnit>();
+		compilationsUnits.addAll(Arrays.asList(subject.getCompilationUnits()));
+	
+		for(IPackageFragment subpackage : subpackages)
+			compilationsUnits.addAll(Arrays.asList(subpackage.getCompilationUnits()));
+
+		return compilationsUnits;
+
 	}
 
 
