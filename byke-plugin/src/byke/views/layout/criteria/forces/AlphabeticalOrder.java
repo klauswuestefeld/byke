@@ -23,4 +23,10 @@ public class AlphabeticalOrder implements Force {
 		first.addForceComponents(cx, cy, second);
 	}
 
+	
+	@Override
+	public boolean isSymmetrical() {
+		return false;
+	}
+
 }
