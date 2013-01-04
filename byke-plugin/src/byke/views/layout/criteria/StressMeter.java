@@ -39,11 +39,20 @@ public class StressMeter {
 	public static float applyForcesTo(NodeElement chosen, List<NodeElement> all) {
 		chosen.clearForces();
 		
-		for (NodeElement other : all) {
-			if (other == chosen) continue;
-			applyForces(chosen, other);
-		}
+		for (NodeElement other : all)
+			if (other != chosen)
+				applyForces(chosen, other);
+
 		return chosen.stress();
 	}
 
+	
+	public static void applyForcesTo(List<? extends NodeElement> nodes) {
+		for (NodeElement n : nodes) n.clearForces();
+
+		for (int i = 0; i < nodes.size(); i++)
+			for (int j = i + 1; j < nodes.size(); j++)
+				applyForces(nodes.get(i), nodes.get(j));
+	}
+	
 }
