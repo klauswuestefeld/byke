@@ -5,6 +5,7 @@ package byke.views.layout.criteria;
 
 import java.util.List;
 
+import byke.views.layout.criteria.forces.AlphabeticalOrder;
 import byke.views.layout.criteria.forces.DependenciesDown;
 import byke.views.layout.criteria.forces.Force;
 import byke.views.layout.criteria.forces.NonCluttering;
@@ -14,7 +15,7 @@ import byke.views.layout.criteria.forces.SaveSpace;
 
 public class StressMeter {
 
-//	private static final Force ALPHABETICAL_ORDER = new AlphabeticalOrder();
+	private static final Force ALPHABETICAL_ORDER = new AlphabeticalOrder();
 	private static final Force DEPENDENCIES_DOWN = new DependenciesDown();
 	private static final Force SAVE_SPACE = new SaveSpace();
 	private static final Force NON_OVERLAPPING = new NonOverlapping();
@@ -23,7 +24,7 @@ public class StressMeter {
 	
 	private static void applyForces(NodeElement n1, NodeElement n2) {
 		// Symmetry breakers: (important for RandomAverage algorithm)
-//		ALPHABETICAL_ORDER.applyTo(n1, n2);
+		ALPHABETICAL_ORDER.applyTo(n1, n2);
 		
 		// Converging:
 		SAVE_SPACE.applyTo(n1, n2);
