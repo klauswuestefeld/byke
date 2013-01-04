@@ -1,48 +1,53 @@
-//package byke.views.layout.algorithm.random;
-//
-//import java.util.Random;
-//
-//import byke.dependencygraph.Node;
-//import byke.views.layout.CartesianLayout;
-//import byke.views.layout.NodeSizeProvider;
-//import byke.views.layout.algorithm.LayoutAlgorithm;
-//import byke.views.layout.criteria.NodeElement;
-//
-//public class RandomAverage<T> extends LayoutAlgorithm<T> {
-//
-//	private static final Random RANDOM = new Random();
-//	private static final float INITIAL_RANDOM_AMPLITUDE = 1000;
-//	private float _randomAmplitude = INITIAL_RANDOM_AMPLITUDE;
-//	
-//	public RandomAverage(Iterable<Node<T>> graph, CartesianLayout initialLayout, NodeSizeProvider sizeProvider) {
-//		super(graph, initialLayout, sizeProvider);
-//	}
-//
-//	
-//	@Override
-//	public void improveLayoutStep() {
-//		//CartesianLayout currentLayout = layoutMemento();
-//		randomize();
-//		_stressMeter.applyForcesTo(_averagingNodes, _allElements);
-//		//layout(currentLayout);
-//
-//		takeAveragePosition(smallestTimeFrame);
-//	}
-//	
-//
-//	private void randomize() {
-//		for (AveragingNode node : _averagingNodes)
-//			node.position(node._x + random(), node._y + random());
-//	}
-//
-//
-//	private float random() {
-//		return (RANDOM.nextFloat() - 0.5f) * _randomAmplitude;
-//	}
-//
-//	
-//	protected NodeElement createNodeElement(Node<?> node) {
-//		return new AveragingNode(node, _stressMeter);
-//	}
-//
-//}
+package byke.views.layout.algorithm.random;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+import byke.dependencygraph.Node;
+import byke.views.layout.CartesianLayout;
+import byke.views.layout.NodeSizeProvider;
+import byke.views.layout.criteria.NodeElement;
+import byke.views.layout.criteria.StressMeter;
+
+
+public class RandomAverage<T> {
+
+	private static final Random RANDOM = new Random();
+	
+	private final List<AveragingNode> _nodeElements = new ArrayList<AveragingNode>();
+
+
+	public RandomAverage(Iterable<Node<T>> graph, NodeSizeProvider sizeProvider) {
+		initNodeElements(graph, sizeProvider);
+	}
+
+	
+	public boolean improveLayoutStep() {
+		if (_nodeElements.size() <= 1) return false;
+
+		StressMeter.applyForcesTo(_nodeElements);
+		
+		return false;
+	}
+
+
+	public CartesianLayout layoutMemento() {
+		CartesianLayout ret = new CartesianLayout();
+		for (NodeElement node : _nodeElements)
+			ret.keep(node.name(), node.position());
+		return ret;
+	}
+
+	
+	private void initNodeElements(Iterable<Node<T>> graph, NodeSizeProvider sizeProvider) {
+		for (Node<T> node : graph)
+			_nodeElements.add(elementFor(node, sizeProvider));
+	}
+
+	
+	private static AveragingNode elementFor(Node<?> node, NodeSizeProvider sizeProvider) {
+		return new AveragingNode(node, sizeProvider.sizeGiven(node));
+	}
+
+}
