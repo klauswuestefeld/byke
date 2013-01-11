@@ -196,14 +196,16 @@ public class DependencyAnalysis implements NodeAccumulator {
 		IJavaElement[] packages = ((IPackageFragmentRoot)_subject.getParent()).getChildren();
 		String[] names = _subject.getElementName().split("\\.");
 		int namesLength = names.length;
-		nextPackage: for (int i= 0, length = packages.length; i < length; i++) {
+		for (int i= 0; i < packages.length; i++) {
 			String[] otherNames = ((IPackageFragment) packages[i]).getElementName().split("\\.");
-			if (otherNames.length <= namesLength) continue nextPackage;
+			if (otherNames.length <= namesLength) 
+				continue;
 			
 			for (int j = 0; j < namesLength; j++)
-				if (!names[j].equals(otherNames[j]))
-					continue nextPackage;
-			subPackages.add((IPackageFragment)packages[i]);
+				if (names[j].equals(otherNames[j])) {
+					subPackages.add((IPackageFragment)packages[i]);
+					break;
+				}
 		}
 		
 		return subPackages;
