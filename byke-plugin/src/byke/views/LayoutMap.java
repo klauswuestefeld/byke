@@ -28,6 +28,8 @@ import byke.views.layout.Coordinates;
 
 public class LayoutMap {
 
+	private static final int DELAY_TO_ALLOW_FOR_BETTER_LAYOUTS = 1000 * 3;
+
 	private static final String FILE_EXTENSION = "properties";
 
 	private final WorkspaceJob saveJob = createSaveJob();
@@ -39,7 +41,7 @@ public class LayoutMap {
 	public void keep(IJavaElement element, CartesianLayout memento) {
 		elementToSave = element;
 		mementoToSave = memento;
-		saveJob.schedule(1000 * 3);
+		saveJob.schedule(DELAY_TO_ALLOW_FOR_BETTER_LAYOUTS);
 	}
 	
 	

@@ -9,5 +9,7 @@ import byke.views.layout.criteria.NodeElement;
 public interface Force {
 
 	void applyTo(NodeElement n1, NodeElement n2);
+	
+	boolean isSymmetrical(); 
 
 }

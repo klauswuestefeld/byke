@@ -66,14 +66,15 @@ public class DependencyAnalysis implements NodeAccumulator {
 	
 	private IJavaElement enclosingPackageOf(IJavaElement element) throws InvalidElement {
 		IPackageFragment result = (IPackageFragment)element.getAncestor(IJavaElement.PACKAGE_FRAGMENT);
-		assertNotBinary(result); 
+		assertValid(result); 
 		return result;
 	}
 
 
-	private void assertNotBinary(IPackageFragment result) throws InvalidElement {
+	private void assertValid(IPackageFragment fragment) throws InvalidElement {
+		if (fragment == null) throw new InvalidElement("Null Package Fragment");
 		try {
-			if (result.getKind() == IPackageFragmentRoot.K_BINARY)
+			if (fragment.getKind() == IPackageFragmentRoot.K_BINARY)
 				throw new InvalidElement("Binary Package");
 		} catch (JavaModelException e) {
 			throw new InvalidElement(e);
