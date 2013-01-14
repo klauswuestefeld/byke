@@ -2,6 +2,7 @@ package byke.tests;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import byke.InvalidElement;
@@ -49,23 +50,24 @@ public class IntraClassAnalysisTest extends CodeAnalysisTest {
 
 	
 	@Test
-	public void fieldDependsOnMethodThatAssignsIt() throws Exception {
-		assertDepIsDependent("int dep; void main() { dep = 3; }");
+	public void methodDependsOnField() throws Exception {
+		assertDepIsDependent("int foo; void dep() { foo = 3; }");
 	}
 
 	
 	@Test
-	public void thisFieldDependsOnMethodThatAssignsIt() throws Exception {
-		assertDepIsDependent("int dep; void foo() { this.dep = 3; }");
+	public void methodDependsOnThisField() throws Exception {
+		assertDepIsDependent("int foo; void dep() { this.foo = 3; }");
 	}
 
 	
 	@Test
-	public void staticFieldDependsOnMethodThatAssignsIt() throws Exception {
-		assertDepIsDependent("static int dep; void foo() { A.dep = 3; }");
+	public void methodDependsOnStaticField() throws Exception {
+		assertDepIsDependent("static int foo; void dep() { A.foo = 3; }");
 	}
 
 	
+	@Ignore
 	@Test
 	public void fieldDeclarationDependsOnRightHandSide() throws Exception {
 		assertDepIsDependent("int dep=calc(); int calc() { return 3; }");
@@ -73,22 +75,23 @@ public class IntraClassAnalysisTest extends CodeAnalysisTest {
 
 	
 	@Test
+	@Ignore
 	public void fieldAssignmentDependsOnRightHandSide() throws Exception {
 		assertDepIsDependent("int dep; void foo(){dep=calc();}; int calc() { return 3; }");
 	}
 
 	
 	@Test
-	public void localVariablesDoNotAppearInGraph() throws Exception {
-		assertDepIsDependent("int dep; void main() { dep = 3; int invalid = 3; }");
-	}
-
-	
-	@Test
+	@Ignore
 	public void localVariableProvidersAreTransitive() throws Exception {
 		assertDepIsDependent("int dep; void main() { int local = calc(); dep = local; } int calc() { return 3; }");
 	}
 
+	
+	@Test
+	public void localVariablesDoNotAppearInGraph() throws Exception {
+		assertDepIsDependent("int foo; void dep() { foo = 3; int invalid = 3; }");
+	}
 	
 	
 	private void assertDepIsDependent(String body) throws CoreException, InvalidElement {
