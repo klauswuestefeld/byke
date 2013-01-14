@@ -3,8 +3,9 @@
 package byke;
 
 
+import static java.util.Arrays.asList;
+
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -188,44 +189,16 @@ public class DependencyAnalysis implements NodeAccumulator {
 		monitor.worked(1);
 	}
 
-
-	public List<IPackageFragment> withSubpackages() throws JavaModelException {
-		if(!(_subject instanceof IPackageFragment)) return null;
-		
-		List<IPackageFragment> ret = new ArrayList<IPackageFragment>();
-		
-		IJavaElement[] packages = ((IPackageFragmentRoot)_subject.getParent()).getChildren();
-		String[] names = _subject.getElementName().split("\\.");
-		int namesLength = names.length;
-		for (int i= 0; i < packages.length; i++) {
-			String[] otherNames = ((IPackageFragment) packages[i]).getElementName().split("\\.");
-			if (otherNames.length < namesLength) 
-				continue;
-			
-			for (int j = 0; j < namesLength; j++)
-				if (names[j].equals(otherNames[j])) {
-					ret.add((IPackageFragment)packages[i]);
-					break;
-				}
-		}
-		
-		return ret;
-	}
-
 	
 	private List<ICompilationUnit> compilationUnits() throws JavaModelException {
-		
-		List<IPackageFragment> subpackages = withSubpackages();
-		if(subpackages == null)
-			return Arrays.asList(((ICompilationUnit)_subject.getAncestor(IJavaElement.COMPILATION_UNIT)));
+		if(!(_subject instanceof IPackageFragment))
+			return asList(((ICompilationUnit)_subject.getAncestor(IJavaElement.COMPILATION_UNIT)));
 
 		List<ICompilationUnit> ret = new ArrayList<ICompilationUnit>();
-	
-		for(IPackageFragment subpackage : subpackages)
-			ret.addAll(Arrays.asList(subpackage.getCompilationUnits()));
+		for(IPackageFragment packge : withSubpackages((IPackageFragment)_subject))
+			ret.addAll(asList(packge.getCompilationUnits()));
 
 		return ret;
-
 	}
 
 
@@ -286,4 +259,13 @@ public class DependencyAnalysis implements NodeAccumulator {
 		return _nodesByKey.values().toArray(NODE_ARRAY);
 	}
 
+	private static List<IPackageFragment> withSubpackages(IPackageFragment packge) throws JavaModelException {
+		IJavaElement[] allPackages = ((IPackageFragmentRoot)packge.getParent()).getChildren();
+		List<IPackageFragment> ret = new ArrayList<IPackageFragment>();
+		for (IJavaElement candidate : allPackages)
+			if (candidate.getElementName().startsWith(packge.getElementName()))
+				ret.add((IPackageFragment)candidate);
+		
+		return ret;
+	}
 }
