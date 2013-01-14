@@ -29,4 +29,9 @@ public abstract class CenterAllignedForce implements Force {
 		return n.position();
 	}
 
+	
+	@Override
+	public boolean isSymmetrical() {
+		return true;
+	}
 }

@@ -49,6 +49,13 @@ public class Node<PayloadType> {
 		if (provider == this) return;
 		_providers.add(provider);
 	}
+	
+	public void addProviders(Collection<Node<PayloadType>> providers) {
+		for (Node<PayloadType> node : providers) {
+			addProvider(node);
+		}
+	}
+	
 	public void removeProvider(Node<IBinding> provider) {
 		_providers.remove(provider);
 	}

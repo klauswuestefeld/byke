@@ -16,6 +16,9 @@ import byke.views.layout.ui.GraphCanvas;
 
 public class StandAlone {
 
+	private static final int NUMBER_OF_NODES = 18;
+	private static final double DENSITY_OF_DEPENDENCIES = 1.3;
+
 	private final static Random RANDOM = new Random(0);
 
 	
@@ -75,7 +78,7 @@ public class StandAlone {
 	
 	private Collection<Node<String>> graph() {
 		
-		String[] names = new String[60];
+		String[] names = new String[NUMBER_OF_NODES];
 		for (int i = 0; i < names.length; i++)
 			names[i] = "Node " + i;
 		return createGraph(names);
@@ -161,7 +164,7 @@ public class StandAlone {
 
 	
 	private static <T> void produceRandomDependencies(List<Node<T>> graph) {
-		int dependenciesToCreate = (int)(graph.size() * 1.8);
+		int dependenciesToCreate = (int)(graph.size() * DENSITY_OF_DEPENDENCIES);
 	
 		while (dependenciesToCreate-- > 0) {
 			Node<T> node1 = drawOneFrom(graph);

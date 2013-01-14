@@ -37,4 +37,10 @@ public class DependenciesDown extends DistanceDefinedForce {
 		throw new IllegalStateException();
 	}
 
+
+	@Override
+	public boolean isSymmetrical() {
+		return false;
+	}
+
 }

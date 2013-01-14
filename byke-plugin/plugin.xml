@@ -3,7 +3,7 @@
 <plugin
    id="byke"
    name="Byke Plug-in"
-   version="0.5.11"
+   version="0.5.12"
    provider-name="Klaus Wuestefeld and Rodrigo B. de Oliveira"
    class="byke.BykePlugin">
 

@@ -8,11 +8,10 @@ public class AlphabeticalOrder implements Force {
 
 	@Override
 	public void applyTo(NodeElement n1, NodeElement n2) {
-		if (n1.name().compareToIgnoreCase(n2.name()) < 0) {
+		if (n1.name().compareToIgnoreCase(n2.name()) < 0)
 			actUponFirstAndSecond(n1, n2);
-		} else {
+		else
 			actUponFirstAndSecond(n2, n1);
-		}
 	}
 
 	private void actUponFirstAndSecond(NodeElement first, NodeElement second) {
@@ -22,6 +21,12 @@ public class AlphabeticalOrder implements Force {
 		float cx = -Constants.ALPHABETICAL_ORDER_THRUST / dx;
 		float cy = -Constants.ALPHABETICAL_ORDER_THRUST / dy;
 		first.addForceComponents(cx, cy, second);
+	}
+
+	
+	@Override
+	public boolean isSymmetrical() {
+		return false;
 	}
 
 }

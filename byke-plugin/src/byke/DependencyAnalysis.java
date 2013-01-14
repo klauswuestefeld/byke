@@ -3,6 +3,8 @@
 package byke;
 
 
+import static java.util.Arrays.asList;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -65,14 +67,15 @@ public class DependencyAnalysis implements NodeAccumulator {
 	
 	private IJavaElement enclosingPackageOf(IJavaElement element) throws InvalidElement {
 		IPackageFragment result = (IPackageFragment)element.getAncestor(IJavaElement.PACKAGE_FRAGMENT);
-		assertNotBinary(result); 
+		assertValid(result); 
 		return result;
 	}
 
 
-	private void assertNotBinary(IPackageFragment result) throws InvalidElement {
+	private void assertValid(IPackageFragment fragment) throws InvalidElement {
+		if (fragment == null) throw new InvalidElement("Null Package Fragment");
 		try {
-			if (result.getKind() == IPackageFragmentRoot.K_BINARY)
+			if (fragment.getKind() == IPackageFragmentRoot.K_BINARY)
 				throw new InvalidElement("Binary Package");
 		} catch (JavaModelException e) {
 			throw new InvalidElement(e);
@@ -87,16 +90,52 @@ public class DependencyAnalysis implements NodeAccumulator {
 			x.printStackTrace();
 		}
 		
-		Collection<Node<IBinding>> finalGraph = _nodesByKey.values();
-		
 		if(MergeClassPatterns.existsMergeClassValue())
-			finalGraph = mergeDependencies();
+			mergeDependencies();
 		
-		return finalGraph;
+		mergeSubpackagesDependencies();
+		
+		return _nodesByKey.values();
 	}
 
 
-	private Collection<Node<IBinding>> mergeDependencies() {
+	private void mergeSubpackagesDependencies() {
+		if(!(_subject instanceof IPackageFragment))
+			return;
+		
+		removeSubjectNode();
+
+		List<Node<IBinding>> toRemove = new ArrayList<Node<IBinding>>();
+
+		for(Node<IBinding> node : _nodesByKey.values()) {
+			if(node.kind().equals(JavaType.PACKAGE))
+				continue;
+			
+			ITypeBinding payload = (ITypeBinding)node.payload();
+			if(!payload.getPackage().equals( _subject))
+				for(Node<IBinding> packageToMerge : _nodesByKey.values())
+					if(packageToMerge.name().equals(payload.getPackage().getName())) {
+						switchProvider(node, packageToMerge);
+						packageToMerge.addProviders(node.providers());
+						toRemove.add(node);
+					}
+		}
+		
+		_nodesByKey.values().removeAll(toRemove);
+	}
+
+	private void removeSubjectNode() {
+		for(Node<IBinding> node : _nodesByKey.values()) 
+			if(_subject.getElementName().equals(node.name())) { 
+				_nodesByKey.values().remove(node);
+				for(Node<IBinding> nodeToRemoveSubjectNode : _nodesByKey.values())
+					nodeToRemoveSubjectNode.providers().remove(node);
+				return;
+			}
+	}
+
+
+	private void mergeDependencies() {
 		List<Node<IBinding>> toRemove = new ArrayList<Node<IBinding>>();
 		List<Pattern> patterns = MergeClassPatterns.getPatterns();
 		for (Pattern pattern : patterns)
@@ -111,7 +150,6 @@ public class DependencyAnalysis implements NodeAccumulator {
 			}
 
 		_nodesByKey.values().removeAll(toRemove);
-		return _nodesByKey.values();
 	}
 
 	
@@ -130,13 +168,14 @@ public class DependencyAnalysis implements NodeAccumulator {
 			? new TypeVisitor()
 			: new PackageAnalyser(this, _subject.getElementName());
 
-		ICompilationUnit[] compilationUnits = compilationUnits();
-		monitor.beginTask("dependency analysis", compilationUnits.length);
+		List<ICompilationUnit> compilationUnits = compilationUnits();
+		monitor.beginTask("dependency analysis", compilationUnits.size());
 		
 		for (ICompilationUnit each : compilationUnits) {
 			if (monitor.isCanceled()) break;
 			populateNodes(monitor, parser, visitor, each);
 		}
+		
 	}
 
 
@@ -150,11 +189,16 @@ public class DependencyAnalysis implements NodeAccumulator {
 		monitor.worked(1);
 	}
 
+	
+	private List<ICompilationUnit> compilationUnits() throws JavaModelException {
+		if(!(_subject instanceof IPackageFragment))
+			return asList(((ICompilationUnit)_subject.getAncestor(IJavaElement.COMPILATION_UNIT)));
 
-	private ICompilationUnit[] compilationUnits() throws JavaModelException {
-		return _subject instanceof IPackageFragment
-			? ((IPackageFragment)_subject).getCompilationUnits()
-			: new ICompilationUnit[] { ((ICompilationUnit)_subject.getAncestor(IJavaElement.COMPILATION_UNIT)) };
+		List<ICompilationUnit> ret = new ArrayList<ICompilationUnit>();
+		for(IPackageFragment packge : withSubpackages((IPackageFragment)_subject))
+			ret.addAll(asList(packge.getCompilationUnits()));
+
+		return ret;
 	}
 
 
@@ -215,4 +259,13 @@ public class DependencyAnalysis implements NodeAccumulator {
 		return _nodesByKey.values().toArray(NODE_ARRAY);
 	}
 
+	private static List<IPackageFragment> withSubpackages(IPackageFragment packge) throws JavaModelException {
+		IJavaElement[] allPackages = ((IPackageFragmentRoot)packge.getParent()).getChildren();
+		List<IPackageFragment> ret = new ArrayList<IPackageFragment>();
+		for (IJavaElement candidate : allPackages)
+			if (candidate.getElementName().startsWith(packge.getElementName()))
+				ret.add((IPackageFragment)candidate);
+		
+		return ret;
+	}
 }

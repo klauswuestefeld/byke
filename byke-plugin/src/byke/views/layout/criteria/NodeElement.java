@@ -8,11 +8,10 @@ import byke.dependencygraph.Node;
 import byke.views.layout.Coordinates;
 
 
-public class NodeElement extends GraphElement {
+public class NodeElement {
 
-	public NodeElement(Node<?> node, Rectangle bounds, StressMeter stressMeter) {
+	public NodeElement(Node<?> node, Rectangle bounds) {
 		_node = node;
-		_stressMeter = stressMeter;
 
 		_aura = createAura(bounds);
 		_auraOffsetX = _aura.width / 2;
@@ -26,10 +25,9 @@ public class NodeElement extends GraphElement {
 	public int _x;
 	public int _y;
 
-	protected float _pendingForceX;
-	protected float _pendingForceY;
-
-	private final StressMeter _stressMeter;
+	private float _resultingForceX;
+	private float _resultingForceY;
+	private float _stress;
 
 	private final Rectangle _aura;
 	private final int _auraOffsetX;
@@ -40,22 +38,35 @@ public class NodeElement extends GraphElement {
 		return _node;
 	}
 
+	
 	public String name() {
 		return _node.name();
 	}
 
-	@Override
+	
 	public Coordinates position() {
 		return new Coordinates(_x, _y);
 	}
 
-	@Override
-	public void addForceComponents(float x, float y) {
-		_pendingForceX += x;
-		_pendingForceY += y;
-		_stressMeter.addStress((float)Math.hypot(x, y));
+	
+	public void clearForces() {
+		_resultingForceX = 0;
+		_resultingForceY = 0;
+		_stress = 0f;
 	}
 
+	
+	protected void addForceComponents(float x, float y) {
+		_resultingForceX += x;
+		_resultingForceY += y;
+		_stress += (float)Math.hypot(x, y);
+	}
+
+	
+	public float resultingForceX() { return _resultingForceX; }
+	public float resultingForceY() { return _resultingForceY; }
+	float stress() { return _stress; }
+	
 	
 	private void assertValidNumber(float n) {
 		if (Float.isNaN(n)) throw new IllegalArgumentException("NaN received instead of a valid number.");
@@ -68,10 +79,10 @@ public class NodeElement extends GraphElement {
 
 	
 	private Rectangle createAura(Rectangle bounds) {
-		Rectangle result = new Rectangle();
-		result.width = bounds.width + (Constants.AURA_THICKNESS * 2);
-		result.height = bounds.height + (Constants.AURA_THICKNESS * 2);
-		return result;
+		Rectangle ret = new Rectangle();
+		ret.width = bounds.width + (Constants.AURA_THICKNESS * 2);
+		ret.height = bounds.height + (Constants.AURA_THICKNESS * 2);
+		return ret;
 	}
 
 	
@@ -86,20 +97,6 @@ public class NodeElement extends GraphElement {
 	}
 
 
-	public void clearPendingForces() {
-		_pendingForceX = 0;
-		_pendingForceY = 0;
-	}
-
-	
-	public float pendingForceX() {
-		return _pendingForceX;
-	}
-	public float pendingForceY() {
-		return _pendingForceY;
-	}
-
-	
 	public void position(Coordinates c) {
 		position(c._x, c._y);
 	}
@@ -118,6 +115,11 @@ public class NodeElement extends GraphElement {
 	
 	public void move(int dx, int dy) {
 		position(_x + dx, _y + dy);
+	}
+
+	public void addForceComponents(float x, float y, NodeElement counterpart) {
+		addForceComponents(x, y);
+		counterpart.addForceComponents(-x, -y);
 	}
 
 }

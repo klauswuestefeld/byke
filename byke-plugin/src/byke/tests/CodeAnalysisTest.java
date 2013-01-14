@@ -32,6 +32,10 @@ public class CodeAnalysisTest extends Assert {
 		return project.createCompilationUnit("foopackage", className + ".java", "package foopackage; " + code);
 	}
 	
+	protected ICompilationUnit createCompilationUnit(String packageName, String className, String code) throws CoreException {
+		return project.createCompilationUnit(packageName, className + ".java", "package "+packageName+"; " + code);
+	}
+	
 	
 	protected void assertDepends(IJavaElement toAnalyse, String dependentName) throws CoreException, InvalidElement {
 		//project.buildProject(null);
@@ -53,7 +57,7 @@ public class CodeAnalysisTest extends Assert {
 	}
 	
 	
-	private Node<IBinding> findNode(String suffix, Collection<Node<IBinding>> graph) {
+	protected Node<IBinding> findNode(String suffix, Collection<Node<IBinding>> graph) {
 		for (Node<IBinding> node : graph)
 			if (node.name().endsWith(suffix)) return node;
 		
