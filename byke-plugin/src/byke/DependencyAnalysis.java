@@ -189,45 +189,41 @@ public class DependencyAnalysis implements NodeAccumulator {
 	}
 
 
-	public List<IPackageFragment> getSubpackages() throws JavaModelException {
+	private List<IPackageFragment> withSubpackages() throws JavaModelException {
 		if(!(_subject instanceof IPackageFragment)) return null;
 		
-		List<IPackageFragment> subPackages = new ArrayList<IPackageFragment>();
+		List<IPackageFragment> ret = new ArrayList<IPackageFragment>();
 		
-		IJavaElement[] packages = ((IPackageFragmentRoot)_subject.getParent()).getChildren();
 		String[] names = _subject.getElementName().split("\\.");
 		int namesLength = names.length;
-		for (int i= 0; i < packages.length; i++) {
-			String[] otherNames = ((IPackageFragment) packages[i]).getElementName().split("\\.");
-			if (otherNames.length <= namesLength) 
+		IJavaElement[] packages = ((IPackageFragmentRoot)_subject.getParent()).getChildren();
+		for (IJavaElement brother_ : packages) {
+			IPackageFragment brother = (IPackageFragment)brother_;
+			String[] brotherNames = brother.getElementName().split("\\.");
+			if (brotherNames.length < namesLength) 
 				continue;
 			
 			for (int j = 0; j < namesLength; j++)
-				if (names[j].equals(otherNames[j])) {
-					subPackages.add((IPackageFragment)packages[i]);
+				if (names[j].equals(brotherNames[j])) {
+					ret.add(brother);
 					break;
 				}
 		}
 		
-		return subPackages;
+		return ret;
 	}
 
 	
 	private List<ICompilationUnit> compilationUnits() throws JavaModelException {
-		
-		List<IPackageFragment> subpackages = getSubpackages();
-		if(subpackages == null)
+		List<IPackageFragment> packages = withSubpackages();
+		if (packages == null)
 			return Arrays.asList( ((ICompilationUnit)_subject.getAncestor(IJavaElement.COMPILATION_UNIT)));
 
-		IPackageFragment subject = (IPackageFragment)_subject;
-		List<ICompilationUnit> compilationsUnits = new ArrayList<ICompilationUnit>();
-		compilationsUnits.addAll(Arrays.asList(subject.getCompilationUnits()));
-	
-		for(IPackageFragment subpackage : subpackages)
-			compilationsUnits.addAll(Arrays.asList(subpackage.getCompilationUnits()));
+		List<ICompilationUnit> ret = new ArrayList<ICompilationUnit>();
+		for(IPackageFragment packge : packages)
+			ret.addAll(Arrays.asList(packge.getCompilationUnits()));
 
-		return compilationsUnits;
-
+		return ret;
 	}
 
 
