@@ -189,44 +189,42 @@ public class DependencyAnalysis implements NodeAccumulator {
 	}
 
 
-	public List<IPackageFragment> getSubpackages() throws JavaModelException {
+	public List<IPackageFragment> withSubpackages() throws JavaModelException {
 		if(!(_subject instanceof IPackageFragment)) return null;
 		
-		List<IPackageFragment> subPackages = new ArrayList<IPackageFragment>();
+		List<IPackageFragment> ret = new ArrayList<IPackageFragment>();
 		
 		IJavaElement[] packages = ((IPackageFragmentRoot)_subject.getParent()).getChildren();
 		String[] names = _subject.getElementName().split("\\.");
 		int namesLength = names.length;
 		for (int i= 0; i < packages.length; i++) {
 			String[] otherNames = ((IPackageFragment) packages[i]).getElementName().split("\\.");
-			if (otherNames.length <= namesLength) 
+			if (otherNames.length < namesLength) 
 				continue;
 			
 			for (int j = 0; j < namesLength; j++)
 				if (names[j].equals(otherNames[j])) {
-					subPackages.add((IPackageFragment)packages[i]);
+					ret.add((IPackageFragment)packages[i]);
 					break;
 				}
 		}
 		
-		return subPackages;
+		return ret;
 	}
 
 	
 	private List<ICompilationUnit> compilationUnits() throws JavaModelException {
 		
-		List<IPackageFragment> subpackages = getSubpackages();
+		List<IPackageFragment> subpackages = withSubpackages();
 		if(subpackages == null)
-			return Arrays.asList( ((ICompilationUnit)_subject.getAncestor(IJavaElement.COMPILATION_UNIT)));
+			return Arrays.asList(((ICompilationUnit)_subject.getAncestor(IJavaElement.COMPILATION_UNIT)));
 
-		IPackageFragment subject = (IPackageFragment)_subject;
-		List<ICompilationUnit> compilationsUnits = new ArrayList<ICompilationUnit>();
-		compilationsUnits.addAll(Arrays.asList(subject.getCompilationUnits()));
+		List<ICompilationUnit> ret = new ArrayList<ICompilationUnit>();
 	
 		for(IPackageFragment subpackage : subpackages)
-			compilationsUnits.addAll(Arrays.asList(subpackage.getCompilationUnits()));
+			ret.addAll(Arrays.asList(subpackage.getCompilationUnits()));
 
-		return compilationsUnits;
+		return ret;
 
 	}
 
