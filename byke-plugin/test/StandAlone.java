@@ -11,13 +11,14 @@ import byke.JavaType;
 import byke.dependencygraph.Node;
 import byke.views.layout.CartesianLayout;
 import byke.views.layout.algorithm.LayoutAlgorithm;
+import byke.views.layout.algorithm.random.RandomAverage;
 import byke.views.layout.ui.GraphCanvas;
 
 
 public class StandAlone {
 
-	private static final int NUMBER_OF_NODES = 18;
-	private static final double DENSITY_OF_DEPENDENCIES = 1.3;
+	private static final int NUMBER_OF_NODES = 1000;
+	private static final double DENSITY_OF_DEPENDENCIES = 1.8;
 
 	private final static Random RANDOM = new Random(0);
 
@@ -47,9 +48,8 @@ public class StandAlone {
 		});
 		
 		
-		LayoutAlgorithm<String> algorithm = new LayoutAlgorithm<String>(_graph, null, canvas);
-		//LayoutAlgorithm<String> algorithm = new InertialRelaxer<String>(_graph, null, canvas);
-		//LayoutAlgorithm<String> algorithm = new AlgorithmCombination<String>(_graph, null, canvas);
+//		LayoutAlgorithm<String> algorithm = new LayoutAlgorithm<String>(_graph, null, canvas);
+		RandomAverage<String> algorithm = new RandomAverage<String>(_graph, canvas);
 
 		shell.open();
 		shell.layout();
@@ -67,9 +67,10 @@ public class StandAlone {
 	}
 
 	
-	private void work(LayoutAlgorithm<String> algorithm, GraphCanvas<String> canvas) {
+//	private void work(LayoutAlgorithm<String> algorithm, GraphCanvas<String> canvas) {
+	private void work(RandomAverage<String> algorithm, GraphCanvas<String> canvas) {
 		boolean improved = algorithm.improveLayoutStep();
-		if (improved)
+//		if (improved)
 			canvas.useLayout(algorithm.layoutMemento());
 
 		canvas.animationStep(1);

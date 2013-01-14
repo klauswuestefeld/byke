@@ -26,7 +26,14 @@ public class RandomAverage<T> {
 	public boolean improveLayoutStep() {
 		if (_nodeElements.size() <= 1) return false;
 
-		StressMeter.applyForcesTo(_nodeElements);
+		int scale = 5000;
+		for (AveragingNode node : _nodeElements)
+			node.position(RANDOM.nextInt(scale), RANDOM.nextInt(scale));
+
+		StressMeter.applySymmetricalForcesTo(_nodeElements);
+		
+		for (AveragingNode node : _nodeElements)
+			node.takeAveragePositionDividedBy(scale);
 		
 		return false;
 	}

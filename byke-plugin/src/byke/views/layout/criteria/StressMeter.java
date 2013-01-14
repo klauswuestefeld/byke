@@ -23,16 +23,20 @@ public class StressMeter {
 	
 	
 	private static void applyForces(NodeElement n1, NodeElement n2) {
-		// Symmetry breakers: (important for RandomAverage algorithm)
-		ALPHABETICAL_ORDER.applyTo(n1, n2);
+		applySymmetricalForcesTo(n1, n2);
 		
 		// Converging:
-		SAVE_SPACE.applyTo(n1, n2);
-		DEPENDENCIES_DOWN.applyTo(n1, n2);
+//		SAVE_SPACE.applyTo(n1, n2);
 		
 		// Diverging:
-		NON_CLUTTERING.applyTo(n1, n2);
-		NON_OVERLAPPING.applyTo(n1, n2);
+//		NON_CLUTTERING.applyTo(n1, n2);
+//		NON_OVERLAPPING.applyTo(n1, n2);
+	}
+
+
+	private static void applySymmetricalForcesTo(NodeElement n1, NodeElement n2) {
+//		ALPHABETICAL_ORDER.applyTo(n1, n2);
+		DEPENDENCIES_DOWN.applyTo(n1, n2);
 	}
 
 	
@@ -47,12 +51,12 @@ public class StressMeter {
 	}
 
 	
-	public static void applyForcesTo(List<? extends NodeElement> nodes) {
+	public static void applySymmetricalForcesTo(List<? extends NodeElement> nodes) {
 		for (NodeElement n : nodes) n.clearForces();
 
 		for (int i = 0; i < nodes.size(); i++)
 			for (int j = i + 1; j < nodes.size(); j++)
-				applyForces(nodes.get(i), nodes.get(j));
+				applySymmetricalForcesTo(nodes.get(i), nodes.get(j));
 	}
 	
 }

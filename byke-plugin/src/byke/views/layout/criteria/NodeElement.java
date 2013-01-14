@@ -22,8 +22,8 @@ public class NodeElement {
 
 	private final Node<?> _node;
 
-	public int _x;
-	public int _y;
+	public int x;
+	public int y;
 
 	private float _resultingForceX;
 	private float _resultingForceY;
@@ -45,7 +45,7 @@ public class NodeElement {
 
 	
 	public Coordinates position() {
-		return new Coordinates(_x, _y);
+		return new Coordinates(x, y);
 	}
 
 	
@@ -53,13 +53,6 @@ public class NodeElement {
 		_resultingForceX = 0;
 		_resultingForceY = 0;
 		_stress = 0f;
-	}
-
-	
-	protected void addForceComponents(float x, float y) {
-		_resultingForceX += x;
-		_resultingForceY += y;
-		_stress += (float)Math.hypot(x, y);
 	}
 
 	
@@ -92,8 +85,8 @@ public class NodeElement {
 
 	
 	private void centerAura() {
-		_aura.x = _x - _auraOffsetX;
-		_aura.y = _y - _auraOffsetY;
+		_aura.x = x - _auraOffsetX;
+		_aura.y = y - _auraOffsetY;
 	}
 
 
@@ -102,24 +95,31 @@ public class NodeElement {
 	}
 
 	
-	private void position(int x, int y) {
-		assertValidNumber(x);
-		assertValidNumber(y);
+	public void position(int newX, int newY) {
+		assertValidNumber(newX);
+		assertValidNumber(newY);
 
-		_x = x;
-		_y = y;
+		x = newX;
+		y = newY;
 
 		centerAura();
 	}
 
 	
 	public void move(int dx, int dy) {
-		position(_x + dx, _y + dy);
+		position(x + dx, y + dy);
 	}
 
-	public void addForceComponents(float x, float y, NodeElement counterpart) {
-		addForceComponents(x, y);
-		counterpart.addForceComponents(-x, -y);
+	public void addForceComponents(float fx, float fy, NodeElement counterpart) {
+		addForceComponents(fx, fy);
+		counterpart.addForceComponents(-fx, -fy);
 	}
 
+	
+	protected void addForceComponents(float fx, float fy) {
+		_resultingForceX += fx;
+		_resultingForceY += fy;
+		_stress += (float)Math.hypot(fx, fy);
+	}
+		
 }

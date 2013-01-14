@@ -1,7 +1,7 @@
 package byke.views.layout.criteria.forces;
 
 import static byke.views.layout.criteria.Constants.DEPENDENCY;
-import static byke.views.layout.criteria.Constants.DEPENDENCY_INVERTED_FACTOR;
+import static byke.views.layout.criteria.Constants.DEPENDENCY_NOT_POINTING_DOWN_FACTOR;
 import static byke.views.layout.criteria.Constants.DEPENDENCY_PREFERRED_SIZE;
 import byke.views.layout.Coordinates;
 import byke.views.layout.criteria.NodeElement;
@@ -12,8 +12,8 @@ public class DependenciesDown extends DistanceDefinedForce {
 	@Override
 	protected float intensityGiven(NodeElement dependent, NodeElement provider, float nonZeroDistance) {
 		float ret = -nonZeroDistance * DEPENDENCY;
-		boolean isInverted = (dependent._y + DEPENDENCY_PREFERRED_SIZE) > provider._y;
-		return isInverted ? ret * DEPENDENCY_INVERTED_FACTOR : ret;
+		boolean isNotPointingDown = dependent.y >= provider.y;
+		return isNotPointingDown ? ret * DEPENDENCY_NOT_POINTING_DOWN_FACTOR : ret;
 	}
 
 	

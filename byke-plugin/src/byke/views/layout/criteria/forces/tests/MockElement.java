@@ -21,8 +21,8 @@ public class MockElement extends NodeElement {
 	}
 
 	@Override
-	protected void addForceComponents(float x, float y) {
-		forces += "x=" + x + " y=" + y + ";";
+	protected void addForceComponents(float fx, float fy) {
+		forces += "x=" + fx + " y=" + fy + ";";
 	}
 
 }
