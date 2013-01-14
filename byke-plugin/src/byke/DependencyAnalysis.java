@@ -192,24 +192,12 @@ public class DependencyAnalysis implements NodeAccumulator {
 	private List<IPackageFragment> withSubpackages() throws JavaModelException {
 		if(!(_subject instanceof IPackageFragment)) return null;
 		
-		List<IPackageFragment> ret = new ArrayList<IPackageFragment>();
-		
-		String[] names = _subject.getElementName().split("\\.");
-		int namesLength = names.length;
 		IJavaElement[] packages = ((IPackageFragmentRoot)_subject.getParent()).getChildren();
-		for (IJavaElement brother_ : packages) {
-			IPackageFragment brother = (IPackageFragment)brother_;
-			String[] brotherNames = brother.getElementName().split("\\.");
-			if (brotherNames.length < namesLength) 
-				continue;
-			
-			for (int j = 0; j < namesLength; j++)
-				if (names[j].equals(brotherNames[j])) {
-					ret.add(brother);
-					break;
-				}
-		}
 		
+		List<IPackageFragment> ret = new ArrayList<IPackageFragment>();
+		for (IJavaElement brother : packages)
+			if (brother.getElementName().startsWith(_subject.getElementName()))
+				ret.add((IPackageFragment)brother);
 		return ret;
 	}
 
