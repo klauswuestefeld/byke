@@ -30,7 +30,6 @@ class TypeAnalyser extends ASTVisitor {
 	private final NodeAccumulator nodeAccumulator;
 
 	private Node<IBinding> methodBeingVisited;
-	private Node<IBinding> variableBeingAssigned;
 	
 	
 	TypeAnalyser(TypeDeclaration node, NodeAccumulator nodeAccumulator, ITypeBinding type) {
@@ -89,22 +88,7 @@ class TypeAnalyser extends ASTVisitor {
 
 	@Override
 	public boolean visit(VariableDeclarationFragment variable) {
-		IVariableBinding b = variable.resolveBinding();
-		return enterVariableAssignment(b);
-	}
-	@Override
-	public void endVisit(VariableDeclarationFragment field) {
-		variableBeingAssigned = null;
-	}
-
-	
-	private boolean enterVariableAssignment(IVariableBinding variable) {
-		if (variableBeingAssigned != null){
-			System.out.println("Assignment inside assignment '"+variableBeingAssigned+"' will not be visited: " + variable);
-			return false;
-		}
-		variableBeingAssigned = variableNodeGiven(variable);
-		addDependent(variableBeingAssigned);
+		addProvider(variableNodeGiven(variable.resolveBinding()));
 		return true;
 	}
 
@@ -145,29 +129,28 @@ class TypeAnalyser extends ASTVisitor {
 		
 		if (lhs instanceof SimpleName) {
 			IVariableBinding b = (IVariableBinding)(((SimpleName)lhs).resolveBinding());
-			shouldVisit = enterVariableAssignment(b);
+			addProvider(variableNodeGiven(b));
+			shouldVisit = true;
 		}
 		
 		if (lhs instanceof FieldAccess) {
 			FieldAccess fieldAccess = (FieldAccess)lhs;
 			IVariableBinding b = fieldAccess.resolveFieldBinding();
-			shouldVisit = enterVariableAssignment(b);
+			addProvider(variableNodeGiven(b));
+			shouldVisit = true;
 			if (shouldVisit) fieldAccess.getExpression().accept(this); //Needs test
 		}
 
 		if (lhs instanceof QualifiedName) {
 			QualifiedName fieldAccess = (QualifiedName)lhs;
 			IVariableBinding b = (IVariableBinding)fieldAccess.resolveBinding();
-			shouldVisit = enterVariableAssignment(b);
+			addProvider(variableNodeGiven(b));
+			shouldVisit = true;
 			if (shouldVisit) fieldAccess.getQualifier().accept(this); //Needs test
 		}
 		
 		if (shouldVisit) assignment.getRightHandSide().accept(this); //Needs test
 		return false;
-	}
-	@Override
-	public void endVisit(Assignment node) {
-		variableBeingAssigned = null;
 	}
 	
 	
@@ -200,12 +183,6 @@ class TypeAnalyser extends ASTVisitor {
 	private void addProvider(Node<IBinding> provider) {
 		if (methodBeingVisited != null)
 			methodBeingVisited.addProvider(provider);
-		if (variableBeingAssigned != null)
-			variableBeingAssigned.addProvider(provider);
-	}
-	private void addDependent(Node<IBinding> dependent) {
-		if (methodBeingVisited != null)
-			dependent.addProvider(methodBeingVisited);
 	}
 
 	

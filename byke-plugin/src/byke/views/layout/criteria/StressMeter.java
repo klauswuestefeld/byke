@@ -32,8 +32,8 @@ public class StressMeter {
 		DEPENDENCIES_DOWN.applyTo(n1, n2);
 		
 		// Diverging:
-		NON_CLUTTERING.applyTo(n1, n2);
-		NON_OVERLAPPING.applyTo(n1, n2);
+//		NON_CLUTTERING.applyTo(n1, n2);
+//		NON_OVERLAPPING.applyTso(n1, n2);
 	}
 
 	

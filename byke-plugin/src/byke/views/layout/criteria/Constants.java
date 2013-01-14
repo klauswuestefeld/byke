@@ -10,7 +10,7 @@ public class Constants {
 
 	public static final float DEPENDENCY = 15f;
 	public static final float DEPENDENCY_INVERTED_FACTOR = 4f;
-	public static final int DEPENDENCY_PREFERRED_SIZE = 55;
+	public static final int DEPENDENCY_PREFERRED_SIZE = 300;
 
 	public static final float ALPHABETICAL_ORDER_THRUST = 10f;
 }
