@@ -3,8 +3,9 @@
 package byke;
 
 
+import static java.util.Arrays.asList;
+
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -188,28 +189,14 @@ public class DependencyAnalysis implements NodeAccumulator {
 		monitor.worked(1);
 	}
 
-
-	private List<IPackageFragment> withSubpackages() throws JavaModelException {
-		if(!(_subject instanceof IPackageFragment)) return null;
-		
-		IJavaElement[] packages = ((IPackageFragmentRoot)_subject.getParent()).getChildren();
-		
-		List<IPackageFragment> ret = new ArrayList<IPackageFragment>();
-		for (IJavaElement brother : packages)
-			if (brother.getElementName().startsWith(_subject.getElementName()))
-				ret.add((IPackageFragment)brother);
-		return ret;
-	}
-
 	
 	private List<ICompilationUnit> compilationUnits() throws JavaModelException {
-		List<IPackageFragment> packages = withSubpackages();
-		if (packages == null)
-			return Arrays.asList( ((ICompilationUnit)_subject.getAncestor(IJavaElement.COMPILATION_UNIT)));
+		if(!(_subject instanceof IPackageFragment))
+			return asList(((ICompilationUnit)_subject.getAncestor(IJavaElement.COMPILATION_UNIT)));
 
 		List<ICompilationUnit> ret = new ArrayList<ICompilationUnit>();
-		for(IPackageFragment packge : packages)
-			ret.addAll(Arrays.asList(packge.getCompilationUnits()));
+		for(IPackageFragment packge : withSubpackages((IPackageFragment)_subject))
+			ret.addAll(asList(packge.getCompilationUnits()));
 
 		return ret;
 	}
@@ -272,4 +259,13 @@ public class DependencyAnalysis implements NodeAccumulator {
 		return _nodesByKey.values().toArray(NODE_ARRAY);
 	}
 
+	private static List<IPackageFragment> withSubpackages(IPackageFragment packge) throws JavaModelException {
+		IJavaElement[] allPackages = ((IPackageFragmentRoot)packge.getParent()).getChildren();
+		List<IPackageFragment> ret = new ArrayList<IPackageFragment>();
+		for (IJavaElement candidate : allPackages)
+			if (candidate.getElementName().startsWith(packge.getElementName()))
+				ret.add((IPackageFragment)candidate);
+		
+		return ret;
+	}
 }
