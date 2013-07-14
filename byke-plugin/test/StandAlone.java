@@ -17,7 +17,7 @@ import byke.views.layout.ui.GraphCanvas;
 
 public class StandAlone {
 
-	private static final int NUMBER_OF_NODES = 1000;
+	private static final int NUMBER_OF_NODES = 5;
 	private static final double DENSITY_OF_DEPENDENCIES = 1.8;
 
 	private final static Random RANDOM = new Random(0);
@@ -67,8 +67,8 @@ public class StandAlone {
 	}
 
 	
-//	private void work(LayoutAlgorithm<String> algorithm, GraphCanvas<String> canvas) {
-	private void work(RandomAverage<String> algorithm, GraphCanvas<String> canvas) {
+	private void work(LayoutAlgorithm algorithm, GraphCanvas<String> canvas) {
+//	private void work(RandomAverage<String> algorithm, GraphCanvas<String> canvas) {
 		boolean improved = algorithm.improveLayoutStep();
 //		if (improved)
 			canvas.useLayout(algorithm.layoutMemento());

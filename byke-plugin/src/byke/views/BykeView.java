@@ -34,6 +34,7 @@ import byke.InvalidElement;
 import byke.dependencygraph.Node;
 import byke.views.layout.CartesianLayout;
 import byke.views.layout.algorithm.LayoutAlgorithm;
+import byke.views.layout.algorithm.LayoutAlgorithmBase;
 import byke.views.layout.ui.GraphCanvas;
 
 
@@ -45,7 +46,7 @@ public class BykeView extends ViewPart implements IBykeView {
 
 		private IJavaElement _elementBeingDisplayed;
 
-		private LayoutAlgorithm<IBinding> _algorithm;
+		private LayoutAlgorithm _algorithm;
 
 		private final Composite _parent2;
 		private GraphCanvas<IBinding> _canvas;
@@ -152,7 +153,7 @@ public class BykeView extends ViewPart implements IBykeView {
 		}
 
 		private void newAlgorithm(Collection<Node<IBinding>> graph, CartesianLayout initialLayout) {
-			_algorithm = new LayoutAlgorithm<IBinding>(graph, initialLayout, _canvas);
+			_algorithm = new LayoutAlgorithmBase<IBinding>(graph, initialLayout, _canvas);
 		}
 
 		void togglePaused(boolean pause) {

@@ -7,11 +7,12 @@ import java.util.Random;
 import byke.dependencygraph.Node;
 import byke.views.layout.CartesianLayout;
 import byke.views.layout.NodeSizeProvider;
+import byke.views.layout.algorithm.LayoutAlgorithm;
 import byke.views.layout.criteria.NodeElement;
 import byke.views.layout.criteria.StressMeter;
 
 
-public class RandomAverage<T> {
+public class RandomAverage<T> implements LayoutAlgorithm {
 
 	private static final Random RANDOM = new Random();
 	
@@ -23,6 +24,7 @@ public class RandomAverage<T> {
 	}
 
 	
+	@Override
 	public boolean improveLayoutStep() {
 		if (_nodeElements.size() <= 1) return false;
 
@@ -39,6 +41,7 @@ public class RandomAverage<T> {
 	}
 
 
+	@Override
 	public CartesianLayout layoutMemento() {
 		CartesianLayout ret = new CartesianLayout();
 		for (NodeElement node : _nodeElements)
