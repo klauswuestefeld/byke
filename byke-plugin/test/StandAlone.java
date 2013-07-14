@@ -68,7 +68,6 @@ public class StandAlone {
 
 	
 	private void work(LayoutAlgorithm algorithm, GraphCanvas<String> canvas) {
-//	private void work(RandomAverage<String> algorithm, GraphCanvas<String> canvas) {
 		boolean improved = algorithm.improveLayoutStep();
 //		if (improved)
 			canvas.useLayout(algorithm.layoutMemento());
