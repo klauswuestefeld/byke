@@ -26,16 +26,16 @@ public class StressMeter {
 		applyAsymmetricalForcesTo(n1, n2);
 		
 		// Converging:
-//		SAVE_SPACE.applyTo(n1, n2);
+//	SAVE_SPACE.applyTo(n1, n2);
 		
 		// Diverging:
-//		NON_CLUTTERING.applyTo(n1, n2);
-//		NON_OVERLAPPING.applyTo(n1, n2);
+//	NON_CLUTTERING.applyTo(n1, n2);
+//	NON_OVERLAPPING.applyTo(n1, n2);
 	}
 
 
 	private static void applyAsymmetricalForcesTo(NodeElement n1, NodeElement n2) {
-//		ALPHABETICAL_ORDER.applyTo(n1, n2);
+//	ALPHABETICAL_ORDER.applyTo(n1, n2);
 		DEPENDENCIES_DOWN.applyTo(n1, n2);
 	}
 
