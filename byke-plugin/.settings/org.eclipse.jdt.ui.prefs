@@ -1,6 +1,6 @@
-#Tue Sep 20 16:04:58 BRT 2005
 eclipse.preferences.version=1
-formatter_settings_version=8
+formatter_profile=_byke profile
+formatter_settings_version=12
 internal.default.compliance=default
 org.eclipse.jdt.ui.exception.name=e
 org.eclipse.jdt.ui.gettersetter.use.is=true
