@@ -32,7 +32,7 @@ public class RandomAverage<T> implements LayoutAlgorithm {
 		for (AveragingNode node : _nodeElements)
 			node.position(RANDOM.nextInt(scale), RANDOM.nextInt(scale));
 
-		StressMeter.applySymmetricalForcesTo(_nodeElements);
+		StressMeter.applyAsymmetricalForcesTo(_nodeElements);
 		
 		for (AveragingNode node : _nodeElements)
 			node.takeAveragePositionDividedBy(scale);
