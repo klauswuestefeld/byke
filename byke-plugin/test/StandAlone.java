@@ -11,7 +11,7 @@ import byke.JavaType;
 import byke.dependencygraph.Node;
 import byke.views.layout.CartesianLayout;
 import byke.views.layout.algorithm.LayoutAlgorithm;
-import byke.views.layout.algorithm.random.RandomAverage;
+import byke.views.layout.algorithm.LayoutAlgorithmBase;
 import byke.views.layout.ui.GraphCanvas;
 
 
@@ -48,8 +48,8 @@ public class StandAlone {
 		});
 		
 		
-//		LayoutAlgorithm<String> algorithm = new LayoutAlgorithm<String>(_graph, null, canvas);
-		RandomAverage<String> algorithm = new RandomAverage<String>(_graph, canvas);
+		LayoutAlgorithm algorithm =
+			new LayoutAlgorithmBase<String>(_graph, null, canvas);
 
 		shell.open();
 		shell.layout();
