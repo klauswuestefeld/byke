@@ -10,8 +10,8 @@ import org.eclipse.swt.widgets.Shell;
 import byke.JavaType;
 import byke.dependencygraph.Node;
 import byke.views.layout.CartesianLayout;
+import byke.views.layout.algorithm.LayeredLayoutAlgorithm;
 import byke.views.layout.algorithm.LayoutAlgorithm;
-import byke.views.layout.algorithm.LayoutAlgorithmBase;
 import byke.views.layout.ui.GraphCanvas;
 
 
@@ -49,7 +49,7 @@ public class StandAlone {
 		
 		
 		LayoutAlgorithm algorithm =
-			new LayoutAlgorithmBase<String>(_graph, null, canvas);
+			new LayeredLayoutAlgorithm<String>(_graph, null, canvas);
 
 		shell.open();
 		shell.layout();

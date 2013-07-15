@@ -10,7 +10,7 @@ public class Constants {
 
 	public static final float DEPENDENCY = 1f; //50f;
 	public static final float DEPENDENCY_NOT_POINTING_DOWN_FACTOR = 1f;
-	public static final int DEPENDENCY_PREFERRED_SIZE = 30;
+	public static final int DEPENDENCY_PREFERRED_SIZE = 50;
 
 	public static final float ALPHABETICAL_ORDER_THRUST = 10f;
 }
