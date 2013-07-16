@@ -17,7 +17,7 @@ import byke.views.layout.ui.GraphCanvas;
 
 public class StandAlone {
 
-	private static final int NUMBER_OF_NODES = 5;
+	private static final int NUMBER_OF_NODES = 40;
 	private static final double DENSITY_OF_DEPENDENCIES = 1.8;
 
 	private final static Random RANDOM = new Random(0);
@@ -48,8 +48,9 @@ public class StandAlone {
 		});
 		
 		
+		@SuppressWarnings("rawtypes")
 		LayoutAlgorithm algorithm =
-			new LayeredLayoutAlgorithm<String>(_graph, null, canvas);
+			new LayeredLayoutAlgorithm((Iterable)_graph, null, canvas);
 
 		shell.open();
 		shell.layout();
