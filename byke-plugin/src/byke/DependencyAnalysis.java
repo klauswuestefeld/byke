@@ -6,6 +6,7 @@ package byke;
 import static java.util.Arrays.asList;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -27,8 +28,11 @@ import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.IBinding;
+import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
+import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
+import org.eclipse.jdt.internal.core.ResolvedSourceMethod;
 
 import byke.dependencygraph.Node;
 
@@ -219,6 +223,21 @@ public class DependencyAnalysis implements NodeAccumulator {
 		Node<IBinding> node = _nodesByKey.get(key);
 		if (null == node) {
 			String name = binding == null ? key : binding.getName();
+			if(binding != null && kind.equals(JavaType.METHOD)) {
+				name += "(";
+				
+				ITypeBinding[] parameterTypes = ((IMethodBinding)binding).getParameterTypes();
+				
+				for(int i = 0; i < parameterTypes.length; i++) {
+					name += parameterTypes[i].getName();
+					
+					if(i < parameterTypes.length-1)
+						name += ",";
+				}
+				
+				name += ")";
+			}
+			
 			node = new Node<IBinding>(name, kind);
 			node.payload(binding);
 			_nodesByKey.put(key, node);

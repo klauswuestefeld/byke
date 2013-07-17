@@ -13,13 +13,18 @@ public class IntraClassAnalysisTest extends CodeAnalysisTest {
 	public void methodCallsMethod() throws Exception {
 		assertDepIsDependent("void dep() { foo(); } void foo() {}");
 	}
+
+	@Test
+	public void methodWithParameterCallsMethod() throws Exception {
+		assertDepIsDependent("void dep() { foo(1); } void foo(int i) {}");
+	}
 	
 
 	@Test
 	public void externalMethodCallsAreIgnored() throws Exception {
 		ICompilationUnit a = createCompilationUnit("A", "class A { void main() { valid(); B.invalid(); } void valid(){} }");
 		createCompilationUnit("B", "class B { static void invalid() {} }");
-		assertDepends(a, "main");
+		assertDepends(a, "main()");
 	}
 
 	
@@ -38,7 +43,7 @@ public class IntraClassAnalysisTest extends CodeAnalysisTest {
 	@Test
 	public void constructorCallsMethod() throws Exception {
 		ICompilationUnit a = createCompilationUnit("A", "class A { A() { main(); } static void main() {} }");
-		assertDepends(a, "A");
+		assertDepends(a, "A()");
 	}
 
 	
@@ -96,7 +101,7 @@ public class IntraClassAnalysisTest extends CodeAnalysisTest {
 	
 	private void assertDepIsDependent(String body) throws CoreException, InvalidElement {
 		ICompilationUnit a = createCompilationUnit("A", "class A { " + body + " }");
-		assertDepends(a, "dep");
+		assertDepends(a, "dep()");
 	}
 
 }
