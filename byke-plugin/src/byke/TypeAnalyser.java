@@ -31,6 +31,7 @@ class TypeAnalyser extends ASTVisitor {
 	private final NodeAccumulator nodeAccumulator;
 
 	private Node<IBinding> methodBeingVisited;
+	private Node<IBinding> variableBeingAssigned;
 
 
 	TypeAnalyser(TypeDeclaration node, NodeAccumulator nodeAccumulator, ITypeBinding type) {
@@ -62,6 +63,11 @@ class TypeAnalyser extends ASTVisitor {
 	public void endVisit(MethodDeclaration method) {
 		exitMethod();
 	}
+	
+	@Override
+	public void endVisit(VariableDeclarationFragment field) {
+		variableBeingAssigned = null;
+	}
 
 	@Override
 	public boolean visit(Initializer node) {
@@ -77,7 +83,7 @@ class TypeAnalyser extends ASTVisitor {
 	public void endVisit(Initializer node) {
 		exitMethod();
 	}
-
+	
 	private boolean enterMethod(Producer<Node<IBinding>> producer) {
 		if (methodBeingVisited != null) {
 			System.out.println("Method inside method '" + methodBeingVisited + "' will not be visited.");
@@ -93,7 +99,8 @@ class TypeAnalyser extends ASTVisitor {
 
 	@Override
 	public boolean visit(VariableDeclarationFragment variable) {
-		addProvider(variableNodeGiven(variable.resolveBinding()));
+		IVariableBinding b = variable.resolveBinding();
+		variableBeingAssigned = variableNodeGiven(b);
 		return true;
 	}
 
@@ -120,37 +127,31 @@ class TypeAnalyser extends ASTVisitor {
 		if (simpleName.resolveBinding() instanceof IVariableBinding) addProviderVariable((IVariableBinding)simpleName.resolveBinding());
 		return true;
 	}
-
+	
 	@Override
 	public boolean visit(Assignment assignment) {
 		final Expression lhs = assignment.getLeftHandSide();
-		boolean shouldVisit = false;
 
 		if (lhs instanceof SimpleName) {
 			IVariableBinding b = (IVariableBinding)(((SimpleName)lhs).resolveBinding());
 			addProvider(variableNodeGiven(b));
-			shouldVisit = true;
 		}
 
 		if (lhs instanceof FieldAccess) {
 			FieldAccess fieldAccess = (FieldAccess)lhs;
 			IVariableBinding b = fieldAccess.resolveFieldBinding();
 			addProvider(variableNodeGiven(b));
-			shouldVisit = true;
-			if (shouldVisit) fieldAccess.getExpression().accept(this); // Needs test
+			fieldAccess.getExpression().accept(this); // Needs test
 		}
 
 		if (lhs instanceof QualifiedName) {
 			QualifiedName fieldAccess = (QualifiedName)lhs;
 			IVariableBinding b = (IVariableBinding)fieldAccess.resolveBinding();
 			addProvider(variableNodeGiven(b));
-			shouldVisit = true;
-			if (shouldVisit) fieldAccess.getQualifier().accept(this); // Needs test
+			fieldAccess.getQualifier().accept(this); // Needs test
 		}
 		
 		handleRightHandSide(assignment);
-
-		if (shouldVisit) assignment.getRightHandSide().accept(this); // Needs test
 		
 		return false;
 	}
@@ -165,7 +166,9 @@ class TypeAnalyser extends ASTVisitor {
 			
 			IMethodBinding methodBinding = (IMethodBinding)(((MethodInvocation)rhs).getName().resolveBinding());
 			variable.addProvider(methodNodeGiven(methodBinding));
-		}		
+		}
+		
+		assignment.getRightHandSide().accept(this);
 	}
 
 	private void addProviderMethod(IMethodBinding method) {
@@ -195,12 +198,7 @@ class TypeAnalyser extends ASTVisitor {
 
 	private void addProvider(Node<IBinding> provider) {
 		if (methodBeingVisited != null) methodBeingVisited.addProvider(provider);
-	}
-
-	@Override
-	public void preVisit(ASTNode node) {
-		// System.out.println(node.getClass() + ": " + node);
-		super.preVisit(node);
+		if (variableBeingAssigned != null) variableBeingAssigned.addProvider(provider);
 	}
 
 }

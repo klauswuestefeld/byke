@@ -79,10 +79,9 @@ public class IntraClassAnalysisTest extends CodeAnalysisTest {
 	}
 
 	
-	@Ignore
 	@Test
 	public void fieldDeclarationDependsOnRightHandSide() throws Exception {
-		assertMethodDepIsDependent("int dep=calc(); int calc() { return 3; }");
+		assertFieldDepIsDependent("int dep=calc(); int 	calc() { return 3; }");
 	}
 
 	
