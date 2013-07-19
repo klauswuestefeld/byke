@@ -15,6 +15,13 @@ public class IntraClassAnalysisTest extends CodeAnalysisTest {
 	}
 
 	@Test
+	public void methodCallsMethodOnAParameterizedClass() throws Exception {
+		String body = "void dep() { foo(); } void foo() {}";
+		ICompilationUnit a = createCompilationUnit("A", "class A<T> { " + body + " }");
+		assertDepends(a, "dep()");
+	}
+
+	@Test
 	public void methodWithParameterCallsMethod() throws Exception {
 		assertMethodDepIsDependent("void dep() { foo(1); } void foo(int i) {}");
 	}

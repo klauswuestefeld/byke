@@ -170,7 +170,7 @@ class TypeAnalyser extends ASTVisitor {
 
 	private void addProviderMethod(IMethodBinding method) {
 		if (method == null) return;
-		if (method.getDeclaringClass() != type) return;
+		if (method.getDeclaringClass().getErasure() != type) return;
 		addProvider(methodNodeGiven(method));
 	}
 
