@@ -43,7 +43,7 @@ public class StandAlone {
 		
 		GraphCanvas<String> canvas = new GraphCanvas<String>(shell, _graph, new CartesianLayout(), new GraphCanvas.Listener<String>() {
 			@Override public void nodeSelected(Node<String> node) {
-				System.out.println("Node:" + node);
+				System.out.println("Node: " + node);
 			}
 		});
 		
