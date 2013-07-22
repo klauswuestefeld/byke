@@ -2,7 +2,6 @@ package byke.tests;
 
 
 import java.util.Collection;
-import java.util.Iterator;
 
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IResource;
@@ -37,7 +36,7 @@ public class CodeAnalysisTest extends Assert {
 	}
 	
 	
-	protected void assertDepends(IJavaElement toAnalyse, String dependentName) throws CoreException, InvalidElement {
+	protected void assertDepends(IJavaElement toAnalyse, String dependentName, String... providers) throws CoreException, InvalidElement {
 		//project.buildProject(null);
 		project.joinAutoBuild();
 		assertBuildOK();
@@ -47,13 +46,20 @@ public class CodeAnalysisTest extends Assert {
 
 		Node<IBinding> dependent = findNode(dependentName, graph);
 		
-		Iterator<Node<IBinding>> it = graph.iterator();
-		while (it.hasNext()) {
-			Node<IBinding> provider = it.next();
-			if (provider == dependent) continue;
-			assertFalse("Invalid provider detected.", provider.name().equals("invalid"));
-			assertTrue("Should be provider: " + provider.name(), dependent.providers().contains(provider));
-		}
+		//TODO check provider's quantity
+		for(String providerName : providers)
+			doAssertions(dependent, findNode(providerName, graph));
+		
+		if(providers.length == 0)
+			for(Node<IBinding> provider : graph)
+				doAssertions(dependent, provider);
+	}
+	
+	
+	private void doAssertions(Node<IBinding> dependent, Node<IBinding> provider) {
+		if (provider == dependent) return;
+		assertFalse("Invalid provider detected.", provider.name().equals("invalid"));
+		assertTrue("Should be provider: " + provider.name(), dependent.providers().contains(provider));
 	}
 	
 	

@@ -11,7 +11,19 @@ public class IntraClassAnalysisTest extends CodeAnalysisTest {
 
 	@Test
 	public void methodCallsMethod() throws Exception {
-		assertDepIsDependent("void dep() { foo(); } void foo() {}");
+		assertMethodDepIsDependent("void dep() { foo(); } void foo() {}");
+	}
+
+	@Test
+	public void methodCallsMethodOnAParameterizedClass() throws Exception {
+		String body = "void dep() { foo(); } void foo() {}";
+		ICompilationUnit a = createCompilationUnit("A", "class A<T> { " + body + " }");
+		assertDepends(a, "dep()");
+	}
+
+	@Test
+	public void methodWithParameterCallsMethod() throws Exception {
+		assertMethodDepIsDependent("void dep() { foo(1); } void foo(int i) {}");
 	}
 	
 
@@ -19,26 +31,26 @@ public class IntraClassAnalysisTest extends CodeAnalysisTest {
 	public void externalMethodCallsAreIgnored() throws Exception {
 		ICompilationUnit a = createCompilationUnit("A", "class A { void main() { valid(); B.invalid(); } void valid(){} }");
 		createCompilationUnit("B", "class B { static void invalid() {} }");
-		assertDepends(a, "main");
+		assertDepends(a, "main()");
 	}
 
 	
 	@Test
 	public void methodReadsField() throws Exception {
-		assertDepIsDependent("int foo; void dep() { System.out.print(this.foo); }");
+		assertMethodDepIsDependent("int foo; void dep() { System.out.print(this.foo); }");
 	}
 
 	
 	@Test
 	public void methodCallsConstructor() throws Exception {
-		assertDepIsDependent("void dep() { new A(); }");
+		assertMethodDepIsDependent("void dep() { new A(); }");
 	}
 
 	
 	@Test
 	public void constructorCallsMethod() throws Exception {
 		ICompilationUnit a = createCompilationUnit("A", "class A { A() { main(); } static void main() {} }");
-		assertDepends(a, "A");
+		assertDepends(a, "A()");
 	}
 
 	
@@ -51,52 +63,65 @@ public class IntraClassAnalysisTest extends CodeAnalysisTest {
 	
 	@Test
 	public void methodDependsOnField() throws Exception {
-		assertDepIsDependent("int foo; void dep() { foo = 3; }");
+		assertMethodDepIsDependent("int foo; void dep() { foo = 3; }");
 	}
 
 	
 	@Test
 	public void methodDependsOnThisField() throws Exception {
-		assertDepIsDependent("int foo; void dep() { this.foo = 3; }");
+		assertMethodDepIsDependent("int foo; void dep() { this.foo = 3; }");
 	}
 
 	
 	@Test
 	public void methodDependsOnStaticField() throws Exception {
-		assertDepIsDependent("static int foo; void dep() { A.foo = 3; }");
+		assertMethodDepIsDependent("static int foo; void dep() { A.foo = 3; }");
 	}
 
 	
-	@Ignore
 	@Test
 	public void fieldDeclarationDependsOnRightHandSide() throws Exception {
-		assertDepIsDependent("int dep=calc(); int calc() { return 3; }");
+		assertFieldDepIsDependent("int dep=calc(); int 	calc() { return 3; }");
 	}
 
 	
 	@Test
-	@Ignore
 	public void fieldAssignmentDependsOnRightHandSide() throws Exception {
-		assertDepIsDependent("int dep; void foo(){dep=calc();}; int calc() { return 3; }");
+		assertFieldDepIsDependent("int dep; void foo(){dep=calc();}; int calc() { return 3; }", "calc()");
+	}
+
+	@Test
+	public void methodDependsOnBothSidesOfAnAssignment() throws Exception {
+		assertMethodDepIsDependent("int foo; void dep(){foo=calc();}; int calc() { return 3; }");
 	}
 
 	
 	@Test
 	@Ignore
 	public void localVariableProvidersAreTransitive() throws Exception {
-		assertDepIsDependent("int dep; void main() { int local = calc(); dep = local; } int calc() { return 3; }");
+		assertMethodDepIsDependent("int dep; void main() { int local = calc(); dep = local; } int calc() { return 3; }");
 	}
 
 	
 	@Test
 	public void localVariablesDoNotAppearInGraph() throws Exception {
-		assertDepIsDependent("int foo; void dep() { foo = 3; int invalid = 3; }");
+		assertMethodDepIsDependent("int foo; void dep() { foo = 3; int invalid = 3; }");
 	}
 	
 	
-	private void assertDepIsDependent(String body) throws CoreException, InvalidElement {
+	private void assertMethodDepIsDependent(String body, String... providers) throws CoreException, InvalidElement {
+		assertIsDependent(body, "dep()", providers);
+	}
+	
+
+	private void assertFieldDepIsDependent(String body, String... providers) throws CoreException, InvalidElement {
+		assertIsDependent(body, "dep", providers);
+	}
+
+	
+	private void assertIsDependent(String body, String dep, String... providers) throws CoreException, InvalidElement {
 		ICompilationUnit a = createCompilationUnit("A", "class A { " + body + " }");
-		assertDepends(a, "dep");
+		assertDepends(a, dep, providers);
 	}
 
 }
