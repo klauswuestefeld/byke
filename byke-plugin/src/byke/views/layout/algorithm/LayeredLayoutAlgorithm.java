@@ -20,8 +20,8 @@ public class LayeredLayoutAlgorithm implements LayoutAlgorithm {
 
 
 	public LayeredLayoutAlgorithm(Iterable<Node<?>> graph, CartesianLayout initialLayout, NodeSizeProvider sizeProvider) {
-		NodesByLayer nodesByLayer = new NodesByLayer(graph);
-		nodeElements = asGraphElements(nodesByLayer, sizeProvider);
+		NodesByDepth nodesByDepth = NodesByDepth.layeringOf(graph);
+		nodeElements = asGraphElements(nodesByDepth, sizeProvider);
 		arrangeWith(initialLayout == null ? new CartesianLayout() : initialLayout);
 		lowestStressEver = relaxTowardLocalMinimum();
 	}
@@ -64,11 +64,11 @@ public class LayeredLayoutAlgorithm implements LayoutAlgorithm {
 		Random random = new Random();
 		for (NodeElement node : nodeElements)
 //		node.position(layout.coordinatesFor(node.name())._x, node.y);
-			node.position(random .nextInt(400), node.y);
+			node.position(random .nextInt(700), node.y);
 	}
 
 	
-	private static <T> List<NodeElement> asGraphElements(NodesByLayer nodesByLayer, NodeSizeProvider sizeProvider) {
+	private static <T> List<NodeElement> asGraphElements(NodesByDepth nodesByLayer, NodeSizeProvider sizeProvider) {
 		List<NodeElement> ret = new ArrayList<NodeElement>();
 		for (Node<?> node : nodesByLayer.graph())
 			ret.add(asGraphElement(node, nodesByLayer, sizeProvider));
@@ -76,7 +76,7 @@ public class LayeredLayoutAlgorithm implements LayoutAlgorithm {
 	}
 
 	
-	private static NodeElement asGraphElement(Node<?> node, NodesByLayer nodesByLayer, NodeSizeProvider sizeProvider) {
+	private static NodeElement asGraphElement(Node<?> node, NodesByDepth nodesByLayer, NodeSizeProvider sizeProvider) {
 		NodeElement ret = new NodeElement(node, sizeProvider.sizeGiven(node));
 		ret.position(ret.x, nodesByLayer.depthOf(node) * LAYER_HEIGHT);
 		return ret;

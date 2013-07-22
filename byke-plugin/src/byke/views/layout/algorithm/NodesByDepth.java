@@ -5,16 +5,22 @@ import java.util.Map;
 
 import byke.dependencygraph.Node;
 
-class NodesByLayer {
+class NodesByDepth {
 
 	private final Iterable<Node<?>> graph;
 	private final Map<Node<?>, Integer> nodesByDepth = new HashMap<Node<?>, Integer>();
 	private boolean nodeHasMoved;
 
 	
-	NodesByLayer(Iterable<Node<?>> graph) {
+	static NodesByDepth layeringOf(Iterable<Node<?>> graph) {
+		NodesByDepth ret = new NodesByDepth(graph);
+		ret.arrangeInLayers();
+		return ret;
+	}
+
+	
+	private NodesByDepth(Iterable<Node<?>> graph) {
 		this.graph = graph;
-		arrangeInLayers();
 	}
 
 	
