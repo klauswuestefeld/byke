@@ -2,7 +2,6 @@ package byke.tests;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import byke.InvalidElement;
@@ -97,9 +96,8 @@ public class IntraClassAnalysisTest extends CodeAnalysisTest {
 
 	
 	@Test
-	@Ignore
 	public void localVariableProvidersAreTransitive() throws Exception {
-		assertMethodDepIsDependent("int dep; void main() { int local = calc(); dep = local; } int calc() { return 3; }");
+		assertFieldDepIsDependent("int dep; void main() { int local = calc(); dep = local; } int calc() { return 3; }", "calc()");
 	}
 
 	

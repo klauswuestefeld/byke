@@ -160,6 +160,16 @@ class TypeAnalyser extends ASTVisitor {
 		final Expression lhs = assignment.getLeftHandSide();
 		final Expression rhs = assignment.getRightHandSide();
 		
+		if (rhs instanceof SimpleName) {
+			IVariableBinding b = (IVariableBinding)(((SimpleName)rhs).resolveBinding());
+			Node<IBinding> variableRhs = variableNodeGiven(b);
+			
+			b = (IVariableBinding)(((SimpleName)lhs).resolveBinding());
+			Node<IBinding> variableLhs = variableNodeGiven(b);
+			
+			variableLhs.addProviders(variableRhs.providers());
+		}
+		
 		if (rhs instanceof MethodInvocation) {
 			IVariableBinding b = (IVariableBinding)(((SimpleName)lhs).resolveBinding());
 			Node<IBinding> variable = variableNodeGiven(b);
