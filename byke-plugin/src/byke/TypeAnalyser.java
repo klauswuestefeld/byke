@@ -3,6 +3,9 @@ package byke;
 import static byke.JavaType.FIELD;
 import static byke.JavaType.METHOD;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.Assignment;
@@ -32,6 +35,8 @@ class TypeAnalyser extends ASTVisitor {
 
 	private Node<IBinding> methodBeingVisited;
 	private Node<IBinding> variableBeingAssigned;
+	
+	private Map<ASTNode, Node<IBinding>> visitLater = new HashMap<ASTNode, Node<IBinding>>();
 
 
 	TypeAnalyser(TypeDeclaration node, NodeAccumulator nodeAccumulator, ITypeBinding type) {
@@ -40,7 +45,18 @@ class TypeAnalyser extends ASTVisitor {
 
 		for (Object decl : node.bodyDeclarations())
 			((ASTNode)decl).accept(this);
-
+		
+		for(Map.Entry<ASTNode, Node<IBinding>> visit : visitLater.entrySet()) {
+			visit.getKey().accept(this);
+			
+			if(visit.getKey() instanceof MethodDeclaration) {
+				Node<IBinding> methodNodeGiven = methodNodeGiven(((MethodDeclaration)visit.getKey()).resolveBinding());
+				visit.getValue().addProviders(methodNodeGiven.providers());
+				nodeAccumulator.remove(methodNodeGiven);
+			}
+		}
+		
+		
 		LocalVariableFolder.fold(this.nodeAccumulator);
 	}
 
@@ -51,6 +67,11 @@ class TypeAnalyser extends ASTVisitor {
 
 	@Override
 	public boolean visit(final MethodDeclaration method) {
+		if (methodBeingVisited != null) {
+			visitLater.put(method, methodBeingVisited);
+			return false;
+		}
+		
 		return enterMethod(new Producer<Node<IBinding>>() {
 			@Override
 			public Node<IBinding> produce() {
@@ -71,6 +92,11 @@ class TypeAnalyser extends ASTVisitor {
 
 	@Override
 	public boolean visit(Initializer node) {
+		if (methodBeingVisited != null) {
+			visitLater.put(node, methodBeingVisited);
+			return false;
+		}
+		
 		return enterMethod(new Producer<Node<IBinding>>() {
 			@Override
 			public Node<IBinding> produce() {
@@ -85,10 +111,6 @@ class TypeAnalyser extends ASTVisitor {
 	}
 	
 	private boolean enterMethod(Producer<Node<IBinding>> producer) {
-		if (methodBeingVisited != null) {
-			System.out.println("Method inside method '" + methodBeingVisited + "' will not be visited.");
-			return false;
-		}
 		methodBeingVisited = producer.produce();
 		return true;
 	}
@@ -132,51 +154,30 @@ class TypeAnalyser extends ASTVisitor {
 	public boolean visit(Assignment assignment) {
 		final Expression lhs = assignment.getLeftHandSide();
 
-		if (lhs instanceof SimpleName) {
-			IVariableBinding b = (IVariableBinding)(((SimpleName)lhs).resolveBinding());
-			addProvider(variableNodeGiven(b));
-		}
+		if (lhs instanceof FieldAccess)
+			((FieldAccess)lhs).getExpression().accept(this); // Needs test
 
-		if (lhs instanceof FieldAccess) {
-			FieldAccess fieldAccess = (FieldAccess)lhs;
-			IVariableBinding b = fieldAccess.resolveFieldBinding();
-			addProvider(variableNodeGiven(b));
-			fieldAccess.getExpression().accept(this); // Needs test
-		}
-
-		if (lhs instanceof QualifiedName) {
-			QualifiedName fieldAccess = (QualifiedName)lhs;
-			IVariableBinding b = (IVariableBinding)fieldAccess.resolveBinding();
-			addProvider(variableNodeGiven(b));
-			fieldAccess.getQualifier().accept(this); // Needs test
-		}
+		if (lhs instanceof QualifiedName)
+			((QualifiedName)lhs).getQualifier().accept(this); // Needs test
 		
+		addProvider(variableNodeGiven(lhs));
+
 		handleRightHandSide(assignment);
 		
 		return false;
 	}
 
 	private void handleRightHandSide(Assignment assignment) {
-		final Expression lhs = assignment.getLeftHandSide();
+		Node<IBinding> variableLhs = variableNodeGiven(assignment.getLeftHandSide());
 		final Expression rhs = assignment.getRightHandSide();
 		
 		if (rhs instanceof SimpleName) {
-			IVariableBinding b = (IVariableBinding)(((SimpleName)rhs).resolveBinding());
-			Node<IBinding> variableRhs = variableNodeGiven(b);
-			
-			b = (IVariableBinding)(((SimpleName)lhs).resolveBinding());
-			Node<IBinding> variableLhs = variableNodeGiven(b);
-			
+			Node<IBinding> variableRhs = variableNodeGiven(rhs);
 			variableLhs.addProviders(variableRhs.providers());
 		}
 		
-		if (rhs instanceof MethodInvocation) {
-			IVariableBinding b = (IVariableBinding)(((SimpleName)lhs).resolveBinding());
-			Node<IBinding> variable = variableNodeGiven(b);
-			
-			IMethodBinding methodBinding = (IMethodBinding)(((MethodInvocation)rhs).getName().resolveBinding());
-			variable.addProvider(methodNodeGiven(methodBinding));
-		}
+		if (rhs instanceof MethodInvocation)
+			variableLhs.addProvider(methodNodeGiven(rhs));
 		
 		assignment.getRightHandSide().accept(this);
 	}
@@ -198,10 +199,34 @@ class TypeAnalyser extends ASTVisitor {
 		return variable.getDeclaringClass() == type;
 	}
 
+	private Node<IBinding> methodNodeGiven(Expression expression) {
+		IMethodBinding b = null;
+		
+		if (expression instanceof MethodInvocation)
+			b = (IMethodBinding)(((MethodInvocation)expression).getName().resolveBinding());
+		
+		return methodNodeGiven(b);
+	}
+	
 	private Node<IBinding> methodNodeGiven(IMethodBinding methodBinding) {
 		return nodeAccumulator.produceNode(methodBinding, METHOD);
 	}
 
+	private Node<IBinding> variableNodeGiven(Expression expression) {
+		IVariableBinding b = null;
+		
+		if (expression instanceof SimpleName)
+			b = (IVariableBinding)(((SimpleName)expression).resolveBinding());
+
+		if (expression instanceof FieldAccess)
+			b = (IVariableBinding)(((FieldAccess)expression).resolveFieldBinding());
+
+		if (expression instanceof QualifiedName)
+			b = (IVariableBinding)(((QualifiedName)expression).resolveBinding());
+
+		return variableNodeGiven(b);
+	}
+	
 	private Node<IBinding> variableNodeGiven(IVariableBinding variableBinding) {
 		return nodeAccumulator.produceNode(variableBinding, FIELD);
 	}

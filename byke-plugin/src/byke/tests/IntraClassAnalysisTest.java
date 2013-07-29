@@ -107,6 +107,13 @@ public class IntraClassAnalysisTest extends CodeAnalysisTest {
 	}
 	
 	
+	@Test
+	public void methodDependsOnMethodInsideAnonymousClass() throws Exception {
+		assertMethodDepIsDependent("void dep() { addListener(new Object() { @Override public String toString() {return foo();}});}" +
+				"String foo() { return null; } void addListener(Object o) {}");
+	}
+	
+	
 	private void assertMethodDepIsDependent(String body, String... providers) throws CoreException, InvalidElement {
 		assertIsDependent(body, "dep()", providers);
 	}

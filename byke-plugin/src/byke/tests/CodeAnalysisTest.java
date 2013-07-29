@@ -46,7 +46,6 @@ public class CodeAnalysisTest extends Assert {
 
 		Node<IBinding> dependent = findNode(dependentName, graph);
 		
-		//TODO check provider's quantity
 		for(String providerName : providers)
 			doAssertions(dependent, findNode(providerName, graph));
 		
