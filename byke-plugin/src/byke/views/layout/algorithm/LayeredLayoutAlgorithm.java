@@ -14,7 +14,7 @@ public class LayeredLayoutAlgorithm implements LayoutAlgorithm {
 
 	private static final int LAYER_HEIGHT = 50;
 
-	private final List<NodeElement> nodeElements;
+	protected final List<NodeElement> nodeElements;
 
 	private float lowestStressEver;
 
@@ -60,7 +60,7 @@ public class LayeredLayoutAlgorithm implements LayoutAlgorithm {
 	}
 
 	
-	private void arrangeWith(CartesianLayout layout) {
+	protected void arrangeWith(CartesianLayout layout) {
 		Random random = new Random();
 		for (NodeElement node : nodeElements)
 //		node.position(layout.coordinatesFor(node.name())._x, node.y);

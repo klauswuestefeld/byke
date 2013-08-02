@@ -11,6 +11,7 @@ import byke.JavaType;
 import byke.dependencygraph.Node;
 import byke.views.layout.CartesianLayout;
 import byke.views.layout.algorithm.LayeredLayoutAlgorithm;
+import byke.views.layout.algorithm.LayeredLayoutAlgorithmExtended;
 import byke.views.layout.algorithm.LayoutAlgorithm;
 import byke.views.layout.ui.GraphCanvas;
 
@@ -49,8 +50,7 @@ public class StandAlone {
 		
 		
 		@SuppressWarnings("rawtypes")
-		LayoutAlgorithm algorithm =
-			new LayeredLayoutAlgorithm((Iterable)_graph, null, canvas);
+		LayoutAlgorithm algorithm = new LayeredLayoutAlgorithmExtended((Iterable)_graph, null, canvas);
 
 		shell.open();
 		shell.layout();
@@ -79,80 +79,71 @@ public class StandAlone {
 	
 	private Collection<Node<String>> graph() {
 		
-		String[] names = new String[NUMBER_OF_NODES];
-		for (int i = 0; i < names.length; i++)
-			names[i] = "Node " + i;
-		return createGraph(names);
+//		String[] names = new String[NUMBER_OF_NODES];
+//		for (int i = 0; i < names.length; i++)
+//			names[i] = "Node " + i;
+//		return createGraph(names);
 
 		
-//		Collection<Node<String>> result = new ArrayList<Node<String>>();
-//		Node<String> n1 = new Node<String>("1");
-//		Node<String> n2 = new Node<String>("2");
-//		Node<String> n3 = new Node<String>("3");
-//		Node<String> n4 = new Node<String>("4");
-//		Node<String> n5 = new Node<String>("5");
-//		Node<String> n6 = new Node<String>("6");
-//		Node<String> n7 = new Node<String>("7");
-//		n1.addProvider(n2);
-//		n2.addProvider(n3);
-//		n3.addProvider(n4);
-//		n4.addProvider(n5);
-//		n5.addProvider(n6);
-//		n6.addProvider(n7);
-//		n1.addProvider(n3);
-//		n1.addProvider(n4);
-//		n1.addProvider(n5);
-//		n1.addProvider(n6);
-//		n1.addProvider(n7);
-//		result.add(n1);
-//		result.add(n2);
-//		result.add(n3);
-//		result.add(n4);
-//		result.add(n5);
-//		result.add(n6);
-//		return result;
-
-		
-//		return Node.createGraph(new String[]{"1 234", "12 34", "123 4"});
-
-		
-//		Collection<Node<String>> result = new ArrayList<Node<String>>();
-//		Node<String> nodeA = new Node<String>("main");
-//		Node<String> nodeB = new Node<String>("banana");
-//		Node<String> nodeC = new Node<String>("abacaxi");
-//		nodeA.addProvider(nodeB);
-//		nodeB.addProvider(nodeC);
-//		nodeC.addProvider(nodeA);
-//		result.add(nodeA);
-//		result.add(nodeB);
-//		result.add(nodeC);
-//		return result;
-
-		
-//		 Collection<Node<String>> result = new ArrayList<Node<String>>();
-//		 Node<String> nodeA = new Node<String>("Agua");
-//		 Node<String> nodeB = new Node<String>("Luz");
-//		 Node<String> nodeC = new Node<String>("Gás");
-//		 Node<String> node1 = new Node<String>("Casa 1");
-//		 Node<String> node2 = new Node<String>("Casa 2");
-//		 Node<String> node3 = new Node<String>("Casa 3");
-//		 nodeA.addProvider(node1);
-//		 nodeB.addProvider(node1);
-//		 nodeC.addProvider(node1);
-//		 nodeA.addProvider(node2);
-//		 nodeB.addProvider(node2);
-//		 nodeC.addProvider(node2);
-//		 nodeA.addProvider(node3);
-//		 nodeB.addProvider(node3);
-//		 nodeC.addProvider(node3);
-//		 result.add(nodeA);
-//		 result.add(nodeB);
-//		 result.add(nodeC);
-//		 result.add(node1);
-//		 result.add(node2);
-//		 result.add(node3);
-//		 return result;
+		return window();
 }
+
+
+	private Collection<Node<String>> window() {
+		Collection<Node<String>> result = new ArrayList<Node<String>>();
+		Node<String> tela = new Node<String>("Window()");
+		Node<String> addItems = new Node<String>("addItems()");
+		Node<String> addHandlers = new Node<String>("addHandlers()");
+		Node<String> addSomething = new Node<String>("addSomething()");
+		Node<String> doSomething = new Node<String>("doSomething()");
+		Node<String> toolbar = new Node<String>("toolbar");
+		Node<String> tabSet = new Node<String>("tabSet");
+		Node<String> aba1 = new Node<String>("tab1");
+		Node<String> aba2 = new Node<String>("tab2");
+		Node<String> aba3 = new Node<String>("tab3");
+		Node<String> aba4 = new Node<String>("tab4");
+		Node<String> aba5 = new Node<String>("tab5");
+		Node<String> aba6 = new Node<String>("tab6");
+		
+		tela.addProvider(addItems);
+		tela.addProvider(addHandlers);
+		tela.addProvider(addSomething);
+		
+		addItems.addProvider(toolbar);
+		addItems.addProvider(tabSet);
+		
+		addHandlers.addProvider(doSomething);
+		
+		doSomething.addProvider(tabSet);
+		
+		tabSet.addProvider(aba1);
+		tabSet.addProvider(aba2);
+		tabSet.addProvider(aba3);
+		tabSet.addProvider(aba4);
+		tabSet.addProvider(aba5);
+		tabSet.addProvider(aba6);
+		
+		//cyclic dependencies
+//		aba1.addProvider(addItems);
+//		aba3.addProvider(addItems);
+//		toolbar.addProvider(addItems);
+		
+		result.add(tela);
+		result.add(addItems);
+		result.add(addHandlers);
+		result.add(addSomething);
+		result.add(doSomething);
+		result.add(toolbar);
+		result.add(tabSet);
+		result.add(aba1);
+		result.add(aba2);
+		result.add(aba3);
+		result.add(aba4);
+		result.add(aba5);
+		result.add(aba6);
+		
+		return result;
+	}
 
 	
 	private static Collection<Node<String>> createGraph(String[] names) {
