@@ -11,13 +11,13 @@ import byke.JavaType;
 import byke.dependencygraph.Node;
 import byke.views.layout.CartesianLayout;
 import byke.views.layout.algorithm.LayeredLayoutAlgorithm;
-import byke.views.layout.algorithm.LayeredLayoutAlgorithmExtended;
 import byke.views.layout.algorithm.LayoutAlgorithm;
 import byke.views.layout.ui.GraphCanvas;
 
 
 public class StandAlone {
 
+	@SuppressWarnings("unused")
 	private static final int NUMBER_OF_NODES = 40;
 	private static final double DENSITY_OF_DEPENDENCIES = 1.8;
 
@@ -50,7 +50,7 @@ public class StandAlone {
 		
 		
 		@SuppressWarnings("rawtypes")
-		LayoutAlgorithm algorithm = new LayeredLayoutAlgorithmExtended((Iterable)_graph, null, canvas);
+		LayoutAlgorithm algorithm = new LayeredLayoutAlgorithm((Iterable)_graph, null, canvas);
 
 		shell.open();
 		shell.layout();
@@ -69,9 +69,8 @@ public class StandAlone {
 
 	
 	private void work(LayoutAlgorithm algorithm, GraphCanvas<String> canvas) {
-		boolean improved = algorithm.improveLayoutStep();
-//		if (improved)
-			canvas.useLayout(algorithm.layoutMemento());
+		algorithm.improveLayoutStep();
+		canvas.useLayout(algorithm.layoutMemento());
 
 		canvas.animationStep(1);
 	}
@@ -146,6 +145,7 @@ public class StandAlone {
 	}
 
 	
+	@SuppressWarnings("unused")
 	private static Collection<Node<String>> createGraph(String[] names) {
 		List<Node<String>> result = new ArrayList<Node<String>>();
 		for (String element : names)
