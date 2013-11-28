@@ -70,12 +70,12 @@ public class LayeredLayoutAlgorithm implements LayoutAlgorithm {
 		
 		for (NodeElement node : nodeElements) {
 			List<NodeElement> children = children(node);
-			for(int i = 0; i < children.size(); i++) {
+			for (int i = 0; i < children.size(); i++) {
 				double qty = 0;
 				
-				if(children.size() % 2 == 0 && children.size() / 2 <= i)
+				if (children.size() % 2 == 0 && children.size() / 2 <= i)
 					qty = 0.5;
-				if(children.size() % 2 == 0 && children.size() / 2 - 1 >= i)
+				if (children.size() % 2 == 0 && children.size() / 2 - 1 >= i)
 					qty = 0.5;
 				NodeElement child = children.get(i);
 				child.position((node.aura().width / 2 + node.x) - (child.aura().width / 2) + (int)(LAYER_WIDTH * (i + qty - children.size() / 2)), child.y);

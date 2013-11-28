@@ -61,11 +61,6 @@ public class NodeElement {
 	float stress() { return _stress; }
 	
 	
-	private void assertValidNumber(float n) {
-		if (Float.isNaN(n)) throw new IllegalArgumentException("NaN received instead of a valid number.");
-	}
-
-	
 	public boolean dependsDirectlyOn(NodeElement other) {
 		return _node.dependsDirectlyOn(other.node());
 	}
@@ -96,9 +91,6 @@ public class NodeElement {
 
 	
 	public void position(int newX, int newY) {
-		assertValidNumber(newX);
-		assertValidNumber(newY);
-
 		x = newX;
 		y = newY;
 
