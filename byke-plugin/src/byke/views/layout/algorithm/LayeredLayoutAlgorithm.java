@@ -18,39 +18,18 @@ public class LayeredLayoutAlgorithm implements LayoutAlgorithm {
 
 	protected final List<NodeElement> nodeElements;
 
-	private float lowestStressEver;
-
 
 	public LayeredLayoutAlgorithm(Iterable<Node<?>> graph, CartesianLayout initialLayout, NodeSizeProvider sizeProvider) {
 		NodesByDepth nodesByDepth = NodesByDepth.layeringOf(graph);
 		nodeElements = asGraphElements(nodesByDepth, sizeProvider);
 		arrangeWith(initialLayout == null ? new CartesianLayout() : initialLayout);
-		lowestStressEver = relaxTowardLocalMinimum();
 	}
 
 	
 	@Override
 	public boolean improveLayoutStep() {
-		if (nodeElements.size() <= 1) return false;
-		float stress = relaxTowardLocalMinimum();
-		return hasImproved(stress);
-	}
-
-
-	private float relaxTowardLocalMinimum() {
-		return 0;
-	}
-
-
-	private boolean hasImproved(float currentStress) {
-		if (currentStress < lowestStressEver) {
-			lowestStressEver = currentStress;
-			return true;
-		}
 		return false;
 	}
-
-
 
 
 	@Override
@@ -62,14 +41,14 @@ public class LayeredLayoutAlgorithm implements LayoutAlgorithm {
 	}
 
 	
-	protected void arrangeWith(CartesianLayout layout) {
+	protected void arrangeWith(CartesianLayout initiallayoutIgnoredForNow) {
 		Collections.sort(nodeElements, new Comparator<NodeElement>() { @Override public int compare(NodeElement o1, NodeElement o2) {
 			return o1.y < o2.y ? 0 : 1;
 		}});
 		
 		
-		for (NodeElement node : nodeElements) {
-			List<NodeElement> children = children(node);
+		for (NodeElement parent : nodeElements) {
+			List<NodeElement> children = children(parent);
 			for (int i = 0; i < children.size(); i++) {
 				double qty = 0;
 				
@@ -78,23 +57,25 @@ public class LayeredLayoutAlgorithm implements LayoutAlgorithm {
 				if (children.size() % 2 == 0 && children.size() / 2 - 1 >= i)
 					qty = 0.5;
 				NodeElement child = children.get(i);
-				child.position((node.aura().width / 2 + node.x) - (child.aura().width / 2) + (int)(LAYER_WIDTH * (i + qty - children.size() / 2)), child.y);
+				int parentCenterX = parent.x + (parent.aura().width / 2);
+				int childNewX = parentCenterX - (child.aura().width / 2) + (int)(LAYER_WIDTH * (i + qty - children.size() / 2));
+				child.position(childNewX, child.y);
 			}
 		}
 	}
 
 	
 	private List<NodeElement> children(NodeElement node) {
-		List<NodeElement> result = new ArrayList<NodeElement>();
+		List<NodeElement> ret = new ArrayList<NodeElement>();
 		
 		for(Node<?> n : node.node().providers())
-			result.add(asNodeElement(n));
+			ret.add(asNodeElement(n));
 		
-		Collections.sort(result, new Comparator<NodeElement>() { @Override public int compare(NodeElement o1, NodeElement o2) {
+		Collections.sort(ret, new Comparator<NodeElement>() { @Override public int compare(NodeElement o1, NodeElement o2) {
 			return o1.name().compareTo(o2.name());
 		}});
 		
-		return result; 
+		return ret; 
 	}
 	
 	
