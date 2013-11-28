@@ -63,11 +63,9 @@ public class LayeredLayoutAlgorithm implements LayoutAlgorithm {
 
 	
 	protected void arrangeWith(CartesianLayout layout) {
-		Collections.sort(nodeElements, new Comparator<NodeElement>() {
-			@Override
-			public int compare(NodeElement o1, NodeElement o2) {
-				return o1.y < o2.y ? 0 : 1;
-			}});
+		Collections.sort(nodeElements, new Comparator<NodeElement>() { @Override public int compare(NodeElement o1, NodeElement o2) {
+			return o1.y < o2.y ? 0 : 1;
+		}});
 		
 		
 		for (NodeElement node : nodeElements) {
@@ -87,24 +85,20 @@ public class LayeredLayoutAlgorithm implements LayoutAlgorithm {
 
 	
 	private List<NodeElement> children(NodeElement node) {
-		List<NodeElement> children = new ArrayList<NodeElement>();
+		List<NodeElement> result = new ArrayList<NodeElement>();
 		
-		for(Node<?> n : node.node().providers()) {
-			NodeElement nElement = find(n);
-			children.add(nElement);
-		}
+		for(Node<?> n : node.node().providers())
+			result.add(asNodeElement(n));
 		
-		Collections.sort(children, new Comparator<NodeElement>() {
-			@Override
-			public int compare(NodeElement o1, NodeElement o2) {
-				return o1.name().compareTo(o2.name());
-			}});
+		Collections.sort(result, new Comparator<NodeElement>() { @Override public int compare(NodeElement o1, NodeElement o2) {
+			return o1.name().compareTo(o2.name());
+		}});
 		
-		return children; 
+		return result; 
 	}
 	
 	
-	private NodeElement find(Node<?> n) {
+	private NodeElement asNodeElement(Node<?> n) {
 		for (NodeElement node : nodeElements)
 			if(node.node().equals(n))
 				return node;
