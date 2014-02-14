@@ -113,5 +113,9 @@ public class NodeElement {
 		_resultingForceY += fy;
 		_stress += (float)Math.hypot(fx, fy);
 	}
-		
+
+	@Override
+	public String toString() {
+		return node().toString();
+	}
 }
