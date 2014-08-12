@@ -33,8 +33,9 @@ import byke.DependencyAnalysis;
 import byke.InvalidElement;
 import byke.dependencygraph.Node;
 import byke.views.layout.CartesianLayout;
+import byke.views.layout.NodeSizeProvider;
+import byke.views.layout.algorithm.LayeredLayoutAlgorithm;
 import byke.views.layout.algorithm.LayoutAlgorithm;
-import byke.views.layout.algorithm.LayoutAlgorithmBase;
 import byke.views.layout.ui.GraphCanvas;
 
 
@@ -152,8 +153,9 @@ public class BykeView extends ViewPart implements IBykeView {
 			};
 		}
 
+		@SuppressWarnings("rawtypes")
 		private void newAlgorithm(Collection<Node<IBinding>> graph, CartesianLayout initialLayout) {
-			_algorithm = new LayoutAlgorithmBase<IBinding>(graph, initialLayout, _canvas);
+			_algorithm = new LayeredLayoutAlgorithm((Collection)graph, initialLayout, (NodeSizeProvider)_canvas);
 		}
 
 		void togglePaused(boolean pause) {

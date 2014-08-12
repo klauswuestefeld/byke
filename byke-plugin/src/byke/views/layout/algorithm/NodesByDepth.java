@@ -34,7 +34,6 @@ class NodesByDepth {
 				? nodesByDepth.get(node)
 				: 0;
 	}
-
 	
 	private void arrangeInLayers() {
 		do {

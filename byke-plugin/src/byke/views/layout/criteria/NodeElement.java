@@ -8,7 +8,7 @@ import byke.dependencygraph.Node;
 import byke.views.layout.Coordinates;
 
 
-public class NodeElement {
+public class NodeElement implements Element {
 
 	public NodeElement(Node<?> node, Rectangle bounds) {
 		_node = node;
@@ -22,8 +22,8 @@ public class NodeElement {
 
 	private final Node<?> _node;
 
-	public int x;
-	public int y;
+	private int _x;
+	private int _y;
 
 	private float _resultingForceX;
 	private float _resultingForceY;
@@ -45,7 +45,7 @@ public class NodeElement {
 
 	
 	public Coordinates position() {
-		return new Coordinates(x, y);
+		return new Coordinates(x(), y());
 	}
 
 	
@@ -80,8 +80,8 @@ public class NodeElement {
 
 	
 	private void centerAura() {
-		_aura.x = x - _auraOffsetX;
-		_aura.y = y - _auraOffsetY;
+		_aura.x = x() - _auraOffsetX;
+		_aura.y = y() - _auraOffsetY;
 	}
 
 
@@ -91,15 +91,15 @@ public class NodeElement {
 
 	
 	public void position(int newX, int newY) {
-		x = newX;
-		y = newY;
+		x(newX);
+		y(newY);
 
 		centerAura();
 	}
 
 	
 	public void move(int dx, int dy) {
-		position(x + dx, y + dy);
+		position(x() + dx, y() + dy);
 	}
 
 	public void addForceComponents(float fx, float fy, NodeElement counterpart) {
@@ -117,5 +117,32 @@ public class NodeElement {
 	@Override
 	public String toString() {
 		return node().toString();
+	}
+
+
+	public int y() {
+		return _y;
+	}
+
+
+	public void y(int y) {
+		_y = y;
+	}
+
+
+	@Override
+	public int x() {
+		return _x;
+	}
+
+
+	public void x(int x) {
+		_x = x;
+	}
+
+
+	@Override
+	public int width() {
+		return aura().width;
 	}
 }

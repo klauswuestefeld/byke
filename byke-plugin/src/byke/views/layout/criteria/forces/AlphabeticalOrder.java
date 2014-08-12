@@ -15,8 +15,8 @@ public class AlphabeticalOrder implements Force {
 	}
 
 	private void actUponFirstAndSecond(NodeElement first, NodeElement second) {
-		float dx = Math.max(Math.abs(first.x - second.x), 1);
-		float dy = Math.max(Math.abs(first.y - second.y), 1);
+		float dx = Math.max(Math.abs(first.x() - second.x()), 1);
+		float dy = Math.max(Math.abs(first.y() - second.y()), 1);
 
 		float cx = -Constants.ALPHABETICAL_ORDER_THRUST / dx;
 		float cy = -Constants.ALPHABETICAL_ORDER_THRUST / dy;

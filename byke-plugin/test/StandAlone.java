@@ -50,26 +50,20 @@ public class StandAlone {
 		
 		
 		@SuppressWarnings("rawtypes")
-		LayoutAlgorithm algorithm = new LayeredLayoutAlgorithm((Iterable)_graph, null, canvas);
+		LayoutAlgorithm algorithm = new LayeredLayoutAlgorithm((Collection)_graph, null, canvas);
 
 		shell.open();
 		shell.layout();
 
-		try {
-			Thread.sleep(1000);
-		} catch (InterruptedException e) {}
-		
 		while (!shell.isDisposed()) {
 			while (!_display.readAndDispatch()) {
 				work(algorithm, canvas);
-			//	_display.sleep();
 			}
 		}
 	}
 
 	
 	private void work(LayoutAlgorithm algorithm, GraphCanvas<String> canvas) {
-		algorithm.improveLayoutStep();
 		canvas.useLayout(algorithm.layoutMemento());
 
 		canvas.animationStep(1);
@@ -90,56 +84,62 @@ public class StandAlone {
 
 	private Collection<Node<String>> window() {
 		Collection<Node<String>> result = new ArrayList<Node<String>>();
-		Node<String> tela = new Node<String>("Window()");
-		Node<String> addItems = new Node<String>("addItems()");
-		Node<String> addHandlers = new Node<String>("addHandlers()");
-		Node<String> addSomething = new Node<String>("addSomething()");
-		Node<String> doSomething = new Node<String>("doSomething()");
-		Node<String> toolbar = new Node<String>("toolbar");
-		Node<String> tabSet = new Node<String>("tabSet");
-		Node<String> aba1 = new Node<String>("tab1");
-		Node<String> aba2 = new Node<String>("tab2");
-		Node<String> aba3 = new Node<String>("tab3");
-		Node<String> aba4 = new Node<String>("tab4");
-		Node<String> aba5 = new Node<String>("tab5");
-		Node<String> aba6 = new Node<String>("tab6");
+		Node<String> tela = new Node<String>("WindowNomeMuitoGrande(XXXX)");
+		Node<String> outraTela = new Node<String>("AnotherWindowNomeMuitoGrande(XXXX)");
+		Node<String> addItems = new Node<String>("addItemsNomeMuitoGrande(XXXX)");
+		Node<String> addHandlers = new Node<String>("addHandlersNomeMuitoGrande(XXXX)()");
+		Node<String> addSomething = new Node<String>("addSomethingNomeMuitoGrande(XXXX)()");
+		Node<String> doSomething = new Node<String>("doSomething()NomeMuitoGrande(XXXX)");
+		Node<String> toolbar = new Node<String>("toolbarNomeMuitoGrande");
+		Node<String> tabSet = new Node<String>("tabSetNomeMuitoGrande");
+		Node<String> aba1 = new Node<String>("tab1NomeMuitoGrande");
+		Node<String> aba2 = new Node<String>("tab2NomeMuitoGrande");
+		Node<String> aba3 = new Node<String>("tab3NomeMuitoGrande");
+		Node<String> aba4 = new Node<String>("tab4NomeMuitoGrande");
+		Node<String> aba5 = new Node<String>("tab5NomeMuitoGrande");
+		Node<String> aba6 = new Node<String>("tab6NomeMuitoGrande");
 		
 		tela.addProvider(addItems);
-		tela.addProvider(addHandlers);
 		tela.addProvider(addSomething);
+		tela.addProvider(addHandlers);
 		
-		addItems.addProvider(toolbar);
+		outraTela.addProvider(addItems);
+		
 		addItems.addProvider(tabSet);
+		addItems.addProvider(toolbar);
 		
 		addHandlers.addProvider(doSomething);
 		
 		doSomething.addProvider(tabSet);
 		
-		tabSet.addProvider(aba1);
 		tabSet.addProvider(aba2);
+		tabSet.addProvider(aba6);
 		tabSet.addProvider(aba3);
 		tabSet.addProvider(aba4);
+		tabSet.addProvider(aba1);
 		tabSet.addProvider(aba5);
-		tabSet.addProvider(aba6);
 		
 		//cyclic dependencies
+		aba1.addProvider(tabSet);
+//		aba3.addProvider(tabSet);
 //		aba1.addProvider(addItems);
 //		aba3.addProvider(addItems);
 //		toolbar.addProvider(addItems);
 		
 		result.add(tela);
+		result.add(outraTela);
+		result.add(addSomething);
+		result.add(tabSet);
 		result.add(addItems);
 		result.add(addHandlers);
-		result.add(addSomething);
 		result.add(doSomething);
 		result.add(toolbar);
-		result.add(tabSet);
-		result.add(aba1);
+		result.add(aba6);
 		result.add(aba2);
 		result.add(aba3);
+		result.add(aba1);
 		result.add(aba4);
 		result.add(aba5);
-		result.add(aba6);
 		
 		return result;
 	}

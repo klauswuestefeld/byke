@@ -12,7 +12,7 @@ public class DependenciesDown extends DistanceDefinedForce {
 	@Override
 	protected float intensityGiven(NodeElement dependent, NodeElement provider, float nonZeroDistance) {
 		float ret = -nonZeroDistance * DEPENDENCY;
-		boolean isNotPointingDown = dependent.y >= provider.y;
+		boolean isNotPointingDown = dependent.y() >= provider.y();
 		return isNotPointingDown ? ret * DEPENDENCY_NOT_POINTING_DOWN_FACTOR : ret;
 	}
 
