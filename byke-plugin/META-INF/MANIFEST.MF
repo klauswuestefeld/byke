@@ -11,8 +11,15 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
  org.eclipse.jdt,
  org.eclipse.jdt.core,
- org.eclipse.jdt.launching, 
+ org.eclipse.jdt.launching,
  org.eclipse.jdt.ui,
  org.junit
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
+Bundle-ClassPath: .,
+                  byke.jar,
+                  lib/org.eclipse.gef4.zest.core_0.1.0.201406280202.jar,
+                  lib/org.eclipse.gef4.layout_0.1.0.201406280202.jar,
+                  lib/org.eclipse.gef4.geometry_0.1.0.201406280202.jar,
+                  lib/org.eclipse.gef4.graph_0.1.0.201406280202.jar,
+                  lib/org.eclipse.draw2d_3.9.100.201405261516.jar

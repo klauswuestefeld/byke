@@ -37,6 +37,7 @@ import byke.views.layout.NodeSizeProvider;
 import byke.views.layout.algorithm.LayeredLayoutAlgorithm;
 import byke.views.layout.algorithm.LayoutAlgorithm;
 import byke.views.layout.ui.GraphCanvas;
+import byke.views.layout.ui.NonMovableGraph;
 
 
 public class BykeView extends ViewPart implements IBykeView {
@@ -54,6 +55,8 @@ public class BykeView extends ViewPart implements IBykeView {
 		
 		private final MouseWheelListener _canvasMouseWheelListener = canvasMouseWheelListener();
 		private final KeyListener _canvasKeyPressedListener = keyPressedListener();
+
+		private NonMovableGraph<IBinding> _nonMovableGraph;
 
 		
 		private LayoutJob(Composite parent) {
@@ -110,11 +113,21 @@ public class BykeView extends ViewPart implements IBykeView {
 			CartesianLayout bestSoFar = _layoutCache.getLayoutFor(_elementBeingDisplayed);
 			if (bestSoFar == null) bestSoFar = new CartesianLayout();
 
-			newCanvas((Collection<Node<IBinding>>)myGraph, bestSoFar);
-			newAlgorithm((Collection<Node<IBinding>>)myGraph, bestSoFar);
+			//newCanvas((Collection<Node<IBinding>>)myGraph, bestSoFar);
+			//newAlgorithm((Collection<Node<IBinding>>)myGraph, bestSoFar);
+			newGraph((Collection<Node<IBinding>>)myGraph, bestSoFar);
 		}
 		
 		
+		private void newGraph(Collection<Node<IBinding>> graph, CartesianLayout initialLayout) {
+			if(_nonMovableGraph != null)
+				_nonMovableGraph.dispose();
+			_nonMovableGraph = new NonMovableGraph<IBinding>(_parent2, graph);
+			
+			_parent2.layout();
+		}
+
+
 		private void newCanvas(Collection<Node<IBinding>> graph, CartesianLayout initialLayout) {
 			if (_canvas != null) _canvas.dispose();
 
