@@ -3,11 +3,13 @@
 package byke.views;
 
 import java.util.Collection;
+import java.util.List;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.gef4.zest.core.widgets.GraphItem;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.dom.IBinding;
@@ -19,7 +21,10 @@ import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.MouseWheelListener;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IViewSite;
@@ -38,6 +43,8 @@ import byke.views.layout.algorithm.LayeredLayoutAlgorithm;
 import byke.views.layout.algorithm.LayoutAlgorithm;
 import byke.views.layout.ui.GraphCanvas;
 import byke.views.layout.ui.NonMovableGraph;
+import byke.views.layout.ui.NonMovableNode;
+import byke.views.layout.ui.NonMovableSubGraph;
 
 
 public class BykeView extends ViewPart implements IBykeView {
@@ -57,7 +64,7 @@ public class BykeView extends ViewPart implements IBykeView {
 		private final KeyListener _canvasKeyPressedListener = keyPressedListener();
 
 		private NonMovableGraph<IBinding> _nonMovableGraph;
-
+		private NonMovableSubGraph<IBinding> _nonMovableSubGraph;
 		
 		private LayoutJob(Composite parent) {
 			super("Byke Diagram Layout");
@@ -123,11 +130,68 @@ public class BykeView extends ViewPart implements IBykeView {
 			if(_nonMovableGraph != null)
 				_nonMovableGraph.dispose();
 			_nonMovableGraph = new NonMovableGraph<IBinding>(_parent2, graph);
+			_nonMovableGraph.addMouseListener(graphMouseClick());
 			
 			_parent2.layout();
 		}
 
+		
+		private MouseListener graphMouseClick() {
+			return new MouseListener() {
 
+				@Override
+				public void mouseUp(MouseEvent e) {}
+				
+				@Override
+				public void mouseDown(MouseEvent e) {}
+				
+				@Override
+				public void mouseDoubleClick(MouseEvent e) {
+					List<GraphItem> selection = ((NonMovableGraph<IBinding>)e.getSource()).getSelection();
+					if(selection.isEmpty())
+						return;
+					
+					Rectangle newBounds = calculateBounds(_nonMovableGraph.getBounds());
+					
+					Collection<Node<IBinding>> nodes = ((NonMovableNode<IBinding>)selection.get(0)).internalNodes();
+					_nonMovableSubGraph = new NonMovableSubGraph<IBinding>(_parent2, nodes);
+					_nonMovableSubGraph.addMouseListener(subGraphMouseListener());
+					_parent2.layout();
+					
+					_nonMovableGraph.setVisible(false);
+					_nonMovableSubGraph.setBounds(newBounds);
+				}
+			};
+		}
+
+		
+		private MouseListener subGraphMouseListener() {
+			return new MouseListener() {
+				@Override
+				public void mouseUp(MouseEvent e) {}
+				
+				@Override
+				public void mouseDown(MouseEvent e) {}
+				
+				@Override
+				public void mouseDoubleClick(MouseEvent e) {
+					Rectangle newBounds = calculateBounds(_nonMovableSubGraph.getBounds());
+					
+					_nonMovableSubGraph.dispose();
+					_nonMovableGraph.setVisible(true);
+					_nonMovableGraph.setBounds(newBounds);
+				}
+
+			};
+		}
+		
+
+		private Rectangle calculateBounds(Rectangle bounds) {
+			Rectangle size = new Rectangle(bounds.x, bounds.y, bounds.width, bounds.height);
+			return size;
+		}
+		
+		
 		private void newCanvas(Collection<Node<IBinding>> graph, CartesianLayout initialLayout) {
 			if (_canvas != null) _canvas.dispose();
 

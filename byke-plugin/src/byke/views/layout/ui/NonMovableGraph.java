@@ -1,12 +1,15 @@
 package byke.views.layout.ui;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.eclipse.draw2d.SWTEventDispatcher;
-import org.eclipse.gef4.layout.algorithms.SpringLayoutAlgorithm;
+import org.eclipse.gef4.layout.algorithms.TreeLayoutAlgorithm;
 import org.eclipse.gef4.zest.core.widgets.GraphConnection;
 import org.eclipse.gef4.zest.core.widgets.GraphNode;
 import org.eclipse.gef4.zest.core.widgets.GraphWidget;
@@ -19,30 +22,69 @@ import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Composite;
 
 import byke.dependencygraph.Node;
-import byke.views.layout.CartesianLayout;
-import byke.views.layout.Coordinates;
 
 public class NonMovableGraph<T> extends GraphWidget {
 
-	private final Color _red = new Color(getDisplay(), new RGB(255, 0, 0));
-	private final Color _black = new Color(getDisplay(), new RGB(0, 0, 0));
-	private final Color _yellow = new Color(getDisplay(), new RGB(204, 204, 0));
+	protected final Color _red = new Color(getDisplay(), new RGB(255, 0, 0));
+	protected final Color _black = new Color(getDisplay(), new RGB(0, 0, 0));
+	protected final Color _yellow = new Color(getDisplay(), new RGB(204, 204, 0));
 	
-	private final Map<Node<T>, NonMovableNode> _nodeFiguresByNode = new HashMap<Node<T>, NonMovableNode>();
-	private GraphNode _selectedNodeFigure;
+	protected Map<Collection<Node<T>>, NonMovableNode<T>> _nodeFiguresByNode = new HashMap<Collection<Node<T>>, NonMovableNode<T>>();
+	protected GraphNode _selectedNodeFigure;
 	
-	public NonMovableGraph(Composite parent, Collection<Node<T>> graph) {
-		super(parent, SWT.NONE);
+	protected Collection<Collection<Node<T>>> calculateSubGraphs(Collection<Node<T>> graph) {
+		Collection<Collection<Node<T>>> newGraph = new ArrayList<Collection<Node<T>>>();
+		
+		for(Node<T> node : graph) {
+			for(Node<T> provider : node.providers()) {
+				if(node.equals(provider))
+					continue;
+				if(provider.dependsOn(node))
+					if(!hasNode(provider, newGraph))
+						newGraph.add(Arrays.asList(node, provider));
+			}
+		}
+		
+		for(Node<T> node : graph) {
+			if(!hasNode(node, newGraph)) {
+				List<Node<T>> asList = new ArrayList<Node<T>>();
+				asList.add(node);
+				newGraph.add(asList);
+			}
+		}
+		
+		return newGraph;
+	}
+
+	private boolean hasNode(Node<T> provider, Collection<Collection<Node<T>>> newGraph) {
+		for(Collection<Node<T>> nodes : newGraph)
+			if(nodes.contains(provider))
+				return true;
+		return false;
+	}
+
+	public NonMovableGraph(Composite parent, final Collection<Node<T>> graph) {
+		super(parent, ZestStyles.NONE);
 		
 		getLightweightSystem().setEventDispatcher(new SWTEventDispatcher() {
       @Override
       public void dispatchMouseMoved(org.eclipse.swt.events.MouseEvent me) {}
     });
 
-		setLayoutAlgorithm(new SpringLayoutAlgorithm(), true);
+		
+//		setLayoutAlgorithm(new SpringLayoutAlgorithm(), true);
 //		setLayoutAlgorithm(new SugiyamaLayoutAlgorithm(), true);
-//		setLayoutAlgorithm(new TreeLayoutAlgorithm(), true);
-		addSelectionListener(new SelectionAdapter() {
+		setLayoutAlgorithm(new TreeLayoutAlgorithm(), true);
+		
+		
+		addSelectionListener(selectionListener());
+		
+		Collection<? extends Collection<Node<T>>> newGraph = calculateSubGraphs(graph);
+		initGraphFigures(newGraph);
+	}
+
+	private SelectionAdapter selectionListener() {
+		return new SelectionAdapter() {
 			@Override
       public void widgetSelected(SelectionEvent e) {
         if(e.item instanceof GraphNode) {
@@ -60,42 +102,62 @@ public class NonMovableGraph<T> extends GraphWidget {
         	_selectedNodeFigure = g;
         }
       }
-    });
-		if(graph != null)
-			initGraphFigures(graph);
+    };
 	}
 
-	private boolean doNodesHaveCyclicDependency(GraphNode source, GraphNode destination) {
-		return ((Node<T>)destination.getData()).dependsOn((Node<T>)source.getData());
+	
+	protected boolean doNodesHaveCyclicDependency(GraphNode source, GraphNode destination) {
+		Collection<Node<?>> destinations = (Collection<Node<?>>)destination.getData();
+		Collection<Node<?>> sources = (Collection<Node<?>>)source.getData();
+		for(Node<?> d : destinations)
+			for(Node<?> s : sources)
+				if(d.dependsOn(s))
+					return true;
+		return false;
+		
+//		return ((Node<?>)destination.getData()).dependsOn((Node<?>)source.getData());
 	}
 	
-	private void initGraphFigures(Iterable<Node<T>> nodeGraph) {
-		for (Node<T> node : nodeGraph) {
-			GraphNode dependentFigure = produceNodeFigureFor(node);
+	protected void initGraphFigures(Collection<? extends Collection<Node<T>>> nodeGraph) {
+		for(Collection<Node<T>> nodes : nodeGraph)
+			produceNodeFigureFor(nodes);
+		
+		for(Collection<Node<T>> nodes : nodeGraph)
+			createNodeFigures(nodes);
+	}
 
+
+	protected void createNodeFigures(Collection<Node<T>> nodes) {
+		GraphNode dependentFigure = produceNodeFigureFor(nodes);
+		for (Node<T> node : nodes) {
+			
 			for (Node<T> provider : node.providers()) {
-				GraphNode providerFigure = produceNodeFigureFor(provider);
+				GraphNode providerFigure = nodeFigureFor(provider);
+				if(dependentFigure.equals(providerFigure))
+					continue;
+				
 				GraphConnection connection = new GraphConnection(this, ZestStyles.CONNECTIONS_DIRECTED, dependentFigure, providerFigure);
 				connection.changeLineColor(doNodesHaveCyclicDependency(connection.getSource(), connection.getDestination()) ? _red : _black);
 			}
 		}
-
 	}
 	
-	private NonMovableNode produceNodeFigureFor(Node<T> node) {
-		NonMovableNode result = _nodeFiguresByNode.get(node);
-		if (result != null) return result;
-
-		result = new NonMovableNode(this, SWT.NONE, node);
-		_nodeFiguresByNode.put(node, result);
-		return result;
-	}
-
-	public void useLayout(CartesianLayout newLayout) {
-		for(GraphNode node : getNodes()) {
-			Coordinates coordinates = newLayout.coordinatesFor(node.getText());
-			node.getFigure().getBounds().x = coordinates._x;
-			node.getFigure().getBounds().y = coordinates._y;
+	
+	protected NonMovableNode<T> nodeFigureFor(Node<T> node) {
+		for(Entry<Collection<Node<T>>, NonMovableNode<T>> entry : _nodeFiguresByNode.entrySet()) {
+			if(entry.getKey().contains(node))
+				return entry.getValue();
 		}
+		return null;
+	}
+	
+
+	protected NonMovableNode<T> produceNodeFigureFor(Collection<Node<T>> nodes) {
+		NonMovableNode<T> result = _nodeFiguresByNode.get(nodes);
+		if (result != null) return result;
+		
+		result = new NonMovableNode<T>(this, SWT.NONE, nodes);
+		_nodeFiguresByNode.put(nodes, result);
+		return result;
 	}
 }
