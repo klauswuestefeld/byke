@@ -1,7 +1,6 @@
 package byke.views.layout.ui;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -9,7 +8,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.eclipse.draw2d.SWTEventDispatcher;
-import org.eclipse.gef4.layout.algorithms.TreeLayoutAlgorithm;
+import org.eclipse.gef4.layout.algorithms.SpaceTreeLayoutAlgorithm;
 import org.eclipse.gef4.zest.core.widgets.GraphConnection;
 import org.eclipse.gef4.zest.core.widgets.GraphNode;
 import org.eclipse.gef4.zest.core.widgets.GraphWidget;
@@ -36,51 +35,63 @@ public class NonMovableGraph<T> extends GraphWidget {
 		Collection<Collection<Node<T>>> newGraph = new ArrayList<Collection<Node<T>>>();
 		
 		for(Node<T> node : graph) {
+			Collection<Node<T>> temp = new ArrayList<Node<T>>();
+			temp.add(node);
 			for(Node<T> provider : node.providers()) {
 				if(node.equals(provider))
 					continue;
 				if(provider.dependsOn(node))
-					if(!hasNode(provider, newGraph))
-						newGraph.add(Arrays.asList(node, provider));
+					temp.add(provider);
 			}
-		}
-		
-		for(Node<T> node : graph) {
-			if(!hasNode(node, newGraph)) {
-				List<Node<T>> asList = new ArrayList<Node<T>>();
-				asList.add(node);
-				newGraph.add(asList);
+			
+			Collection<Node<T>> cyclics = new ArrayList<Node<T>>();
+
+			for(Collection<Node<T>> x : newGraph) {
+				for(Node<T> y : temp)
+					if(x.contains(y)) {
+						cyclics = x;
+						break;
+					}
 			}
+			
+			for(Node<T> n : temp)
+				if(!cyclics.contains(n))
+					cyclics.add(n);
+			
+			newGraph.add(cyclics);
 		}
 		
 		return newGraph;
 	}
 
-	private boolean hasNode(Node<T> provider, Collection<Collection<Node<T>>> newGraph) {
-		for(Collection<Node<T>> nodes : newGraph)
-			if(nodes.contains(provider))
-				return true;
-		return false;
-	}
-
 	public NonMovableGraph(Composite parent, final Collection<Node<T>> graph) {
 		super(parent, ZestStyles.NONE);
 		
-		getLightweightSystem().setEventDispatcher(new SWTEventDispatcher() {
-      @Override
-      public void dispatchMouseMoved(org.eclipse.swt.events.MouseEvent me) {}
-    });
+		lockNodeMoves();
 
-		
-//		setLayoutAlgorithm(new SpringLayoutAlgorithm(), true);
-//		setLayoutAlgorithm(new SugiyamaLayoutAlgorithm(), true);
-		setLayoutAlgorithm(new TreeLayoutAlgorithm(), true);
-		
+		SpaceTreeLayoutAlgorithm spaceTreeLayoutAlgorithm = new SpaceTreeLayoutAlgorithm();
+		spaceTreeLayoutAlgorithm.setBranchGap(150);
+		spaceTreeLayoutAlgorithm.setLayerGap(50);
+		spaceTreeLayoutAlgorithm.setLeafGap(30);
+		spaceTreeLayoutAlgorithm.setDirection(SpaceTreeLayoutAlgorithm.TOP_DOWN);
+		setLayoutAlgorithm(spaceTreeLayoutAlgorithm, true);
 		
 		addSelectionListener(selectionListener());
 		
 		Collection<? extends Collection<Node<T>>> newGraph = calculateSubGraphs(graph);
-		initGraphFigures(newGraph);
+		try { // FIXME there's a NPE on this call, when you double click a node without subnodes
+			initGraphFigures(newGraph);
+		} catch (RuntimeException e) {
+			dispose();
+			e.printStackTrace();
+		}
+	}
+
+	private void lockNodeMoves() {
+		getLightweightSystem().setEventDispatcher(new SWTEventDispatcher() {
+      @Override
+      public void dispatchMouseMoved(org.eclipse.swt.events.MouseEvent me) {}
+    });
 	}
 
 	private SelectionAdapter selectionListener() {
@@ -114,8 +125,6 @@ public class NonMovableGraph<T> extends GraphWidget {
 				if(d.dependsOn(s))
 					return true;
 		return false;
-		
-//		return ((Node<?>)destination.getData()).dependsOn((Node<?>)source.getData());
 	}
 	
 	protected void initGraphFigures(Collection<? extends Collection<Node<T>>> nodeGraph) {
@@ -135,7 +144,7 @@ public class NonMovableGraph<T> extends GraphWidget {
 				GraphNode providerFigure = nodeFigureFor(provider);
 				if(dependentFigure.equals(providerFigure))
 					continue;
-				
+
 				GraphConnection connection = new GraphConnection(this, ZestStyles.CONNECTIONS_DIRECTED, dependentFigure, providerFigure);
 				connection.changeLineColor(doNodesHaveCyclicDependency(connection.getSource(), connection.getDestination()) ? _red : _black);
 			}
