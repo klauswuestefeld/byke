@@ -1,35 +1,28 @@
-package byke.views.layout.ui;
+package byke.views.layout.algorithm;
 
 import org.eclipse.gef4.geometry.planar.Point;
 import org.eclipse.gef4.geometry.planar.Rectangle;
 import org.eclipse.gef4.layout.LayoutAlgorithm;
-import org.eclipse.gef4.layout.algorithms.AlgorithmHelper;
 import org.eclipse.gef4.layout.interfaces.EntityLayout;
 import org.eclipse.gef4.layout.interfaces.LayoutContext;
 
 
 public class CircularLayoutAlgorithm implements LayoutAlgorithm {
 
+	private static final int EXPAND_RATIO = 50;
+	private static final int MINIMUM_DISTANCE = 50;
+	
 	private LayoutContext _context;
 
 	@Override
 	public void applyLayout(boolean arg0) {
 		EntityLayout[] entities = _context.getEntities();
-		Rectangle bounds = computeBoundsWithoutOverlapping(entities);
-		computeRadialPositions(entities);
-		AlgorithmHelper.fitWithinBounds(entities, bounds, false);
-	}
-
-	private Rectangle computeBoundsWithoutOverlapping(EntityLayout[] entities) {
-		computeRadialPositions(entities);
-
-		Rectangle bounds = AlgorithmHelper.getLayoutBounds(entities, false);
+		
+		int radius = 100;
 		while(existsOverlapping(entities)) {
-			AlgorithmHelper.fitWithinBounds(entities, bounds, false);
-			bounds.setWidth(bounds.getWidth() + 10);
-			bounds.setHeight(bounds.getHeight() + 10);
+			computeRadialPositions(entities, radius);
+			radius += EXPAND_RATIO;
 		}
-		return bounds;
 	}
 
 	private boolean existsOverlapping(EntityLayout[] entities) {
@@ -46,9 +39,9 @@ public class CircularLayoutAlgorithm implements LayoutAlgorithm {
 				continue;
 			
 			Rectangle entityBounds = new Rectangle(entity.getLocation(), entity.getSize());
-			entityBounds.setSize(entityBounds.getWidth() + 50, entityBounds.getHeight() + 50);
+			entityBounds.setSize(entityBounds.getWidth() + MINIMUM_DISTANCE, entityBounds.getHeight() + MINIMUM_DISTANCE);
 			Rectangle anotherEntityBounds = new Rectangle(anotherEntity.getLocation(), anotherEntity.getSize());
-			anotherEntityBounds.setSize(anotherEntityBounds.getWidth() + 50, anotherEntityBounds.getHeight() + 50);
+			anotherEntityBounds.setSize(anotherEntityBounds.getWidth() + MINIMUM_DISTANCE, anotherEntityBounds.getHeight() + MINIMUM_DISTANCE);
 			
 			if(entityBounds.touches(anotherEntityBounds))
 				return true;
@@ -56,14 +49,13 @@ public class CircularLayoutAlgorithm implements LayoutAlgorithm {
 		return false;
 	}
 
-	private void computeRadialPositions(EntityLayout[] entities) {
+	private void computeRadialPositions(EntityLayout[] entities, int radius) {
 		double angle = 0;
-		int distance = 100;
 
 		for (EntityLayout entity : entities) {
 			Point result = new Point(0, 0);
-			result.y = Math.round(distance * Math.sin(angle));
-			result.x = Math.round(distance * Math.cos(angle));
+			result.y = Math.round(radius * Math.sin(angle));
+			result.x = Math.round(radius * Math.cos(angle));
 			
 			angle += 2 * Math.PI / entities.length;
 			

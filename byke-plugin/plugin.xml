@@ -27,19 +27,7 @@
       	<initializer class="byke.preferences.PreferenceInitializer"/>
    	</extension>
    
-   	<extension point="org.eclipse.ui.commands">
-		<command
-            name="Pause diagram layout thread"
-            id="byke.views.actions.ToggleActiveAction"
-            defaultHandler="byke.views.handlers.ToggleActiveHandler">
-            
-            <state id="org.eclipse.ui.commands.toggleState">
-        		<class class="org.eclipse.ui.handlers.RegistryToggleState"> 
-         			<parameter name="default" value="false"/> 
-      			</class> 
-        	</state>
-     	</command>
-     	
+   	<extension point="org.eclipse.ui.commands">     	
      	<command
             name="Show Dependencies"
             id="byke.popup.actions.ShowDependenciesAction"
@@ -48,16 +36,6 @@
    	</extension>
    	
 	<extension point="org.eclipse.ui.menus">
-		<menuContribution locationURI="toolbar:byke.views.BykeView?after=additions">
-          	<command
-                 commandId="byke.views.actions.ToggleActiveAction"
-                 icon="icons/pause.gif"
-                 label="Toggle Active"
-                 style="toggle"
-                 tooltip="Pause diagram layout thread">
-          	</command>
-		</menuContribution>
-
 		<menuContribution locationURI="popup:org.eclipse.ui.popup.any?before=additions">
           	<command
                  commandId="byke.popup.actions.ShowDependenciesAction"

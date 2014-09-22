@@ -9,10 +9,7 @@ import org.eclipse.swt.widgets.Shell;
 
 import byke.JavaType;
 import byke.dependencygraph.Node;
-import byke.views.layout.CartesianLayout;
-import byke.views.layout.algorithm.LayeredLayoutAlgorithm;
-import byke.views.layout.algorithm.LayoutAlgorithm;
-import byke.views.layout.ui.GraphCanvas;
+import byke.views.layout.ui.NonMovableGraph;
 
 
 public class StandAlone {
@@ -41,63 +38,40 @@ public class StandAlone {
 		FillLayout layout = new FillLayout();
 		shell.setLayout(layout);
 
-		
-		GraphCanvas<String> canvas = new GraphCanvas<String>(shell, _graph, new CartesianLayout(), new GraphCanvas.Listener<String>() {
-			@Override public void nodeSelected(Node<String> node) {
-				System.out.println("Node: " + node);
-			}
-		});
-		
-		
-		@SuppressWarnings("rawtypes")
-		LayoutAlgorithm algorithm = new LayeredLayoutAlgorithm((Collection)_graph, null, canvas);
+		new NonMovableGraph<String>(shell, _graph);
 
 		shell.open();
 		shell.layout();
 
 		while (!shell.isDisposed()) {
 			while (!_display.readAndDispatch()) {
-				work(algorithm, canvas);
+				_display.sleep();
 			}
 		}
 	}
 
 	
-	private void work(LayoutAlgorithm algorithm, GraphCanvas<String> canvas) {
-		canvas.useLayout(algorithm.layoutMemento());
-
-		canvas.animationStep(1);
-	}
-
-	
 	private Collection<Node<String>> graph() {
-		
-//		String[] names = new String[NUMBER_OF_NODES];
-//		for (int i = 0; i < names.length; i++)
-//			names[i] = "Node " + i;
-//		return createGraph(names);
-
-		
 		return window();
-}
+	}
 
 
 	private Collection<Node<String>> window() {
-		Collection<Node<String>> result = new ArrayList<Node<String>>();
-		Node<String> tela = new Node<String>("WindowNomeMuitoGrande(XXXX)");
-		Node<String> outraTela = new Node<String>("AnotherWindowNomeMuitoGrande(XXXX)");
-		Node<String> addItems = new Node<String>("addItemsNomeMuitoGrande(XXXX)");
-		Node<String> addHandlers = new Node<String>("addHandlersNomeMuitoGrande(XXXX)()");
-		Node<String> addSomething = new Node<String>("addSomethingNomeMuitoGrande(XXXX)()");
-		Node<String> doSomething = new Node<String>("doSomething()NomeMuitoGrande(XXXX)");
-		Node<String> toolbar = new Node<String>("toolbarNomeMuitoGrande");
-		Node<String> tabSet = new Node<String>("tabSetNomeMuitoGrande");
-		Node<String> aba1 = new Node<String>("tab1NomeMuitoGrande");
-		Node<String> aba2 = new Node<String>("tab2NomeMuitoGrande");
-		Node<String> aba3 = new Node<String>("tab3NomeMuitoGrande");
-		Node<String> aba4 = new Node<String>("tab4NomeMuitoGrande");
-		Node<String> aba5 = new Node<String>("tab5NomeMuitoGrande");
-		Node<String> aba6 = new Node<String>("tab6NomeMuitoGrande");
+		
+		Node<String> tela = new Node<String>("Window(XXXX)");
+		Node<String> outraTela = new Node<String>("AnotherWindow(XXXX)");
+		Node<String> addItems = new Node<String>("addItems(XXXX)");
+		Node<String> addHandlers = new Node<String>("addHandlers(XXXX)()");
+		Node<String> addSomething = new Node<String>("addSomething(XXXX)()");
+		Node<String> doSomething = new Node<String>("doSomething(XXXX)");
+		Node<String> toolbar = new Node<String>("toolbar");
+		Node<String> tabSet = new Node<String>("tabSet");
+		Node<String> aba1 = new Node<String>("tab1");
+		Node<String> aba2 = new Node<String>("tab2");
+		Node<String> aba3 = new Node<String>("tab3");
+		Node<String> aba4 = new Node<String>("tab4");
+		Node<String> aba5 = new Node<String>("tab5");
+		Node<String> aba6 = new Node<String>("tab6");
 		
 		tela.addProvider(addItems);
 		tela.addProvider(addSomething);
@@ -112,11 +86,11 @@ public class StandAlone {
 		
 		doSomething.addProvider(tabSet);
 		
+		tabSet.addProvider(aba1);
 		tabSet.addProvider(aba2);
 		tabSet.addProvider(aba6);
 		tabSet.addProvider(aba3);
 		tabSet.addProvider(aba4);
-		tabSet.addProvider(aba1);
 		tabSet.addProvider(aba5);
 		
 		//cyclic dependencies
@@ -126,24 +100,25 @@ public class StandAlone {
 //		aba3.addProvider(addItems);
 //		toolbar.addProvider(addItems);
 		
+		Collection<Node<String>> result = new ArrayList<Node<String>>();
 		result.add(tela);
 		result.add(outraTela);
 		result.add(addSomething);
-		result.add(tabSet);
 		result.add(addItems);
 		result.add(addHandlers);
 		result.add(doSomething);
 		result.add(toolbar);
+		result.add(tabSet);
+		result.add(aba1);
 		result.add(aba6);
 		result.add(aba2);
 		result.add(aba3);
-		result.add(aba1);
 		result.add(aba4);
 		result.add(aba5);
 		
 		return result;
 	}
-
+	
 	
 	@SuppressWarnings("unused")
 	private static Collection<Node<String>> createGraph(String[] names) {

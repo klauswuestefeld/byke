@@ -3,9 +3,11 @@ package byke.views.layout.ui;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.eclipse.draw2d.SWTEventDispatcher;
 import org.eclipse.gef4.layout.algorithms.SpaceTreeLayoutAlgorithm;
@@ -30,6 +32,13 @@ public class NonMovableGraph<T> extends GraphWidget {
 	
 	protected Map<Collection<Node<T>>, NonMovableNode<T>> _nodeFiguresByNode = new HashMap<Collection<Node<T>>, NonMovableNode<T>>();
 	protected GraphNode _selectedNodeFigure;
+	
+	public Collection<Node<T>> nodes() {
+		Set<Node<T>> nodes = new HashSet<Node<T>>();
+		for(Collection<Node<T>> n : _nodeFiguresByNode.keySet())
+			nodes.addAll(n);
+		return nodes;
+	}
 	
 	protected Collection<Collection<Node<T>>> calculateSubGraphs(Collection<Node<T>> graph) {
 		Collection<Collection<Node<T>>> newGraph = new ArrayList<Collection<Node<T>>>();
@@ -64,11 +73,11 @@ public class NonMovableGraph<T> extends GraphWidget {
 		return newGraph;
 	}
 
+	
 	public NonMovableGraph(Composite parent, final Collection<Node<T>> graph) {
 		super(parent, ZestStyles.NONE);
 		
 		lockNodeMoves();
-
 		SpaceTreeLayoutAlgorithm spaceTreeLayoutAlgorithm = new SpaceTreeLayoutAlgorithm();
 		spaceTreeLayoutAlgorithm.setBranchGap(150);
 		spaceTreeLayoutAlgorithm.setLayerGap(50);
@@ -87,12 +96,14 @@ public class NonMovableGraph<T> extends GraphWidget {
 		}
 	}
 
+	
 	private void lockNodeMoves() {
 		getLightweightSystem().setEventDispatcher(new SWTEventDispatcher() {
       @Override
       public void dispatchMouseMoved(org.eclipse.swt.events.MouseEvent me) {}
     });
 	}
+	
 
 	private SelectionAdapter selectionListener() {
 		return new SelectionAdapter() {

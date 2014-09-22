@@ -10,38 +10,22 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.gef4.zest.core.widgets.GraphItem;
-import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.dom.IBinding;
-import org.eclipse.jdt.internal.ui.actions.SimpleSelectionProvider;
 import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.StructuredSelection;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.KeyEvent;
-import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
-import org.eclipse.swt.events.MouseWheelListener;
-import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.progress.UIJob;
 
 import byke.DependencyAnalysis;
 import byke.InvalidElement;
 import byke.dependencygraph.Node;
-import byke.views.layout.CartesianLayout;
-import byke.views.layout.NodeSizeProvider;
-import byke.views.layout.algorithm.LayeredLayoutAlgorithm;
-import byke.views.layout.algorithm.LayoutAlgorithm;
-import byke.views.layout.ui.GraphCanvas;
 import byke.views.layout.ui.NonMovableGraph;
 import byke.views.layout.ui.NonMovableNode;
 import byke.views.layout.ui.NonMovableSubGraph;
@@ -51,18 +35,8 @@ public class BykeView extends ViewPart implements IBykeView {
 
 	private final class LayoutJob extends UIJob {
 		
-		private static final int ONE_TENTH_OF_A_SECOND = 100;
-
-		private IJavaElement _elementBeingDisplayed;
-
-		private LayoutAlgorithm _algorithm;
-
 		private final Composite _parent2;
-		private GraphCanvas<IBinding> _canvas;
 		
-		private final MouseWheelListener _canvasMouseWheelListener = canvasMouseWheelListener();
-		private final KeyListener _canvasKeyPressedListener = keyPressedListener();
-
 		private NonMovableGraph<IBinding> _nonMovableGraph;
 		private NonMovableSubGraph<IBinding> _nonMovableSubGraph;
 		
@@ -78,55 +52,30 @@ public class BykeView extends ViewPart implements IBykeView {
 		@Override
 		public IStatus runInUIThread(IProgressMonitor monitor) {
 			if (monitor.isCanceled()) return Status.OK_STATUS;
-			if (_paused) return Status.OK_STATUS;
 			if (_parent2 == null || _parent2.isDisposed()) return Status.OK_STATUS;
 			checkForNewGraph();
-			if (_canvas == null || _canvas.isDisposed()) return Status.OK_STATUS;
 
 			_timeLastLayoutJobStarted = System.nanoTime();
-			_canvas.animationStep();
-			boolean improved = improveLayoutForAWhile();
 			this.schedule(nanosecondsToSleep() / 1000000);
-
-			if (improved) {
-				CartesianLayout bestSoFar = _algorithm.layoutMemento();
-				_canvas.useLayout(bestSoFar);
-				_layoutCache.keep(_elementBeingDisplayed, bestSoFar);
-			}
 
 			return Status.OK_STATUS;
 		}
 
-		
-		private boolean improveLayoutForAWhile() {
-			long start = System.currentTimeMillis();
-			do {
-				if (_algorithm.improveLayoutStep()) return true;
-			} while (System.currentTimeMillis() - start < ONE_TENTH_OF_A_SECOND);
-			
-			return false;
-		}
-		
 		
 		private void checkForNewGraph() {
 			if (_selectedGraph == null) return;
 
 			Collection<Node<IBinding>> myGraph;
 			synchronized (_graphChangeMonitor) {
-				_elementBeingDisplayed = _selectedElement;
 				myGraph = _selectedGraph;
 				_selectedGraph = null;
 			}
-			CartesianLayout bestSoFar = _layoutCache.getLayoutFor(_elementBeingDisplayed);
-			if (bestSoFar == null) bestSoFar = new CartesianLayout();
 
-			//newCanvas((Collection<Node<IBinding>>)myGraph, bestSoFar);
-			//newAlgorithm((Collection<Node<IBinding>>)myGraph, bestSoFar);
-			newGraph((Collection<Node<IBinding>>)myGraph, bestSoFar);
+			newGraph((Collection<Node<IBinding>>)myGraph);
 		}
 		
 		
-		private void newGraph(Collection<Node<IBinding>> graph, CartesianLayout initialLayout) {
+		private void newGraph(Collection<Node<IBinding>> graph) {
 			if(_nonMovableGraph != null)
 				_nonMovableGraph.dispose();
 			_nonMovableGraph = new NonMovableGraph<IBinding>(_parent2, graph);
@@ -148,18 +97,15 @@ public class BykeView extends ViewPart implements IBykeView {
 				@Override
 				public void mouseDoubleClick(MouseEvent e) {
 					List<GraphItem> selection = ((NonMovableGraph<IBinding>)e.getSource()).getSelection();
-					if(selection.isEmpty())
+					if(selection.isEmpty() || !(selection.get(0) instanceof NonMovableNode))
 						return;
-					
-					Rectangle newBounds = calculateBounds(_nonMovableGraph.getBounds());
 					
 					Collection<Node<IBinding>> nodes = ((NonMovableNode<IBinding>)selection.get(0)).internalNodes();
 					_nonMovableSubGraph = new NonMovableSubGraph<IBinding>(_parent2, nodes);
 					_nonMovableSubGraph.addMouseListener(subGraphMouseListener());
+					_nonMovableGraph.dispose();
 					_parent2.layout();
 					
-					_nonMovableGraph.setVisible(false);
-					_nonMovableSubGraph.setBounds(newBounds);
 				}
 			};
 		}
@@ -175,75 +121,25 @@ public class BykeView extends ViewPart implements IBykeView {
 				
 				@Override
 				public void mouseDoubleClick(MouseEvent e) {
-					Rectangle newBounds = calculateBounds(_nonMovableSubGraph.getBounds());
-					
-					_nonMovableSubGraph.dispose();
-					_nonMovableGraph.setVisible(true);
-					_nonMovableGraph.setBounds(newBounds);
+					if(!_nonMovableSubGraph.isDisposed())
+						_nonMovableSubGraph.dispose();
+					_nonMovableGraph = new NonMovableGraph<IBinding>(_parent2, _nonMovableGraph.nodes());
+					_nonMovableGraph.addMouseListener(graphMouseClick());
+					_parent2.layout();
 				}
 
 			};
 		}
-		
 
-		private Rectangle calculateBounds(Rectangle bounds) {
-			Rectangle size = new Rectangle(bounds.x, bounds.y, bounds.width, bounds.height);
-			return size;
-		}
-		
-		
-		private void newCanvas(Collection<Node<IBinding>> graph, CartesianLayout initialLayout) {
-			if (_canvas != null) _canvas.dispose();
 
-			_canvas = new GraphCanvas<IBinding>(_parent2, graph, initialLayout, new GraphCanvas.Listener<IBinding>() {
-				@Override
-				public void nodeSelected(Node<IBinding> node) {
-					selectNode(node);
-				}
-			});
-			_canvas.addMouseWheelListener(_canvasMouseWheelListener);
-			_canvas.addKeyListener(_canvasKeyPressedListener);
-			
-			_parent2.layout();
+		public void disposeGraphs() {
+			if(_nonMovableGraph != null)
+				_nonMovableGraph.dispose();
+			if(_nonMovableSubGraph != null)
+				_nonMovableSubGraph.dispose();
 		}
-		
-		private MouseWheelListener canvasMouseWheelListener() {
-			return new MouseWheelListener() {
-				@Override public void mouseScrolled(org.eclipse.swt.events.MouseEvent e) {
-					if (e.stateMask == SWT.CTRL)
-						if(e.count > 0)
-							_canvas.zoom(e.x, e.y, -5);
-						else
-							_canvas.zoom(e.x, e.y, 5);
-				}
-			};
-		}
-				
-		private KeyListener keyPressedListener() {
-			return new KeyListener() {			
-				@Override public void keyReleased(KeyEvent e) {
-					if(e.stateMask == SWT.CTRL && e.keyCode == SWT.KEYPAD_0)
-						_canvas.useLayout(_layoutCache.getLayoutFor(_elementBeingDisplayed));
-				}
-				
-				@Override public void keyPressed(KeyEvent e) {}
-			};
-		}
-
-		@SuppressWarnings("rawtypes")
-		private void newAlgorithm(Collection<Node<IBinding>> graph, CartesianLayout initialLayout) {
-			_algorithm = new LayeredLayoutAlgorithm((Collection)graph, initialLayout, (NodeSizeProvider)_canvas);
-		}
-
-		void togglePaused(boolean pause) {
-			_paused = pause;
-			if (!_paused) _layoutJob.schedule();
-		}
-
 	}
 
-	private boolean _paused;
-	
 	private static final int ONE_MILLISECOND = 1000000;
 	private static final int FIVE_SECONDS = 5 * 1000000000;
 
@@ -256,9 +152,6 @@ public class BykeView extends ViewPart implements IBykeView {
 	private Composite _parent;
 	private LayoutJob _layoutJob;
 	private long _timeLastLayoutJobStarted;
-	private final LayoutMap _layoutCache = new LayoutMap();
-
-	private ISelectionProvider _selectionProvider = new SimpleSelectionProvider();
 
 
 	@Override
@@ -278,13 +171,13 @@ public class BykeView extends ViewPart implements IBykeView {
 	
 	@Override
 	public void createPartControl(Composite parent) {
-		getSite().setSelectionProvider(_selectionProvider);
 		_parent = parent;
 		_layoutJob = new LayoutJob(_parent);
 	}
 
 	@Override
 	public void selectionChanged(IWorkbenchPart ignored, ISelection selection) {
+		_layoutJob.disposeGraphs();
 		showDependencies(selection);
 	}
 
@@ -330,55 +223,6 @@ public class BykeView extends ViewPart implements IBykeView {
 			}
 			return Status.OK_STATUS;
 		}}).schedule();
-	}
-
-	private void selectNode(Node<IBinding> selection) {
-		if (null == selection) {
-			drillUp();
-		} else {
-			drillDown(selection);
-		}
-	}
-
-	private void drillDown(Node<IBinding> selection) {
-		IBinding binding = selection.payload();
-		IJavaElement element = binding.getJavaElement();
-		setSelection(element);
-	}
-
-
-	private void drillUp() {
-		setSelection(drillUpTarget());
-	}
-
-	
-	private void setSelection(IJavaElement element) {
-		if (element == null) return;
-		StructuredSelection selection = new StructuredSelection(element);
-		getSite().getSelectionProvider().setSelection(selection);
-
-		setSelection("org.eclipse.ui.navigator.ProjectExplorer", selection);
-		setSelection("org.eclipse.jdt.ui.PackageExplorer", selection);
-	}
-
-
-	private void setSelection(String viewId, StructuredSelection selection) {
-		IViewPart view = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().findView(viewId);
-		if (view != null)
-			view.getSite().getSelectionProvider().setSelection(selection);
-	}
-
-
-	private IJavaElement drillUpTarget() {
-		IJavaElement current = _selectedElement.getParent();
-		return current instanceof ICompilationUnit
-			? current.getParent()
-			: current;
-	}
-
-	@Override
-	public void togglePaused(boolean pause) {
-		_layoutJob.togglePaused(pause);
 	}
 
 
