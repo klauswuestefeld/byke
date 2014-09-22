@@ -12,33 +12,60 @@ public class CircularLayoutAlgorithm implements LayoutAlgorithm {
 
 	private LayoutContext _context;
 
-
 	@Override
 	public void applyLayout(boolean arg0) {
 		EntityLayout[] entities = _context.getEntities();
-		Rectangle bounds = _context.getBounds();
-
-		computeRadialPositions(entities, bounds);
-
-//		int insets = 4;
-//		bounds.setX(bounds.getX() + insets);
-//		bounds.setY(bounds.getY() + insets);
-//		bounds.setWidth(bounds.getWidth() - 2 * insets);
-//		bounds.setHeight(bounds.getHeight() - 2 * insets);
+		Rectangle bounds = computeBoundsWithoutOverlapping(entities);
+		computeRadialPositions(entities);
 		AlgorithmHelper.fitWithinBounds(entities, bounds, false);
 	}
 
-	private void computeRadialPositions(EntityLayout[] entities, Rectangle bounds) {
-		Point centerPoint = new Point(bounds.getWidth() / 2, bounds.getHeight() / 2);
+	private Rectangle computeBoundsWithoutOverlapping(EntityLayout[] entities) {
+		computeRadialPositions(entities);
+
+		Rectangle bounds = AlgorithmHelper.getLayoutBounds(entities, false);
+		while(existsOverlapping(entities)) {
+			AlgorithmHelper.fitWithinBounds(entities, bounds, false);
+			bounds.setWidth(bounds.getWidth() + 10);
+			bounds.setHeight(bounds.getHeight() + 10);
+		}
+		return bounds;
+	}
+
+	private boolean existsOverlapping(EntityLayout[] entities) {
+		for (EntityLayout entity : entities)
+			if(isOverlapping(entity, entities))
+					return true;
+		
+		return false;
+	}
+
+	private boolean isOverlapping(EntityLayout entity, EntityLayout[] entities) {
+		for (EntityLayout anotherEntity : entities) {
+			if(entity.equals(anotherEntity))
+				continue;
+			
+			Rectangle entityBounds = new Rectangle(entity.getLocation(), entity.getSize());
+			entityBounds.setSize(entityBounds.getWidth() + 50, entityBounds.getHeight() + 50);
+			Rectangle anotherEntityBounds = new Rectangle(anotherEntity.getLocation(), anotherEntity.getSize());
+			anotherEntityBounds.setSize(anotherEntityBounds.getWidth() + 50, anotherEntityBounds.getHeight() + 50);
+			
+			if(entityBounds.touches(anotherEntityBounds))
+				return true;
+		}
+		return false;
+	}
+
+	private void computeRadialPositions(EntityLayout[] entities) {
 		double angle = 0;
-		int distance = 10;
+		int distance = 100;
 
 		for (EntityLayout entity : entities) {
 			Point result = new Point(0, 0);
-			result.y = centerPoint.y + (int)Math.round(distance * Math.sin(angle));
-			result.x = centerPoint.x + (int)Math.round(distance * Math.cos(angle));
+			result.y = Math.round(distance * Math.sin(angle));
+			result.x = Math.round(distance * Math.cos(angle));
 			
-			angle += (2 * Math.PI / entities.length);
+			angle += 2 * Math.PI / entities.length;
 			
 			entity.setLocation(result.x, result.y);
 		}
