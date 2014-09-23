@@ -37,6 +37,8 @@ public class BykeView extends ViewPart implements IBykeView {
 		
 		private final Composite _parent2;
 		
+		private IJavaElement _elementBeingDisplayed;
+		
 		private NonMovableGraph<IBinding> _nonMovableGraph;
 		private NonMovableSubGraph<IBinding> _nonMovableSubGraph;
 		
@@ -55,9 +57,6 @@ public class BykeView extends ViewPart implements IBykeView {
 			if (_parent2 == null || _parent2.isDisposed()) return Status.OK_STATUS;
 			checkForNewGraph();
 
-			_timeLastLayoutJobStarted = System.nanoTime();
-			this.schedule(nanosecondsToSleep() / 1000000);
-
 			return Status.OK_STATUS;
 		}
 
@@ -68,10 +67,14 @@ public class BykeView extends ViewPart implements IBykeView {
 			Collection<Node<IBinding>> myGraph;
 			synchronized (_graphChangeMonitor) {
 				myGraph = _selectedGraph;
+				if(_elementBeingDisplayed == null || !_elementBeingDisplayed.equals(_selectedElement)) {
+					disposeGraphs();
+					_elementBeingDisplayed = _selectedElement;
+					newGraph((Collection<Node<IBinding>>)myGraph);
+				}
 				_selectedGraph = null;
 			}
 
-			newGraph((Collection<Node<IBinding>>)myGraph);
 		}
 		
 		
@@ -140,9 +143,6 @@ public class BykeView extends ViewPart implements IBykeView {
 		}
 	}
 
-	private static final int ONE_MILLISECOND = 1000000;
-	private static final int FIVE_SECONDS = 5 * 1000000000;
-
 	private IViewSite _site;
 
 	private final Object _graphChangeMonitor = new Object();
@@ -151,7 +151,6 @@ public class BykeView extends ViewPart implements IBykeView {
 
 	private Composite _parent;
 	private LayoutJob _layoutJob;
-	private long _timeLastLayoutJobStarted;
 
 
 	@Override
@@ -177,7 +176,6 @@ public class BykeView extends ViewPart implements IBykeView {
 
 	@Override
 	public void selectionChanged(IWorkbenchPart ignored, ISelection selection) {
-		_layoutJob.disposeGraphs();
 		showDependencies(selection);
 	}
 
@@ -188,7 +186,7 @@ public class BykeView extends ViewPart implements IBykeView {
 
 	private void showJavaDependencies(IJavaElement javaElement) {
 		if (javaElement == null) return;
-		
+
 		DependencyAnalysis a;
 		try {
 			a = new DependencyAnalysis(javaElement);
@@ -233,21 +231,6 @@ public class BykeView extends ViewPart implements IBykeView {
 		if (!(firstElement instanceof IJavaElement)) return null;
 
 		return (IJavaElement)firstElement;
-	}
-
-	private long nanosecondsToSleep() {
-		long currentTime = System.nanoTime();
-
-		long timeLastLayoutJobTook = currentTime - _timeLastLayoutJobStarted;
-		if (timeLastLayoutJobTook < 0) timeLastLayoutJobTook = 0; // This can happen due to rounding from nanos to millis.
-
-		long timeToSleep = timeLastLayoutJobTook * 4; // The more things run in parallel with byke, the less greedy byke will be. Byke is proud to be a very good citizen. :)
-		if (timeToSleep > FIVE_SECONDS) timeToSleep = FIVE_SECONDS;
-		if (timeToSleep < ONE_MILLISECOND) timeToSleep = ONE_MILLISECOND;
-
-		_timeLastLayoutJobStarted = currentTime + timeToSleep;
-
-		return timeToSleep;
 	}
 
 	@Override
