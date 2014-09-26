@@ -33,12 +33,32 @@ public class NonMovableGraph<T> extends GraphWidget {
 	protected Map<Collection<Node<T>>, NonMovableNode<T>> _nodeFiguresByNode = new HashMap<Collection<Node<T>>, NonMovableNode<T>>();
 	protected GraphNode _selectedNodeFigure;
 	
+	
+	public NonMovableGraph(Composite parent, final Collection<Node<T>> graph) {
+		super(parent, ZestStyles.NONE);
+		
+		lockNodeMoves();
+		SpaceTreeLayoutAlgorithm spaceTreeLayoutAlgorithm = new SpaceTreeLayoutAlgorithm();
+		spaceTreeLayoutAlgorithm.setBranchGap(150);
+		spaceTreeLayoutAlgorithm.setLayerGap(50);
+		spaceTreeLayoutAlgorithm.setLeafGap(30);
+		spaceTreeLayoutAlgorithm.setDirection(SpaceTreeLayoutAlgorithm.TOP_DOWN);
+		setLayoutAlgorithm(spaceTreeLayoutAlgorithm, true);
+		
+		addSelectionListener(selectionListener());
+		
+		Collection<? extends Collection<Node<T>>> newGraph = calculateSubGraphs(graph);
+		initGraphFigures(newGraph);
+	}
+
+
 	public Collection<Node<T>> nodes() {
 		Set<Node<T>> nodes = new HashSet<Node<T>>();
 		for(Collection<Node<T>> n : _nodeFiguresByNode.keySet())
 			nodes.addAll(n);
 		return nodes;
 	}
+	
 	
 	protected Collection<Collection<Node<T>>> calculateSubGraphs(Collection<Node<T>> graph) {
 		Collection<Collection<Node<T>>> newGraph = new ArrayList<Collection<Node<T>>>();
@@ -72,30 +92,6 @@ public class NonMovableGraph<T> extends GraphWidget {
 		
 		return newGraph;
 	}
-
-	
-	public NonMovableGraph(Composite parent, final Collection<Node<T>> graph) {
-		super(parent, ZestStyles.NONE);
-		
-		lockNodeMoves();
-		SpaceTreeLayoutAlgorithm spaceTreeLayoutAlgorithm = new SpaceTreeLayoutAlgorithm();
-		spaceTreeLayoutAlgorithm.setBranchGap(150);
-		spaceTreeLayoutAlgorithm.setLayerGap(50);
-		spaceTreeLayoutAlgorithm.setLeafGap(30);
-		spaceTreeLayoutAlgorithm.setDirection(SpaceTreeLayoutAlgorithm.TOP_DOWN);
-		setLayoutAlgorithm(spaceTreeLayoutAlgorithm, true);
-		
-		addSelectionListener(selectionListener());
-		
-		Collection<? extends Collection<Node<T>>> newGraph = calculateSubGraphs(graph);
-		try { // FIXME there's a NPE on this call, when you double click a node without subnodes
-			initGraphFigures(newGraph);
-		} catch (RuntimeException e) {
-			dispose();
-			e.printStackTrace();
-		}
-	}
-
 	
 	private void lockNodeMoves() {
 		getLightweightSystem().setEventDispatcher(new SWTEventDispatcher() {
@@ -139,9 +135,6 @@ public class NonMovableGraph<T> extends GraphWidget {
 	}
 	
 	protected void initGraphFigures(Collection<? extends Collection<Node<T>>> nodeGraph) {
-		for(Collection<Node<T>> nodes : nodeGraph)
-			produceNodeFigureFor(nodes);
-		
 		for(Collection<Node<T>> nodes : nodeGraph)
 			createNodeFigures(nodes);
 	}

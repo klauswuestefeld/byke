@@ -3,6 +3,7 @@
 package byke.views;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -104,6 +105,9 @@ public class BykeView extends ViewPart implements IBykeView {
 						return;
 					
 					Collection<Node<IBinding>> nodes = ((NonMovableNode<IBinding>)selection.get(0)).internalNodes();
+					if(nodes.size() < 2)
+						return;
+					
 					_nonMovableSubGraph = new NonMovableSubGraph<IBinding>(_parent2, nodes);
 					_nonMovableSubGraph.addMouseListener(subGraphMouseListener());
 					_nonMovableGraph.dispose();
@@ -126,7 +130,8 @@ public class BykeView extends ViewPart implements IBykeView {
 				public void mouseDoubleClick(MouseEvent e) {
 					if(!_nonMovableSubGraph.isDisposed())
 						_nonMovableSubGraph.dispose();
-					_nonMovableGraph = new NonMovableGraph<IBinding>(_parent2, _nonMovableGraph.nodes());
+					Collection<Node<IBinding>> nodes = new HashSet<Node<IBinding>>(_nonMovableGraph.nodes());
+					_nonMovableGraph = new NonMovableGraph<IBinding>(_parent2, nodes);
 					_nonMovableGraph.addMouseListener(graphMouseClick());
 					_parent2.layout();
 				}
