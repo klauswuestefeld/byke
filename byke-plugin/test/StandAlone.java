@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
@@ -14,9 +15,8 @@ import byke.views.layout.ui.NonMovableGraph;
 
 public class StandAlone {
 
-	@SuppressWarnings("unused")
-	private static final int NUMBER_OF_NODES = 40;
-	private static final double DENSITY_OF_DEPENDENCIES = 1.8;
+	private static final int NUMBER_OF_NODES = 10;
+	private static final double DENSITY_OF_DEPENDENCIES = 0.9;
 
 	private final static Random RANDOM = new Random(0);
 
@@ -52,7 +52,37 @@ public class StandAlone {
 
 	
 	private Collection<Node<String>> graph() {
-		return window();
+		return createSimpleCyclicDependencyGraph();
+		//return randomGraph();
+		//return window();
+	}
+
+
+	private Collection<Node<String>> randomGraph() {
+		String[] names = new String[NUMBER_OF_NODES];
+		for(int i=0; i<NUMBER_OF_NODES;i++)
+			names[i] = "Node "+i;
+		return createGraph(names);
+	}
+
+
+	private Collection<Node<String>> createSimpleDependencyGraph() {
+		Node<String> st1 = new Node<String>("static 1");
+		Node<String> st2 = new Node<String>("static 2");
+		Node<String> m1 = new Node<String>("method1");
+		Node<String> m2 = new Node<String>("method2");
+		m1.addProvider(m2);
+		return Arrays.asList(st1, st2, m1, m2);
+	}
+	
+	private Collection<Node<String>> createSimpleCyclicDependencyGraph() {
+		Node<String> n1 = new Node<String>("n 1");
+		Node<String> n2 = new Node<String>("n 2");
+		Node<String> n3 = new Node<String>("n 3");
+		n1.addProvider(n2);
+		n2.addProvider(n1);
+		n2.addProvider(n3);
+		return Arrays.asList(n1, n2, n3);
 	}
 
 
@@ -100,27 +130,10 @@ public class StandAlone {
 //		aba3.addProvider(addItems);
 //		toolbar.addProvider(addItems);
 		
-		Collection<Node<String>> result = new ArrayList<Node<String>>();
-		result.add(tela);
-		result.add(outraTela);
-		result.add(addSomething);
-		result.add(addItems);
-		result.add(addHandlers);
-		result.add(doSomething);
-		result.add(toolbar);
-		result.add(tabSet);
-		result.add(aba1);
-		result.add(aba6);
-		result.add(aba2);
-		result.add(aba3);
-		result.add(aba4);
-		result.add(aba5);
-		
-		return result;
+		return Arrays.asList(tela, outraTela, addSomething, addItems, addHandlers, doSomething, toolbar, tabSet, aba1, aba2, aba3, aba4, aba5, aba6);
 	}
 	
 	
-	@SuppressWarnings("unused")
 	private static Collection<Node<String>> createGraph(String[] names) {
 		List<Node<String>> result = new ArrayList<Node<String>>();
 		for (String element : names)

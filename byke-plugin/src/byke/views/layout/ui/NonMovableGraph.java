@@ -1,6 +1,7 @@
 package byke.views.layout.ui;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -145,12 +146,14 @@ public class NonMovableGraph<T> extends GraphWidget {
 		for (Node<T> node : nodes) {
 			
 			for (Node<T> provider : node.providers()) {
-				GraphNode providerFigure = nodeFigureFor(provider);
+				GraphNode providerFigure = produceNodeFigureFor(Arrays.asList(provider));
 				if(dependentFigure.equals(providerFigure))
 					continue;
 
-				GraphConnection connection = new GraphConnection(this, ZestStyles.CONNECTIONS_DIRECTED, dependentFigure, providerFigure);
-				connection.changeLineColor(doNodesHaveCyclicDependency(connection.getSource(), connection.getDestination()) ? _red : _black);
+				if(providerFigure != null) {
+					GraphConnection connection = new GraphConnection(this, ZestStyles.CONNECTIONS_DIRECTED, dependentFigure, providerFigure);
+					connection.changeLineColor(doNodesHaveCyclicDependency(connection.getSource(), connection.getDestination()) ? _red : _black);
+				}
 			}
 		}
 	}
