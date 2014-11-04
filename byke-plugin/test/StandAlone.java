@@ -8,6 +8,7 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
+import ui.NonMovableGraphTest;
 import byke.JavaType;
 import byke.dependencygraph.Node;
 import byke.views.layout.ui.NonMovableGraph;
@@ -52,7 +53,7 @@ public class StandAlone {
 
 	
 	private Collection<Node<String>> graph() {
-		return createSimpleCyclicDependencyGraph();
+		return NonMovableGraphTest.createSimpleCyclicDependencyGraph();
 		//return randomGraph();
 		//return window();
 	}
@@ -75,17 +76,6 @@ public class StandAlone {
 		return Arrays.asList(st1, st2, m1, m2);
 	}
 	
-	private Collection<Node<String>> createSimpleCyclicDependencyGraph() {
-		Node<String> n1 = new Node<String>("n 1");
-		Node<String> n2 = new Node<String>("n 2");
-		Node<String> n3 = new Node<String>("n 3");
-		n1.addProvider(n2);
-		n2.addProvider(n1);
-		n2.addProvider(n3);
-		return Arrays.asList(n1, n2, n3);
-	}
-
-
 	private Collection<Node<String>> window() {
 		
 		Node<String> tela = new Node<String>("Window(XXXX)");
