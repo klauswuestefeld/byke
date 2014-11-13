@@ -8,6 +8,7 @@ public enum JavaType {
 
 	PACKAGE(ISharedImages.IMG_OBJS_PACKAGE),
 	CLASS(ISharedImages.IMG_OBJS_CLASS),
+	SUBGRAPH(ISharedImages.IMG_OBJS_CLASS),
 	ANNOTATION(ISharedImages.IMG_OBJS_ANNOTATION), 
 	INTERFACE(ISharedImages.IMG_OBJS_INTERFACE),
 	ENUM(ISharedImages.IMG_OBJS_ENUM),

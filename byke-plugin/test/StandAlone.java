@@ -16,8 +16,8 @@ import byke.views.layout.ui.NonMovableGraph;
 
 public class StandAlone {
 
-	private static final int NUMBER_OF_NODES = 10;
-	private static final double DENSITY_OF_DEPENDENCIES = 0.9;
+	private static final int NUMBER_OF_NODES = 11;
+	private static final double DENSITY_OF_DEPENDENCIES = 1.3;
 
 	private final static Random RANDOM = new Random(0);
 
@@ -25,7 +25,6 @@ public class StandAlone {
 	public static void main(String args[]) {
 		new StandAlone();
 	}
-
 
 	private final Collection<Node<String>> _graph = graph();
 
@@ -53,8 +52,8 @@ public class StandAlone {
 
 	
 	private Collection<Node<String>> graph() {
-		return NonMovableGraphTest.createSimpleCyclicDependencyGraph();
-		//return randomGraph();
+		//return NonMovableGraphTest.createSimpleCyclicDependencyGraph();
+		return randomGraph();
 		//return window();
 	}
 
@@ -64,16 +63,6 @@ public class StandAlone {
 		for(int i=0; i<NUMBER_OF_NODES;i++)
 			names[i] = "Node "+i;
 		return createGraph(names);
-	}
-
-
-	private Collection<Node<String>> createSimpleDependencyGraph() {
-		Node<String> st1 = new Node<String>("static 1");
-		Node<String> st2 = new Node<String>("static 2");
-		Node<String> m1 = new Node<String>("method1");
-		Node<String> m2 = new Node<String>("method2");
-		m1.addProvider(m2);
-		return Arrays.asList(st1, st2, m1, m2);
 	}
 	
 	private Collection<Node<String>> window() {

@@ -8,9 +8,12 @@ import org.eclipse.gef4.zest.core.widgets.GraphNode;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import byke.dependencygraph.Node;
+import byke.dependencygraph.SubGraph;
+import byke.views.layout.ui.DependencyProcessor;
 import byke.views.layout.ui.NonMovableGraph;
 
 
@@ -19,21 +22,36 @@ public class NonMovableGraphTest {
 	private NonMovableGraph<String> _graph;
 
 
-	@Test
+	@Test 
 	public void simpleGraph() {
 		newGraph(createSimpleCyclicDependencyGraph());
 
-		Assert.assertEquals(4, _graph.getNodes().size());
-		Assert.assertEquals(6, _graph.getConnections().size());
+		Assert.assertEquals(2, _graph.getNodes().size());
+		Assert.assertEquals(1, _graph.getConnections().size());
 
-		hasNode("n 1");
-		hasNode("n 2");
-		hasNode("n 3");
 		hasNode("n 1, n 2");
-
-		hasConnection("n 1, n 2", "n 1");
-		hasConnection("n 1, n 2", "n 2");
+		hasNode("n 3");
+		
 		hasConnection("n 1, n 2", "n 3");
+	}
+	
+	@Test
+	public void dependencyProcessing() {
+		Collection<SubGraph<String>> processedGraph = new DependencyProcessor().calculateSubGraphs(createSimpleCyclicDependencyGraph());
+	
+		Assert.assertEquals(2, processedGraph.size());
+		SubGraph cycle = getNode("n 1, n 2", processedGraph);
+		SubGraph other = getNode("n 3", processedGraph);
+		Assert.assertTrue(cycle.providers().contains(other));
+	}
+
+	private SubGraph<String> getNode(String name, Collection<SubGraph<String>> graph) {
+		for (SubGraph<String> node : graph)
+			if (node.name().equals(name)) 
+				return node;
+
+		Assert.fail(String.format("Node '%s' not found", name));
+		return null;
 	}
 
 	public static Collection<Node<String>> createSimpleCyclicDependencyGraph() {

@@ -24,6 +24,7 @@ import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Composite;
 
 import byke.dependencygraph.Node;
+import byke.dependencygraph.SubGraph;
 
 public class NonMovableGraph<T> extends GraphWidget {
 
@@ -31,7 +32,7 @@ public class NonMovableGraph<T> extends GraphWidget {
 	protected final Color _black = new Color(getDisplay(), new RGB(0, 0, 0));
 	protected final Color _yellow = new Color(getDisplay(), new RGB(204, 204, 0));
 	
-	protected Map<Collection<Node<T>>, NonMovableNode<T>> _nodeFiguresByNode = new HashMap<Collection<Node<T>>, NonMovableNode<T>>();
+	protected Map<SubGraph<T>, NonMovableNode<T>> _nodeFiguresByNode = new HashMap<SubGraph<T>, NonMovableNode<T>>();
 	protected GraphNode _selectedNodeFigure;
 	
 	
@@ -48,50 +49,17 @@ public class NonMovableGraph<T> extends GraphWidget {
 		
 		addSelectionListener(selectionListener());
 		
-		Collection<? extends Collection<Node<T>>> newGraph = calculateSubGraphs(graph);
+		DependencyProcessor processor = new DependencyProcessor();
+		Collection<SubGraph<T>> newGraph = processor.calculateSubGraphs(graph);
 		initGraphFigures(newGraph);
 	}
 
 
 	public Collection<Node<T>> nodes() {
 		Set<Node<T>> nodes = new HashSet<Node<T>>();
-		for(Collection<Node<T>> n : _nodeFiguresByNode.keySet())
-			nodes.addAll(n);
+		for(SubGraph<T> n : _nodeFiguresByNode.keySet())
+			nodes.addAll(n.payload());
 		return nodes;
-	}
-	
-	
-	protected Collection<Collection<Node<T>>> calculateSubGraphs(Collection<Node<T>> graph) {
-		Collection<Collection<Node<T>>> newGraph = new ArrayList<Collection<Node<T>>>();
-		
-		for(Node<T> node : graph) {
-			Collection<Node<T>> temp = new ArrayList<Node<T>>();
-			temp.add(node);
-			for(Node<T> provider : node.providers()) {
-				if(node.equals(provider))
-					continue;
-				if(provider.dependsOn(node))
-					temp.add(provider);
-			}
-			
-			Collection<Node<T>> cyclics = new ArrayList<Node<T>>();
-
-			for(Collection<Node<T>> x : newGraph) {
-				for(Node<T> y : temp)
-					if(x.contains(y)) {
-						cyclics = x;
-						break;
-					}
-			}
-			
-			for(Node<T> n : temp)
-				if(!cyclics.contains(n))
-					cyclics.add(n);
-			
-			newGraph.add(cyclics);
-		}
-		
-		return newGraph;
 	}
 	
 	private void lockNodeMoves() {
@@ -109,13 +77,13 @@ public class NonMovableGraph<T> extends GraphWidget {
         if(e.item instanceof GraphNode) {
         	if(_selectedNodeFigure != null)
         		for(GraphConnection connection : (List<GraphConnection>)_selectedNodeFigure.getSourceConnections()) {
-  						connection.changeLineColor(doNodesHaveCyclicDependency(connection.getSource(), connection.getDestination()) ? _red : _black);
+  						//connection.changeLineColor(doNodesHaveCyclicDependency(connection.getSource(), connection.getDestination()) ? _red : _black);
   						connection.setLineWidth(1);
         		}
         	
         	GraphNode g = (GraphNode)e.item;
         	for(GraphConnection connection : (List<GraphConnection>)g.getSourceConnections()) {
-						connection.changeLineColor(doNodesHaveCyclicDependency(connection.getSource(), connection.getDestination()) ? _red : _yellow);
+						//connection.changeLineColor(doNodesHaveCyclicDependency(connection.getSource(), connection.getDestination()) ? _red : _yellow);
 						connection.setLineWidth(3);
         	}
         	_selectedNodeFigure = g;
@@ -125,55 +93,51 @@ public class NonMovableGraph<T> extends GraphWidget {
 	}
 
 	
-	protected boolean doNodesHaveCyclicDependency(GraphNode source, GraphNode destination) {
-		Collection<Node<?>> destinations = (Collection<Node<?>>)destination.getData();
-		Collection<Node<?>> sources = (Collection<Node<?>>)source.getData();
-		for(Node<?> d : destinations)
-			for(Node<?> s : sources)
-				if(d.dependsOn(s))
-					return true;
-		return false;
-	}
+//	protected boolean doNodesHaveCyclicDependency(GraphNode source, GraphNode destination) {
+//		Collection<Node<?>> destinations = (Collection<Node<?>>)destination.getData();
+//		Collection<Node<?>> sources = (Collection<Node<?>>)source.getData();
+//		for(Node<?> d : destinations)
+//			for(Node<?> s : sources)
+//				if(d.dependsOn(s))
+//					return true;
+//		return false;
+//	}
 	
-	protected void initGraphFigures(Collection<? extends Collection<Node<T>>> nodeGraph) {
-		for(Collection<Node<T>> nodes : nodeGraph)
-			createNodeFigures(nodes);
+	protected void initGraphFigures(Collection<SubGraph<T>> nodeGraph) {
+		for(SubGraph<T> node : nodeGraph)
+			createNodeFigures(node);
 	}
 
 
-	protected void createNodeFigures(Collection<Node<T>> nodes) {
-		GraphNode dependentFigure = produceNodeFigureFor(nodes);
-		for (Node<T> node : nodes) {
+	protected void createNodeFigures(SubGraph<T> node) {
+		GraphNode dependentFigure = produceNodeFigureFor(node);
 			
-			for (Node<T> provider : node.providers()) {
-				GraphNode providerFigure = produceNodeFigureFor(Arrays.asList(provider));
-				if(dependentFigure.equals(providerFigure))
-					continue;
+		for (Object provider : node.providers()) {
+			GraphNode providerFigure = produceNodeFigureFor((SubGraph<T>)provider);
+			if (dependentFigure.equals(providerFigure)) continue;
 
-				if(providerFigure != null) {
-					GraphConnection connection = new GraphConnection(this, ZestStyles.CONNECTIONS_DIRECTED, dependentFigure, providerFigure);
-					connection.changeLineColor(doNodesHaveCyclicDependency(connection.getSource(), connection.getDestination()) ? _red : _black);
-				}
+			if (providerFigure != null) {
+				GraphConnection connection = new GraphConnection(this, ZestStyles.CONNECTIONS_DIRECTED, dependentFigure, providerFigure);
+				//connection.changeLineColor(doNodesHaveCyclicDependency(connection.getSource(), connection.getDestination()) ? _red : _black);
 			}
 		}
 	}
 	
 	
-	protected NonMovableNode<T> nodeFigureFor(Node<T> node) {
-		for(Entry<Collection<Node<T>>, NonMovableNode<T>> entry : _nodeFiguresByNode.entrySet()) {
-			if(entry.getKey().contains(node))
+	protected NonMovableNode<T> nodeFigureFor(Node<?> node) {
+		for(Entry<SubGraph<T>, NonMovableNode<T>> entry : _nodeFiguresByNode.entrySet()) {
+			if(entry.getKey().equals(node))
 				return entry.getValue();
 		}
 		return null;
 	}
-	
 
-	protected NonMovableNode<T> produceNodeFigureFor(Collection<Node<T>> nodes) {
-		NonMovableNode<T> result = _nodeFiguresByNode.get(nodes);
+	protected NonMovableNode<T> produceNodeFigureFor(SubGraph<T> subGraph) {
+		NonMovableNode<T> result = _nodeFiguresByNode.get(subGraph);
 		if (result != null) return result;
 		
-		result = new NonMovableNode<T>(this, SWT.NONE, nodes);
-		_nodeFiguresByNode.put(nodes, result);
+		result = new NonMovableNode<T>(this, SWT.NONE, subGraph);
+		_nodeFiguresByNode.put(subGraph, result);
 		return result;
 	}
 }

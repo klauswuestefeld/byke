@@ -21,25 +21,25 @@ public class NonMovableSubGraph<T> extends NonMovableGraph<T> {
 	}
 
 
-	@Override
-	protected Collection<Collection<Node<T>>> calculateSubGraphs(Collection<Node<T>> graph) {
-		Collection<Collection<Node<T>>> newGraph = new ArrayList<Collection<Node<T>>>();
-		
-		for(Node<T> node : graph)
-			newGraph.add(Arrays.asList(node));
-		newGraph.add(graph);
-		
-		return newGraph;
-	}
+//	@Override
+//	protected Collection<Collection<Node<T>>> calculateSubGraphs(Collection<Node<T>> graph) {
+//		Collection<Collection<Node<T>>> newGraph = new ArrayList<Collection<Node<T>>>();
+//		
+//		for(Node<T> node : graph)
+//			newGraph.add(Arrays.asList(node));
+//		newGraph.add(graph);
+//		
+//		return newGraph;
+//	}
 	
 	
-	@Override
-	protected void initGraphFigures(Collection<? extends Collection<Node<T>>> nodeGraph) {
-		for(Collection<Node<T>> nodes : nodeGraph)
-			if(nodes.size() < 2)
-				produceNodeFigureFor(nodes);
-		
-		for(Collection<Node<T>> nodes : _nodeFiguresByNode.keySet())
-			createNodeFigures(nodes);
-	}
+//	@Override
+//	protected void initGraphFigures(Collection<Node<T>> nodeGraph) {
+//		for(Node<T> nodes : nodeGraph)
+//			if(nodes.size() < 2)
+//				produceNodeFigureFor(nodes);
+//		
+//		for(Collection<Node<T>> nodes : _nodeFiguresByNode.keySet())
+//			createNodeFigures(nodes);
+//	}
 }
