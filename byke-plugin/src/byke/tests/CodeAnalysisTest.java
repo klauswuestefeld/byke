@@ -37,9 +37,7 @@ public class CodeAnalysisTest extends Assert {
 	
 	
 	protected void assertDepends(IJavaElement toAnalyse, String dependentName, String... providers) throws CoreException, InvalidElement {
-		//project.buildProject(null);
-		project.joinAutoBuild();
-		assertBuildOK();
+		buildProject();
 		
 		Collection<Node<IBinding>> graph = new DependencyAnalysis(toAnalyse).dependencyGraph(null);
 		assertTrue("Graph should have more than one node: " + graph, graph.size() > 1);
@@ -52,6 +50,12 @@ public class CodeAnalysisTest extends Assert {
 		if(providers.length == 0)
 			for(Node<IBinding> provider : graph)
 				doAssertions(dependent, provider);
+	}
+	
+	
+	protected void buildProject() throws CoreException {
+		project.joinAutoBuild();
+		assertBuildOK();
 	}
 	
 	

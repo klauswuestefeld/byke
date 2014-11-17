@@ -2,6 +2,7 @@
 //This is free software. See the license distributed along with this file.
 package byke.views;
 
+import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -15,9 +16,12 @@ import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.FileDialog;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PartInitException;
@@ -172,7 +176,6 @@ public class BykeView extends ViewPart implements IBykeView {
 		super.dispose();
 	}
 
-	
 	@Override
 	public void createPartControl(Composite parent) {
 		_parent = parent;
@@ -215,6 +218,7 @@ public class BykeView extends ViewPart implements IBykeView {
 		(new Job("'" + analysis.subject().getElementName() + "' analysis") { @Override protected IStatus run(IProgressMonitor monitor) {
 			try {
 				Collection<Node<IBinding>> nextGraph = analysis.dependencyGraph(monitor);
+				new DependencyAnalysisCache().keep(analysis.subject(), nextGraph);
 				
 				synchronized (_graphChangeMonitor) {
 					if (analysis.subject() != _selectedElement) return Status.OK_STATUS;
@@ -241,6 +245,48 @@ public class BykeView extends ViewPart implements IBykeView {
 	@Override
 	public void setFocus() {
 		_parent.setFocus();
+	}
+
+
+	public void exportDependencyAnalysis() {
+		if(_selectedElement == null)
+			return;
+		
+    String selectedFileName = askForFile();
+    
+    if(selectedFileName == null)
+    	return;
+    
+    createFile(selectedFileName);
+	}
+
+
+	private void createFile(String fileName) {
+		try {
+			PrintWriter writer = new PrintWriter(fileName, "UTF-8");
+			writer.print(new DependencyAnalysisCache().getCacheFor(_selectedElement));
+			writer.close();
+		} catch (Exception e) {
+			showErrorMessage(e.getMessage());
+		}
+	}
+
+
+	private String askForFile() {
+		FileDialog fileDialog = new FileDialog(_parent.getShell());
+    fileDialog.setText("Create file");
+    fileDialog.setFilterExtensions(new String[] { "*.dot" });
+    fileDialog.setFilterNames(new String[] { "DOT Language(*.dot)" });
+    String selected = fileDialog.open();
+		return selected;
+	}
+
+
+	private void showErrorMessage(String message) {
+		MessageBox messageDialog = new MessageBox(_parent.getShell(), SWT.ERROR);
+    messageDialog.setText("Error");
+    messageDialog.setMessage(message);	
+    messageDialog.open();
 	}
 
 }

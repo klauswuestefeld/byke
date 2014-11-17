@@ -33,6 +33,12 @@
             id="byke.popup.actions.ShowDependenciesAction"
             defaultHandler="byke.popup.handlers.ShowDependenciesHandler">
      	</command>
+     	
+		<command
+            name="Export dependency analysis"
+            id="byke.views.actions.ExportDependencyAnalysisAction"
+            defaultHandler="byke.views.handlers.ExportDependencyAnalysisHandler">
+     	</command>
    	</extension>
    	
 	<extension point="org.eclipse.ui.menus">
@@ -50,7 +56,15 @@
                 	</with>
             	</visibleWhen>
           	</command>
-		</menuContribution>		
+		</menuContribution>
+		
+		<menuContribution locationURI="toolbar:byke.views.BykeView?after=additions">
+          	<command
+                 commandId="byke.views.actions.ExportDependencyAnalysisAction"
+                 icon="icons/graph.jpg"
+                 label="Export dependency analysis">
+          	</command>
+		</menuContribution>
 	</extension>
    
 </plugin>
