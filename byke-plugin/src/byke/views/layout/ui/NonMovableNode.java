@@ -1,7 +1,6 @@
 package byke.views.layout.ui;
 
 import java.util.Collection;
-import java.util.regex.Pattern;
 
 import org.eclipse.gef4.zest.core.widgets.GraphNode;
 import org.eclipse.gef4.zest.core.widgets.IContainer;
@@ -10,13 +9,11 @@ import byke.dependencygraph.Node;
 
 public class NonMovableNode<T> extends GraphNode {
 
-	public NonMovableNode(IContainer graphModel, int style, Object data) {
+	public NonMovableNode(IContainer graphModel, int style, Object data, String name) {
 		super(graphModel, style);
 		setData(data);
 		
-		String text = data.toString().replaceAll(Pattern.quote("["), "").replaceAll(Pattern.quote("]"), "");
-		text = insert(text, "\n", 40);
-		setText(text);
+		setText(insert(name, "\n", 40));
 	}
 
 	

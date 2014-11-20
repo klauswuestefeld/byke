@@ -1,6 +1,9 @@
 package byke.dependencygraph;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import byke.JavaType;
 
@@ -12,12 +15,15 @@ public class SubGraph <T> extends Node<Collection<Node<T>>> {
 	}
 
 	private static <T> String nameFor(Collection<Node<T>> nodes) {
-		String name = "";
-		for(Node<?> n: nodes){
-			if(!name.isEmpty()) name += ", ";
-			name += n.name();
-		}
-		return name;
+		List<String> names = new ArrayList<String>(nodes.size());
+		for(Node<?> node: nodes)
+			names.add(node.name());
+		Collections.sort(names);
+		
+		String ret = "";
+		for(String n: names)
+			ret += ret.isEmpty() ? n : ", " + n;
+		return ret;
 	}
 
 }
