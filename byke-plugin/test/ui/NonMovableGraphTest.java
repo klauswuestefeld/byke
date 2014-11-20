@@ -16,7 +16,7 @@ import byke.views.layout.ui.DependencyProcessor;
 import byke.views.layout.ui.NonMovableGraph;
 
 
-public class NonMovableGraphTest {
+public class NonMovableGraphTest extends Assert {
 
 	private NonMovableGraph<String> _graph;
 
@@ -25,7 +25,7 @@ public class NonMovableGraphTest {
 	public void simpleGraph() {
 		newGraph(createSimpleCyclicDependencyGraph());
 
-		Assert.assertEquals(2, _graph.getNodes().size());
+		Assert.assertEquals("Actual " + _graph.getNodes(), 2, _graph.getNodes().size());
 		Assert.assertEquals(1, _graph.getConnections().size());
 
 		hasNode("n 1, n 2");
@@ -36,12 +36,33 @@ public class NonMovableGraphTest {
 	
 	@Test
 	public void dependencyProcessing() {
-		Collection<SubGraph<String>> processedGraph = new DependencyProcessor().calculateSubGraphs(createSimpleCyclicDependencyGraph());
+		Collection<SubGraph<String>> processedGraph = new DependencyProcessor().clusterCycles(createSimpleCyclicDependencyGraph());
 	
 		Assert.assertEquals(2, processedGraph.size());
-		SubGraph cycle = getNode("n 1, n 2", processedGraph);
-		SubGraph other = getNode("n 3", processedGraph);
+		SubGraph<String> cycle = getNode("n 1, n 2", processedGraph);
+		SubGraph<String> other = getNode("n 3", processedGraph);
 		Assert.assertTrue(cycle.providers().contains(other));
+	}
+
+	
+	//	a -> b
+	//	b -> a
+	//	b -> c
+	//	c -> b
+	@Test
+	public void dependencyProcessing2() {
+		Node<String> a = new Node<String>("a");
+		Node<String> b = new Node<String>("b");
+		Node<String> c = new Node<String>("c");
+		a.addProvider(b);
+		b.addProvider(a);
+		b.addProvider(c);
+		c.addProvider(b);
+
+		Collection<SubGraph<String>> processedGraph = new DependencyProcessor().clusterCycles(Arrays.asList(a, b, c));
+	
+		Assert.assertEquals("Actual: " + processedGraph, 1, processedGraph.size());
+		assertNotNull(getNode("a, b, c", processedGraph));
 	}
 
 	private SubGraph<String> getNode(String name, Collection<SubGraph<String>> graph) {
@@ -72,7 +93,7 @@ public class NonMovableGraphTest {
 			if (node.getText().equals(name)) 
 				return;
 
-		Assert.fail(String.format("Node '%s' not found", name));
+		Assert.fail("Node " + name + " not found in " + _graph.getNodes().toString());
 	}
 
 	private void hasConnection(String from, String to) {
