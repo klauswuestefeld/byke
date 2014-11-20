@@ -9,7 +9,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.eclipse.draw2d.SWTEventDispatcher;
-import org.eclipse.gef4.layout.algorithms.SpaceTreeLayoutAlgorithm;
 import org.eclipse.gef4.zest.core.widgets.GraphConnection;
 import org.eclipse.gef4.zest.core.widgets.GraphNode;
 import org.eclipse.gef4.zest.core.widgets.GraphWidget;
@@ -23,6 +22,7 @@ import org.eclipse.swt.widgets.Composite;
 
 import byke.dependencygraph.Node;
 import byke.dependencygraph.SubGraph;
+import byke.views.layout.algorithm.CircularLayoutAlgorithm;
 
 public class NonMovableGraph<T> extends GraphWidget {
 
@@ -38,17 +38,24 @@ public class NonMovableGraph<T> extends GraphWidget {
 		super(parent, ZestStyles.NONE);
 		
 		lockNodeMoves();
-		SpaceTreeLayoutAlgorithm spaceTreeLayoutAlgorithm = new SpaceTreeLayoutAlgorithm();
-		spaceTreeLayoutAlgorithm.setBranchGap(150);
-		spaceTreeLayoutAlgorithm.setLayerGap(50);
-		spaceTreeLayoutAlgorithm.setLeafGap(30);
-		spaceTreeLayoutAlgorithm.setDirection(SpaceTreeLayoutAlgorithm.TOP_DOWN);
-		setLayoutAlgorithm(spaceTreeLayoutAlgorithm, true);
+//	SpaceTreeLayoutAlgorithm algorithm = new SpaceTreeLayoutAlgorithm();
+//	algorithm.setBranchGap(150);
+//	algorithm.setLayerGap(50);
+//	algorithm.setLeafGap(30);
+//	algorithm.setDirection(SpaceTreeLayoutAlgorithm.TOP_DOWN);
+
+//	SugiyamaLayoutAlgorithm algorithm = new SugiyamaLayoutAlgorithm();
+
+//  LayoutAlgorithm algorithm = new SpringLayoutAlgorithm();
+
+  CircularLayoutAlgorithm algorithm = new CircularLayoutAlgorithm();
+
+  	setLayoutAlgorithm(algorithm, true);
 		
 		addSelectionListener(selectionListener());
 		
 		DependencyProcessor processor = new DependencyProcessor();
-		Collection<SubGraph<T>> newGraph = processor.calculateSubGraphs(graph);
+		Collection<SubGraph<T>> newGraph = processor.clusterCycles(graph);
 		initGraphFigures(newGraph);
 	}
 
@@ -132,7 +139,7 @@ public class NonMovableGraph<T> extends GraphWidget {
 		NonMovableNode<T> result = _nodeFiguresByNode.get(subGraph);
 		if (result != null) return result;
 		
-		result = new NonMovableNode<T>(this, SWT.NONE, subGraph);
+		result = new NonMovableNode<T>(this, SWT.NONE, subGraph, subGraph.name());
 		_nodeFiguresByNode.put(subGraph, result);
 		return result;
 	}

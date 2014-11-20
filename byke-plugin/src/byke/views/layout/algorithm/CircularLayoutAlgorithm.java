@@ -10,8 +10,8 @@ import org.eclipse.gef4.layout.interfaces.LayoutContext;
 
 public class CircularLayoutAlgorithm implements LayoutAlgorithm {
 
-	private static final int EXPAND_RATIO = 50;
-	private static final int MINIMUM_DISTANCE = 50;
+	private static final float EXPAND_RATIO = 1.05f;
+	private static final int MINIMUM_DISTANCE = 0;
 	
 	private LayoutContext _context;
 
@@ -19,10 +19,11 @@ public class CircularLayoutAlgorithm implements LayoutAlgorithm {
 	public void applyLayout(boolean arg0) {
 		EntityLayout[] entities = _context.getEntities();
 		
-		int radius = 100;
+		int radius = 20;
 		while(existsOverlapping(entities)) {
-			computeRadialPositions(entities, radius);
-			radius += EXPAND_RATIO;
+			System.out.println(radius);
+			layoutInCircle(entities, radius);
+			radius *= EXPAND_RATIO;
 		}
 		
 		moveToTheBeginningOfTheView(entities);
@@ -44,13 +45,13 @@ public class CircularLayoutAlgorithm implements LayoutAlgorithm {
 	}
 
 	private boolean isOverlapping(EntityLayout entity, EntityLayout[] entities) {
-		for (EntityLayout anotherEntity : entities) {
-			if(entity.equals(anotherEntity))
+		for (EntityLayout other : entities) {
+			if(entity.equals(other))
 				continue;
 			
 			Rectangle entityBounds = new Rectangle(entity.getLocation(), entity.getSize());
 			entityBounds.setSize(entityBounds.getWidth() + MINIMUM_DISTANCE, entityBounds.getHeight() + MINIMUM_DISTANCE);
-			Rectangle anotherEntityBounds = new Rectangle(anotherEntity.getLocation(), anotherEntity.getSize());
+			Rectangle anotherEntityBounds = new Rectangle(other.getLocation(), other.getSize());
 			anotherEntityBounds.setSize(anotherEntityBounds.getWidth() + MINIMUM_DISTANCE, anotherEntityBounds.getHeight() + MINIMUM_DISTANCE);
 			
 			if(entityBounds.touches(anotherEntityBounds))
@@ -59,7 +60,7 @@ public class CircularLayoutAlgorithm implements LayoutAlgorithm {
 		return false;
 	}
 
-	private void computeRadialPositions(EntityLayout[] entities, int radius) {
+	private void layoutInCircle(EntityLayout[] entities, int radius) {
 		double angle = 0;
 
 		for (EntityLayout entity : entities) {
