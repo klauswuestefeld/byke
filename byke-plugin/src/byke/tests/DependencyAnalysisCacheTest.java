@@ -35,8 +35,8 @@ public class DependencyAnalysisCacheTest extends CodeAnalysisTest {
 		String layout = cacheFor(unit);
 		Assert.assertEquals(
 				"digraph Test {\n"
-			+ "  \"method1()\"\n"
 			+ "  \"method2()\"\n"
+			+ "  \"method1()\"\n"
 			+ "  \"method2()\" -> \"method1()\"\n"
 			+ "}"
 			+ "\n",
