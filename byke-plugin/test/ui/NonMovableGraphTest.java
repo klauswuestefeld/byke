@@ -8,7 +8,6 @@ import org.eclipse.gef4.zest.core.widgets.GraphNode;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import byke.dependencygraph.Node;

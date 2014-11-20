@@ -8,7 +8,6 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
-import ui.NonMovableGraphTest;
 import byke.JavaType;
 import byke.dependencygraph.Node;
 import byke.views.layout.ui.NonMovableGraph;
