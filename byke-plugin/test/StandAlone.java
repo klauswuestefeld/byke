@@ -64,6 +64,8 @@ public class StandAlone {
 		return createGraph(names);
 	}
 	
+	
+	@SuppressWarnings("unused")
 	private Collection<Node<String>> window() {
 		
 		Node<String> tela = new Node<String>("Window(XXXX)");
