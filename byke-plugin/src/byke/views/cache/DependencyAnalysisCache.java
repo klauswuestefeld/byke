@@ -1,4 +1,4 @@
-package byke.views;
+package byke.views.cache;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -25,11 +25,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.IBinding;
 
 import byke.dependencygraph.Node;
-import byke.views.cache.EdgeFigure;
-import byke.views.cache.GEXFFile;
 import byke.views.cache.GEXFHelper;
-import byke.views.cache.GraphFigure;
-import byke.views.cache.NodeFigure;
 
 
 public class DependencyAnalysisCache {

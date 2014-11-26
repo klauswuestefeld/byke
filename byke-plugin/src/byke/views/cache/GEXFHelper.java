@@ -14,13 +14,13 @@ import javax.xml.bind.Unmarshaller;
 
 public class GEXFHelper {
 
-	public static <T> T unmarshall(Class<T> clazz, String xml) throws Exception {
+	static <T> T unmarshall(Class<T> clazz, String xml) throws Exception {
 		JAXBContext jaxbContext = JAXBContext.newInstance(clazz);
 		Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
     return (T) unmarshaller.unmarshal(new ByteArrayInputStream(xml.getBytes()));
 	}
 	
-	public static <T extends Writer> T marshall(Class<?> clazz, Object in, T out) throws Exception {
+	static <T extends Writer> T marshall(Class<?> clazz, Object in, T out) throws Exception {
 		JAXBContext jaxbContext = JAXBContext.newInstance(clazz);
 		Marshaller marshaller = jaxbContext.createMarshaller();
 		marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);

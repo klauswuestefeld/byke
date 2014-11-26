@@ -13,7 +13,7 @@ import org.junit.Test;
 import byke.DependencyAnalysis;
 import byke.InvalidElement;
 import byke.dependencygraph.Node;
-import byke.views.DependencyAnalysisCache;
+import byke.views.cache.DependencyAnalysisCache;
 import byke.views.cache.NodeFigure;
 
 public class DependencyAnalysisCacheTest extends CodeAnalysisTest {

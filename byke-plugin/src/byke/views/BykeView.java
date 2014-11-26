@@ -25,6 +25,7 @@ import org.eclipse.ui.progress.UIJob;
 
 import byke.DependencyAnalysis;
 import byke.InvalidElement;
+import byke.views.cache.DependencyAnalysisCache;
 import byke.views.cache.NodeFigure;
 import byke.views.layout.ui.NonMovableGraph;
 
