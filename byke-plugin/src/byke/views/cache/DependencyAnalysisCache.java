@@ -111,34 +111,33 @@ public class DependencyAnalysisCache {
 
 	
 	private List<NodeFigure> save(IJavaElement element, Collection<Node<IBinding>> memento) {
+		GEXFFile gexf = newGEXFFile(memento);
+		
 		try {
-			IFile file = createTimestampedFile(element);
-			
-			List<NodeFigure> nodes = createNodes(memento);
-			List<EdgeFigure> edges = createEdges(memento);
-			
-			GraphFigure graph = new GraphFigure();
-			graph.defaultEdgeType("directed");
-			graph.nodes(nodes);
-			graph.edges(edges);
-			
-			GEXFFile gexf = new GEXFFile();
-			gexf.graph(graph);
-			
 			StringWriter toSave = GEXFHelper.marshall(GEXFFile.class, gexf, new StringWriter());
+			
+			IFile file = createTimestampedFile(element);
 			file.create(new ByteArrayInputStream(toSave.toString().getBytes(Charset.forName("UTF-8"))), false, null);
-			return gexf.graph().nodes();
-
 		} catch (Exception e) {
-			try {
-				bykeFolderFor(element).refreshLocal(IResource.DEPTH_INFINITE, null);
-			} catch (CoreException e1) {
-				e = e1;
-			}
 			e.printStackTrace();
 		}
 		
-		return null;
+		return gexf.graph().nodes();
+	}
+
+
+	private GEXFFile newGEXFFile(Collection<Node<IBinding>> memento) {
+		List<NodeFigure> nodes = createNodes(memento);
+		List<EdgeFigure> edges = createEdges(memento);
+		
+		GraphFigure graph = new GraphFigure();
+		graph.defaultEdgeType("directed");
+		graph.nodes(nodes);
+		graph.edges(edges);
+		
+		GEXFFile gexf = new GEXFFile();
+		gexf.graph(graph);
+		return gexf;
 	}
 
 
@@ -194,6 +193,7 @@ public class DependencyAnalysisCache {
 
 	
 	static private IFile createTimestampedFile(IJavaElement element) throws CoreException, JavaModelException {
+		refreshBykeFolder(element);
 		IFolder cacheFolder = produceCacheFolder(element);
 		String baseName = baseNameFor(element);
 		deleteOldFiles(cacheFolder, baseName);
