@@ -114,23 +114,8 @@ public class DependencyAnalysisCache {
 		try {
 			IFile file = createTimestampedFile(element);
 			
-			List<NodeFigure> nodes = new ArrayList<NodeFigure>();
-			for (Node<IBinding> node : memento) {
-				NodeFigure figure = new NodeFigure();
-				figure.id(node.name());
-				figure.name(node.name());
-				nodes.add(figure);
-			}
-			
-			List<EdgeFigure> edges = new ArrayList<EdgeFigure>();
-			for (Node<IBinding> node : memento) {
-				for(Node<IBinding> provider : node.providers()) {
-					EdgeFigure edge = new EdgeFigure();
-					edge.source(node.name());
-					edge.target(provider.name());
-					edges.add(edge);
-				}
-			}
+			List<NodeFigure> nodes = createNodes(memento);
+			List<EdgeFigure> edges = createEdges(memento);
 			
 			GraphFigure graph = new GraphFigure();
 			graph.defaultEdgeType("directed");
@@ -141,10 +126,9 @@ public class DependencyAnalysisCache {
 			gexf.graph(graph);
 			
 			StringWriter toSave = GEXFHelper.marshall(GEXFFile.class, gexf, new StringWriter());
-			
 			file.create(new ByteArrayInputStream(toSave.toString().getBytes(Charset.forName("UTF-8"))), false, null);
-			
 			return gexf.graph().nodes();
+
 		} catch (Exception e) {
 			try {
 				bykeFolderFor(element).refreshLocal(IResource.DEPTH_INFINITE, null);
@@ -155,6 +139,32 @@ public class DependencyAnalysisCache {
 		}
 		
 		return null;
+	}
+
+
+	private List<EdgeFigure> createEdges(Collection<Node<IBinding>> memento) {
+		List<EdgeFigure> edges = new ArrayList<EdgeFigure>();
+		for (Node<IBinding> node : memento) {
+			for(Node<IBinding> provider : node.providers()) {
+				EdgeFigure edge = new EdgeFigure();
+				edge.source(node.name());
+				edge.target(provider.name());
+				edges.add(edge);
+			}
+		}
+		return edges;
+	}
+
+
+	private List<NodeFigure> createNodes(Collection<Node<IBinding>> memento) {
+		List<NodeFigure> nodes = new ArrayList<NodeFigure>();
+		for (Node<IBinding> node : memento) {
+			NodeFigure figure = new NodeFigure();
+			figure.id(node.name());
+			figure.name(node.name());
+			nodes.add(figure);
+		}
+		return nodes;
 	}
 
 	
