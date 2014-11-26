@@ -11,7 +11,7 @@ import org.eclipse.gef4.layout.interfaces.LayoutContext;
 public class CircularLayoutAlgorithm implements LayoutAlgorithm {
 
 	private static final float EXPAND_RATIO = 1.05f;
-	private static final int MINIMUM_DISTANCE = 0;
+	private static final int MINIMUM_DISTANCE = 5;
 	
 	private LayoutContext _context;
 
@@ -21,7 +21,6 @@ public class CircularLayoutAlgorithm implements LayoutAlgorithm {
 		
 		int radius = 20;
 		while(existsOverlapping(entities)) {
-			System.out.println(radius);
 			layoutInCircle(entities, radius);
 			radius *= EXPAND_RATIO;
 		}
@@ -33,7 +32,7 @@ public class CircularLayoutAlgorithm implements LayoutAlgorithm {
 		Rectangle layoutBounds = AlgorithmHelper.getLayoutBounds(entities, true);
 		layoutBounds.setX(0);
 		layoutBounds.setY(0);
-		AlgorithmHelper.fitWithinBounds(entities, layoutBounds, true);
+		AlgorithmHelper.fitWithinBounds(entities, layoutBounds, false);
 	}
 
 	private boolean existsOverlapping(EntityLayout[] entities) {

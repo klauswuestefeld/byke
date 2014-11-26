@@ -1,13 +1,11 @@
 package byke.views.layout.ui;
 
-import java.util.Collection;
-
 import org.eclipse.gef4.zest.core.widgets.GraphNode;
 import org.eclipse.gef4.zest.core.widgets.IContainer;
 
-import byke.dependencygraph.Node;
+import byke.views.cache.NodeFigure;
 
-public class NonMovableNode<T> extends GraphNode {
+public class NonMovableNode extends GraphNode {
 
 	public NonMovableNode(IContainer graphModel, int style, Object data, String name) {
 		super(graphModel, style);
@@ -17,8 +15,8 @@ public class NonMovableNode<T> extends GraphNode {
 	}
 
 	
-	public Collection<Node<T>> internalNodes() {
-		return (Collection<Node<T>>)getData();
+	public NodeFigure subGraph() {
+		return (NodeFigure)getData();
 	}
 
 	

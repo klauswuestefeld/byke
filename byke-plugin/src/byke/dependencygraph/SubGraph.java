@@ -5,18 +5,19 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import byke.JavaType;
+import byke.views.cache.NodeFigure;
 
-public class SubGraph <T> extends Node<Collection<Node<T>>> {
+public class SubGraph extends NodeFigure {
 
-	public SubGraph(Collection<Node<T>> nodes) {
-		super(nameFor(nodes), JavaType.SUBGRAPH);
-		payload(nodes);
+	public SubGraph(Collection<NodeFigure> nodes) {
+		_name = _id = nameFor(nodes);
+		
+		addSubGraph(nodes);
 	}
 
-	private static <T> String nameFor(Collection<Node<T>> nodes) {
+	private static String nameFor(Collection<NodeFigure> nodes) {
 		List<String> names = new ArrayList<String>(nodes.size());
-		for(Node<?> node: nodes)
+		for(NodeFigure node: nodes)
 			names.add(node.name());
 		Collections.sort(names);
 		

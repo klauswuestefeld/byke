@@ -7,40 +7,116 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import byke.DependencyAnalysis;
 import byke.InvalidElement;
 import byke.dependencygraph.Node;
 import byke.views.DependencyAnalysisCache;
+import byke.views.cache.NodeFigure;
 
 public class DependencyAnalysisCacheTest extends CodeAnalysisTest {
 
+	private DependencyAnalysisCache _subject;
+	
+	@Before
+	public void setUp() {
+		_subject = new DependencyAnalysisCache();
+	}
+
+	@Test
+	public void fileContentForPackage() throws Exception {
+		ICompilationUnit unit = createCompilationUnit(
+				"Test", 
+				"class Test { }");
+	
+		String layout = cacheFileFor(unit.getParent());
+		Assert.assertEquals(""
+				+ "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
+				+ "<ns2:gexf xmlns:ns2=\"http://www.gexf.net/1.2draft\">\n"
+				+ "    <graph defaultedgetype=\"directed\">\n"
+				+ "        <nodes>\n"
+				+ "            <node label=\"Test\" id=\"Test\"/>\n"
+				+ "        </nodes>\n"
+				+ "        <edges/>\n"
+				+ "    </graph>\n"
+				+ "</ns2:gexf>\n",
+				layout);
+	}
+
+	@Test
+	public void fileContentForClass() throws Exception {
+		ICompilationUnit unit = createCompilationUnit(
+				"Test", 
+				"class Test { void method1(){} void method2() { method1(); } }");
+		
+		String layout = cacheFileFor(unit);
+		assertEquals(""
+				+ "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
+				+ "<ns2:gexf xmlns:ns2=\"http://www.gexf.net/1.2draft\">\n"
+				+ "    <graph defaultedgetype=\"directed\">\n"
+				+ "        <nodes>\n"
+				+ "            <node label=\"method2()\" id=\"method2()\"/>\n"
+				+ "            <node label=\"method1()\" id=\"method1()\"/>\n"
+				+ "        </nodes>\n"
+				+ "        <edges>\n"
+				+ "            <edge target=\"method1()\" source=\"method2()\"/>\n"
+				+ "        </edges>\n"
+				+ "    </graph>\n"
+				+ "</ns2:gexf>\n",
+				layout);
+	}
+	
+	@Test
+	public void fileNotFound() throws Exception {
+		ICompilationUnit unit = createCompilationUnit(
+				"Test", 
+				"class Test { }");
+		buildProject();
+		
+		DependencyAnalysis dependencyAnalysis = new DependencyAnalysis(unit.getParent());
+		Collection<Node<IBinding>> graph = dependencyAnalysis.dependencyGraph(null);
+		Assert.assertEquals(1, graph.size());
+		
+		String layout = _subject.getCacheFileFor(dependencyAnalysis.subject());
+		Assert.assertTrue(layout.isEmpty());
+	}
+	
+	
+	@Test
+	public void fileForNullElement() throws Exception {
+		String layout = _subject.getCacheFileFor(null);
+		Assert.assertTrue(layout.isEmpty());
+	}
+
+	
 	@Test
 	public void cacheForPackage() throws Exception {
 		ICompilationUnit unit = createCompilationUnit(
 				"Test", 
 				"class Test { }");
-	
-		String layout = cacheFor(unit.getParent());
-		Assert.assertEquals("digraph foopackage {\n  \"Test\"\n}\n", layout);
+		
+		Collection<NodeFigure> nodes = cacheFor(unit.getParent());
+		
+		assertEquals(1, nodes.size());
+		NodeFigure node = nodes.iterator().next();
+		assertEquals("Test", node.name());
+		assertTrue(node.providers().isEmpty());
 	}
-
+	
 	@Test
 	public void cacheForClass() throws Exception {
 		ICompilationUnit unit = createCompilationUnit(
 				"Test", 
 				"class Test { void method1(){} void method2() { method1(); } }");
 		
-		String layout = cacheFor(unit);
-		Assert.assertEquals(
-				"digraph Test {\n"
-			+ "  \"method2()\"\n"
-			+ "  \"method1()\"\n"
-			+ "  \"method2()\" -> \"method1()\"\n"
-			+ "}"
-			+ "\n",
-			layout);
+		Collection<NodeFigure> nodes = cacheFor(unit);
+		
+		assertEquals(2, nodes.size());
+//		NodeFigure node = nodes.iterator().next();
+//		assertEquals("Test", node.name());
+//		assertTrue(node.providers().isEmpty());
 	}
 	
 	@Test
@@ -54,25 +130,37 @@ public class DependencyAnalysisCacheTest extends CodeAnalysisTest {
 		Collection<Node<IBinding>> graph = dependencyAnalysis.dependencyGraph(null);
 		Assert.assertEquals(1, graph.size());
 		
-		DependencyAnalysisCache dependencyMap = new DependencyAnalysisCache();
-		String layout = dependencyMap.getCacheFor(dependencyAnalysis.subject());
-		Assert.assertNull(layout);
+		Collection<NodeFigure> nodes = _subject.getCacheFor(dependencyAnalysis.subject());
+		Assert.assertTrue(nodes.isEmpty());
 	}
-
+	
+	
 	@Test
 	public void cacheForNullElement() throws Exception {
-		String layout = new DependencyAnalysisCache().getCacheFor(null);
-		Assert.assertNull(layout);
+		Collection<NodeFigure> nodes = _subject.getCacheFor(null);
+		Assert.assertTrue(nodes.isEmpty());
 	}
-
-	private String cacheFor(IJavaElement element) throws CoreException, InvalidElement {
+	
+	
+	
+		
+	private String cacheFileFor(IJavaElement element) throws CoreException, InvalidElement {
 		buildProject();
 		
 		DependencyAnalysis dependencyAnalysis = new DependencyAnalysis(element);
 		Collection<Node<IBinding>> graph = dependencyAnalysis.dependencyGraph(null);
-		DependencyAnalysisCache dependencyMap = new DependencyAnalysisCache();
-		dependencyMap.keep(dependencyAnalysis.subject(), graph);
+		_subject.keep(dependencyAnalysis.subject(), graph);
 		
-		return dependencyMap.getCacheFor(dependencyAnalysis.subject());
+		return _subject.getCacheFileFor(dependencyAnalysis.subject());
+	}
+
+	private Collection<NodeFigure> cacheFor(IJavaElement element) throws CoreException, InvalidElement {
+		buildProject();
+		
+		DependencyAnalysis dependencyAnalysis = new DependencyAnalysis(element);
+		Collection<Node<IBinding>> graph = dependencyAnalysis.dependencyGraph(null);
+		_subject.keep(dependencyAnalysis.subject(), graph);
+		
+		return _subject.getCacheFor(dependencyAnalysis.subject());
 	}
 }

@@ -6,31 +6,25 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import byke.dependencygraph.Node;
 import byke.dependencygraph.SubGraph;
+import byke.views.cache.NodeFigure;
 
 public class DependencyProcessor {
 
-	public <T> Collection<SubGraph<T>> clusterCycles(Collection<Node<T>> graph) {
-		Map<Node<T>, SubGraph<T>> cyclesByNode = new HashMap<Node<T>, SubGraph<T>>();
+	public Collection<SubGraph> clusterCycles(Collection<NodeFigure> graph) {
+		Map<NodeFigure, SubGraph> cyclesByNode = new HashMap<NodeFigure, SubGraph>();
 		
-		for (Node<T> node : graph) {
+		for (NodeFigure node : graph) {
 			if (cyclesByNode.containsKey(node))
 				continue;
 			
-			Set<Node<T>> cycle = node.cycle();
-			SubGraph<T> subGraph = new SubGraph<T>(cycle);
-			for (Node<T> visited : cycle)
+			Set<NodeFigure> cycle = node.cycle();
+			SubGraph subGraph = new SubGraph(cycle);
+			for (NodeFigure visited : cycle)
 				cyclesByNode.put(visited, subGraph);
 		}
 		
-		HashSet<SubGraph<T>> ret = new HashSet<SubGraph<T>>(cyclesByNode.values());
-		for(SubGraph<T> sub: ret)
-			for(Node<T> subNode: sub.payload())
-				for(Node<T> provider: subNode.providers())
-					sub.addProvider(cyclesByNode.get(provider));
-		
-		return ret;
+		return new HashSet<SubGraph>(cyclesByNode.values());
 	}
 
 }

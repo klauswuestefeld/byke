@@ -8,8 +8,7 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
-import byke.JavaType;
-import byke.dependencygraph.Node;
+import byke.views.cache.NodeFigure;
 import byke.views.layout.ui.NonMovableGraph;
 
 
@@ -25,7 +24,7 @@ public class StandAlone {
 		new StandAlone();
 	}
 
-	private final Collection<Node<String>> _graph = graph();
+	private final Collection<NodeFigure> _graph = graph();
 
 	private final Display _display = new Display(); // Has to be initialized before the _graphFigure although there is no explicit dependency, or else ColorConstants will throw a NullPointerException. :(
 
@@ -37,10 +36,10 @@ public class StandAlone {
 		FillLayout layout = new FillLayout();
 		shell.setLayout(layout);
 
-		new NonMovableGraph<String>(shell, _graph);
+		new NonMovableGraph(shell, _graph);
 
 		shell.open();
-		shell.layout();
+//		shell.layout();
 
 		while (!shell.isDisposed()) {
 			while (!_display.readAndDispatch()) {
@@ -50,14 +49,14 @@ public class StandAlone {
 	}
 
 	
-	private Collection<Node<String>> graph() {
-		//return NonMovableGraphTest.createSimpleCyclicDependencyGraph();
+	private Collection<NodeFigure> graph() {
+//		return NonMovableGraphTest.createSimpleCyclicDependencyGraph();
 		return randomGraph();
-		//return window();
+//		return window();
 	}
 
 
-	private Collection<Node<String>> randomGraph() {
+	protected Collection<NodeFigure> randomGraph() {
 		String[] names = new String[NUMBER_OF_NODES];
 		for(int i=0; i<NUMBER_OF_NODES;i++)
 			names[i] = "Node "+i;
@@ -65,23 +64,22 @@ public class StandAlone {
 	}
 	
 	
-	@SuppressWarnings("unused")
-	private Collection<Node<String>> window() {
+	protected Collection<NodeFigure> window() {
 		
-		Node<String> tela = new Node<String>("Window(XXXX)");
-		Node<String> outraTela = new Node<String>("AnotherWindow(XXXX)");
-		Node<String> addItems = new Node<String>("addItems(XXXX)");
-		Node<String> addHandlers = new Node<String>("addHandlers(XXXX)()");
-		Node<String> addSomething = new Node<String>("addSomething(XXXX)()");
-		Node<String> doSomething = new Node<String>("doSomething(XXXX)");
-		Node<String> toolbar = new Node<String>("toolbar");
-		Node<String> tabSet = new Node<String>("tabSet");
-		Node<String> aba1 = new Node<String>("tab1");
-		Node<String> aba2 = new Node<String>("tab2");
-		Node<String> aba3 = new Node<String>("tab3");
-		Node<String> aba4 = new Node<String>("tab4");
-		Node<String> aba5 = new Node<String>("tab5");
-		Node<String> aba6 = new Node<String>("tab6");
+		NodeFigure tela = new NodeFigure("Window(XXXX)");
+		NodeFigure outraTela = new NodeFigure("AnotherWindow(XXXX)");
+		NodeFigure addItems = new NodeFigure("addItems(XXXX)");
+		NodeFigure addHandlers = new NodeFigure("addHandlers(XXXX)()");
+		NodeFigure addSomething = new NodeFigure("addSomething(XXXX)()");
+		NodeFigure doSomething = new NodeFigure("doSomething(XXXX)");
+		NodeFigure toolbar = new NodeFigure("toolbar");
+		NodeFigure tabSet = new NodeFigure("tabSet");
+		NodeFigure aba1 = new NodeFigure("tab1");
+		NodeFigure aba2 = new NodeFigure("tab2");
+		NodeFigure aba3 = new NodeFigure("tab3");
+		NodeFigure aba4 = new NodeFigure("tab4");
+		NodeFigure aba5 = new NodeFigure("tab5");
+		NodeFigure aba6 = new NodeFigure("tab6");
 		
 		tela.addProvider(addItems);
 		tela.addProvider(addSomething);
@@ -114,21 +112,24 @@ public class StandAlone {
 	}
 	
 	
-	private static Collection<Node<String>> createGraph(String[] names) {
-		List<Node<String>> result = new ArrayList<Node<String>>();
-		for (String element : names)
-			result.add(new Node<String>(element, JavaType.PACKAGE));
+	private static Collection<NodeFigure> createGraph(String[] names) {
+		List<NodeFigure> result = new ArrayList<NodeFigure>();
+		for (String element : names) {
+			NodeFigure node = new NodeFigure();
+			node.name(element);
+			result.add(node);
+		}
 		produceRandomDependencies(result);
 		return result;
 	}
 
 	
-	private static <T> void produceRandomDependencies(List<Node<T>> graph) {
+	private static void produceRandomDependencies(List<NodeFigure> graph) {
 		int dependenciesToCreate = (int)(graph.size() * DENSITY_OF_DEPENDENCIES);
 	
 		while (dependenciesToCreate-- > 0) {
-			Node<T> node1 = drawOneFrom(graph);
-			Node<T> node2 = drawOneFrom(graph);
+			NodeFigure node1 = drawOneFrom(graph);
+			NodeFigure node2 = drawOneFrom(graph);
 			if (node1 == node2) continue;
 	
 			node1.addProvider(node2);
@@ -136,7 +137,7 @@ public class StandAlone {
 	}
 
 	
-	private static <T> Node<T> drawOneFrom(List<Node<T>> hat) {
+	private static NodeFigure drawOneFrom(List<NodeFigure> hat) {
 		return hat.get(RANDOM.nextInt(hat.size()));
 	}
 

@@ -10,15 +10,15 @@ import org.eclipse.swt.widgets.Shell;
 import org.junit.Assert;
 import org.junit.Test;
 
-import byke.dependencygraph.Node;
 import byke.dependencygraph.SubGraph;
+import byke.views.cache.NodeFigure;
 import byke.views.layout.ui.DependencyProcessor;
 import byke.views.layout.ui.NonMovableGraph;
 
 
 public class NonMovableGraphTest extends Assert {
 
-	private NonMovableGraph<String> _graph;
+	private NonMovableGraph _graph;
 
 
 	@Test 
@@ -33,14 +33,15 @@ public class NonMovableGraphTest extends Assert {
 		
 		hasConnection("n 1, n 2", "n 3");
 	}
+
 	
 	@Test
 	public void dependencyProcessing() {
-		Collection<SubGraph<String>> processedGraph = new DependencyProcessor().clusterCycles(createSimpleCyclicDependencyGraph());
+		Collection<SubGraph> processedGraph = new DependencyProcessor().clusterCycles(createSimpleCyclicDependencyGraph());
 	
 		Assert.assertEquals(2, processedGraph.size());
-		SubGraph<String> cycle = getNode("n 1, n 2", processedGraph);
-		SubGraph<String> other = getNode("n 3", processedGraph);
+		SubGraph cycle = getNode("n 1, n 2", processedGraph);
+		SubGraph other = getNode("n 3", processedGraph);
 		Assert.assertTrue(cycle.providers().contains(other));
 	}
 
@@ -51,22 +52,22 @@ public class NonMovableGraphTest extends Assert {
 	//	c -> b
 	@Test
 	public void dependencyProcessing2() {
-		Node<String> a = new Node<String>("a");
-		Node<String> b = new Node<String>("b");
-		Node<String> c = new Node<String>("c");
+		NodeFigure a = new NodeFigure("a");
+		NodeFigure b = new NodeFigure("b");
+		NodeFigure c = new NodeFigure("c");
 		a.addProvider(b);
 		b.addProvider(a);
 		b.addProvider(c);
 		c.addProvider(b);
 
-		Collection<SubGraph<String>> processedGraph = new DependencyProcessor().clusterCycles(Arrays.asList(a, b, c));
+		Collection<SubGraph> processedGraph = new DependencyProcessor().clusterCycles(Arrays.asList(a, b, c));
 	
 		Assert.assertEquals("Actual: " + processedGraph, 1, processedGraph.size());
 		assertNotNull(getNode("a, b, c", processedGraph));
 	}
 
-	private SubGraph<String> getNode(String name, Collection<SubGraph<String>> graph) {
-		for (SubGraph<String> node : graph)
+	private SubGraph getNode(String name, Collection<SubGraph> graph) {
+		for (SubGraph node : graph)
 			if (node.name().equals(name)) 
 				return node;
 
@@ -74,18 +75,18 @@ public class NonMovableGraphTest extends Assert {
 		return null;
 	}
 
-	public static Collection<Node<String>> createSimpleCyclicDependencyGraph() {
-		Node<String> n1 = new Node<String>("n 1");
-		Node<String> n2 = new Node<String>("n 2");
-		Node<String> n3 = new Node<String>("n 3");
+	public static Collection<NodeFigure> createSimpleCyclicDependencyGraph() {
+		NodeFigure n1 = new NodeFigure("n 1");
+		NodeFigure n2 = new NodeFigure("n 2");
+		NodeFigure n3 = new NodeFigure("n 3");
 		n1.addProvider(n2);
 		n2.addProvider(n1);
 		n2.addProvider(n3);
 		return Arrays.asList(n1, n2, n3);
 	}
 
-	private void newGraph(Collection<Node<String>> nodes) {
-		_graph = new NonMovableGraph<String>(new Shell(new Display()), nodes);
+	private void newGraph(Collection<NodeFigure> nodes) {
+		_graph = new NonMovableGraph(new Shell(new Display()), nodes);
 	}
 
 	private void hasNode(String name) {

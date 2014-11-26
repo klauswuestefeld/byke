@@ -84,21 +84,7 @@ public class Node<PayloadType> {
 		return false;
 	}
 
-	public Set<Node<PayloadType>> cycle() {
-		HashSet<Node<PayloadType>> ret = new HashSet<Node<PayloadType>>();
-		accumulateCycle(ret);
-		return ret;
-	}
-
-	private void accumulateCycle(Set<Node<PayloadType>> cycle) {
-		if (cycle.contains(this)) return;
-		cycle.add(this);
-
-		for (Node<PayloadType> neighbor : _providers)
-			if (neighbor.dependsOn(this))
-				neighbor.accumulateCycle(cycle);
-	}
-
+	
 	public boolean dependsOn(Node<?> node) {
 		if (this == node) return false;
 		Set<Node<?>> visited = new HashSet<Node<?>>();
@@ -110,16 +96,12 @@ public class Node<PayloadType> {
 		return this._name.hashCode();
 	}
 
+	
 	@Override
 	public boolean equals(Object arg0) {
 		if (!(arg0 instanceof Node<?>)) return false;
 		Node<?> n = (Node<?>)arg0;
 		return _kind.equals(n._kind) && _name.equals(n._name);
-	}
-
-	@Override
-	public String toString() {
-		return "<" + name() + ">";
 	}
 
 }

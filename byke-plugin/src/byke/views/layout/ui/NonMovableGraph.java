@@ -5,67 +5,67 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 import org.eclipse.draw2d.SWTEventDispatcher;
 import org.eclipse.gef4.zest.core.widgets.GraphConnection;
+import org.eclipse.gef4.zest.core.widgets.GraphItem;
 import org.eclipse.gef4.zest.core.widgets.GraphNode;
 import org.eclipse.gef4.zest.core.widgets.GraphWidget;
 import org.eclipse.gef4.zest.core.widgets.ZestStyles;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.RGB;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.ui.PlatformUI;
 
-import byke.dependencygraph.Node;
 import byke.dependencygraph.SubGraph;
+import byke.views.BykeView;
+import byke.views.cache.NodeFigure;
 import byke.views.layout.algorithm.CircularLayoutAlgorithm;
 
-public class NonMovableGraph<T> extends GraphWidget {
+public class NonMovableGraph extends GraphWidget {
 
-	protected final Color _red = new Color(getDisplay(), new RGB(255, 0, 0));
-	protected final Color _black = new Color(getDisplay(), new RGB(0, 0, 0));
-	protected final Color _yellow = new Color(getDisplay(), new RGB(204, 204, 0));
+	private class NonMovableGraphMouseListener implements MouseListener {
+
+		@Override
+		public void mouseUp(MouseEvent arg0) {}
+
+		@Override
+		public void mouseDown(MouseEvent arg0) {}
+
+		
+		@Override
+		public void mouseDoubleClick(MouseEvent e) {
+			newGraph(((NonMovableGraph)e.getSource()).getSelection());
+		}
+	}
 	
-	protected Map<SubGraph<T>, NonMovableNode<T>> _nodeFiguresByNode = new HashMap<SubGraph<T>, NonMovableNode<T>>();
-	protected GraphNode _selectedNodeFigure;
+	private Map<NodeFigure, NonMovableNode> _nodeFiguresByNode = new HashMap<NodeFigure, NonMovableNode>();
 	
+	private Collection<NodeFigure> _parent = new HashSet<NodeFigure>();
 	
-	public NonMovableGraph(Composite parent, final Collection<Node<T>> graph) {
+	public NonMovableGraph(Composite parent, final Collection<NodeFigure> graph) {
 		super(parent, ZestStyles.NONE);
+		setAnimationEnabled(true);
+		setBounds(parent.getBounds());
 		
 		lockNodeMoves();
-//	SpaceTreeLayoutAlgorithm algorithm = new SpaceTreeLayoutAlgorithm();
-//	algorithm.setBranchGap(150);
-//	algorithm.setLayerGap(50);
-//	algorithm.setLeafGap(30);
-//	algorithm.setDirection(SpaceTreeLayoutAlgorithm.TOP_DOWN);
 
-//	SugiyamaLayoutAlgorithm algorithm = new SugiyamaLayoutAlgorithm();
-
-//  LayoutAlgorithm algorithm = new SpringLayoutAlgorithm();
-
-  CircularLayoutAlgorithm algorithm = new CircularLayoutAlgorithm();
-
+		CircularLayoutAlgorithm algorithm = new CircularLayoutAlgorithm();
   	setLayoutAlgorithm(algorithm, true);
 		
-		addSelectionListener(selectionListener());
+		initGraphFigures(clusterCycles(graph));
 		
+		addMouseListener(new NonMovableGraphMouseListener());
+	}
+	
+	
+	protected Collection<? extends NodeFigure> clusterCycles(final Collection<NodeFigure> graph) {
 		DependencyProcessor processor = new DependencyProcessor();
-		Collection<SubGraph<T>> newGraph = processor.clusterCycles(graph);
-		initGraphFigures(newGraph);
+		Collection<SubGraph> newGraph = processor.clusterCycles(graph);
+		return newGraph;
 	}
 
-
-	public Collection<Node<T>> nodes() {
-		Set<Node<T>> nodes = new HashSet<Node<T>>();
-		for(SubGraph<T> n : _nodeFiguresByNode.keySet())
-			nodes.addAll(n.payload());
-		return nodes;
-	}
 	
 	private void lockNodeMoves() {
 		getLightweightSystem().setEventDispatcher(new SWTEventDispatcher() {
@@ -75,50 +75,17 @@ public class NonMovableGraph<T> extends GraphWidget {
 	}
 	
 
-	private SelectionAdapter selectionListener() {
-		return new SelectionAdapter() {
-			@Override
-      public void widgetSelected(SelectionEvent e) {
-        if(e.item instanceof GraphNode) {
-        	if(_selectedNodeFigure != null)
-        		for(GraphConnection connection : (List<GraphConnection>)_selectedNodeFigure.getSourceConnections()) {
-  						//connection.changeLineColor(doNodesHaveCyclicDependency(connection.getSource(), connection.getDestination()) ? _red : _black);
-  						connection.setLineWidth(1);
-        		}
-        	
-        	GraphNode g = (GraphNode)e.item;
-        	for(GraphConnection connection : (List<GraphConnection>)g.getSourceConnections()) {
-						//connection.changeLineColor(doNodesHaveCyclicDependency(connection.getSource(), connection.getDestination()) ? _red : _yellow);
-						connection.setLineWidth(3);
-        	}
-        	_selectedNodeFigure = g;
-        }
-      }
-    };
-	}
-
-	
-//	protected boolean doNodesHaveCyclicDependency(GraphNode source, GraphNode destination) {
-//		Collection<Node<?>> destinations = (Collection<Node<?>>)destination.getData();
-//		Collection<Node<?>> sources = (Collection<Node<?>>)source.getData();
-//		for(Node<?> d : destinations)
-//			for(Node<?> s : sources)
-//				if(d.dependsOn(s))
-//					return true;
-//		return false;
-//	}
-	
-	protected void initGraphFigures(Collection<SubGraph<T>> nodeGraph) {
-		for(SubGraph<T> node : nodeGraph)
+	private void initGraphFigures(Collection<? extends NodeFigure> nodeGraph) {
+		for(NodeFigure node : nodeGraph)
 			createNodeFigures(node);
 	}
 
 
-	protected void createNodeFigures(SubGraph<T> node) {
+	private void createNodeFigures(NodeFigure node) {
 		GraphNode dependentFigure = produceNodeFigureFor(node);
 			
-		for (Object provider : node.providers()) {
-			GraphNode providerFigure = produceNodeFigureFor((SubGraph<T>)provider);
+		for (NodeFigure provider : node.providers()) {
+			GraphNode providerFigure = produceNodeFigureFor(provider);
 			if (dependentFigure.equals(providerFigure)) continue;
 
 			if (providerFigure != null)
@@ -127,20 +94,44 @@ public class NonMovableGraph<T> extends GraphWidget {
 	}
 	
 	
-	protected NonMovableNode<T> nodeFigureFor(Node<?> node) {
-		for(Entry<SubGraph<T>, NonMovableNode<T>> entry : _nodeFiguresByNode.entrySet()) {
-			if(entry.getKey().equals(node))
-				return entry.getValue();
-		}
-		return null;
-	}
-
-	protected NonMovableNode<T> produceNodeFigureFor(SubGraph<T> subGraph) {
-		NonMovableNode<T> result = _nodeFiguresByNode.get(subGraph);
+	private NonMovableNode produceNodeFigureFor(NodeFigure subGraph) {
+		NonMovableNode result = _nodeFiguresByNode.get(subGraph);
 		if (result != null) return result;
 		
-		result = new NonMovableNode<T>(this, SWT.NONE, subGraph, subGraph.name());
+		result = new NonMovableNode(this, SWT.NONE, subGraph, subGraph.name());
 		_nodeFiguresByNode.put(subGraph, result);
 		return result;
 	}
+	
+	
+	private void newGraph(List<GraphItem> selection) {
+		if (selection.isEmpty()) {
+			if (!_parent.isEmpty()) {
+				new NonMovableSubGraph(composite(), _parent);
+				dispose();
+			}
+			return;
+		}
+		if (!(selection.get(0) instanceof NonMovableNode)) return;
+
+		NodeFigure subGraph = ((NonMovableNode)selection.get(0)).subGraph();
+		if (subGraph.subGraph().size() < 2) return;
+
+		NonMovableGraph nonMovableGraph = new NonMovableSubGraph(composite(), subGraph.subGraph());
+		nonMovableGraph._parent = _nodeFiguresByNode.keySet();
+		dispose();
+	}
+
+	
+	private Composite composite() {
+		Composite composite;
+		try {
+			BykeView bikeView = (BykeView)PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().showView("byke.views.BykeView");
+			composite = bikeView._parent;
+		} catch (Throwable ex) {
+			composite = getShell();
+		}
+		return composite;
+	}
+
 }

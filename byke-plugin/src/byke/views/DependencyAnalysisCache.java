@@ -5,8 +5,12 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.StringWriter;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
@@ -21,44 +25,59 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.IBinding;
 
 import byke.dependencygraph.Node;
+import byke.views.cache.EdgeFigure;
+import byke.views.cache.GEXFFile;
+import byke.views.cache.GEXFHelper;
+import byke.views.cache.GraphFigure;
+import byke.views.cache.NodeFigure;
 
 
 public class DependencyAnalysisCache {
 
-	private static final String FILE_EXTENSION = "dot";
+	private static final String FILE_EXTENSION = "gexf";
 
 
-	synchronized public void keep(IJavaElement element, Collection<Node<IBinding>> graph) {
-		if(needSave(element))
-			save(element, graph);
+	synchronized public Collection<NodeFigure> keep(IJavaElement element, Collection<Node<IBinding>> graph) {
+		return save(element, graph);
 	}
 
 	
-	synchronized public String getCacheFor(IJavaElement element) {
+	synchronized public String getCacheFileFor(IJavaElement element) {
 		return read(element);
 	}
 
 	
-	private boolean needSave(IJavaElement element) {
+	synchronized public Collection<NodeFigure> getCacheFor(IJavaElement element) {
 		try {
-			if(fileForReading(element) == null)
-				return true;
-		} catch (JavaModelException e) {
+			GEXFFile gexf = GEXFHelper.unmarshall(GEXFFile.class, read(element));
+			for(EdgeFigure edge : gexf.graph().edges()) {
+				NodeFigure source = nodeFor(gexf.graph(), edge.source());
+				NodeFigure target = nodeFor(gexf.graph(), edge.target());
+				source.addProvider(target);
+			}
+			
+			return gexf.graph().nodes();
+		} catch (Exception e) {
 			e.printStackTrace();
-			return true;
-		} catch (CoreException e) {
-			e.printStackTrace();
-			return true;
 		}
-		
-		return false;
+		return Collections.emptyList();
 	}
+
 	
-	
+	private NodeFigure nodeFor(GraphFigure graph, String nodeName) {
+		for(NodeFigure node : graph.nodes())
+			if(node.name().equals(nodeName))
+				return node;
+		return null;
+	}
+
+
 	private String read(IJavaElement element) {
 		try {
+			if(element == null)
+				return "";
+			
 			IFile file = fileForReading(element);
-			if (file == null) return null;
 			return content(file);
 		} catch (CoreException e) { // Normally caused by folder out of sync
 			try {
@@ -71,10 +90,13 @@ public class DependencyAnalysisCache {
 			e.printStackTrace();
 		}
 		
-		return null;
+		return "";
 	}
 
 	private String content(IFile file) throws CoreException, IOException {
+		if(file == null)
+			return "";
+		
 		InputStream contents = file.getContents();
 		try {
 			StringBuilder sb = new StringBuilder();
@@ -92,13 +114,41 @@ public class DependencyAnalysisCache {
 	}
 
 	
-	private void save(IJavaElement element, Collection<Node<IBinding>> memento) {
+	private List<NodeFigure> save(IJavaElement element, Collection<Node<IBinding>> memento) {
 		try {
 			IFile file = createTimestampedFile(element);
-			String toSave = header(element);
-			toSave += body(memento);
-			toSave += footer();
-			file.create(new ByteArrayInputStream(toSave.getBytes(Charset.forName("UTF-8"))), false, null);
+			
+			List<NodeFigure> nodes = new ArrayList<NodeFigure>();
+			for (Node<IBinding> node : memento) {
+				NodeFigure figure = new NodeFigure();
+				figure.id(node.name());
+				figure.name(node.name());
+				nodes.add(figure);
+			}
+			
+			List<EdgeFigure> edges = new ArrayList<EdgeFigure>();
+			for (Node<IBinding> node : memento) {
+				for(Node<IBinding> provider : node.providers()) {
+					EdgeFigure edge = new EdgeFigure();
+					edge.source(node.name());
+					edge.target(provider.name());
+					edges.add(edge);
+				}
+			}
+			
+			GraphFigure graph = new GraphFigure();
+			graph.defaultEdgeType("directed");
+			graph.nodes(nodes);
+			graph.edges(edges);
+			
+			GEXFFile gexf = new GEXFFile();
+			gexf.graph(graph);
+			
+			StringWriter toSave = GEXFHelper.marshall(GEXFFile.class, gexf, new StringWriter());
+			
+			file.create(new ByteArrayInputStream(toSave.toString().getBytes(Charset.forName("UTF-8"))), false, null);
+			
+			return gexf.graph().nodes();
 		} catch (Exception e) {
 			try {
 				bykeFolderFor(element).refreshLocal(IResource.DEPTH_INFINITE, null);
@@ -107,33 +157,26 @@ public class DependencyAnalysisCache {
 			}
 			e.printStackTrace();
 		}
-	}
-
-	private String footer() {
-		return "}";
-	}
-
-	private String body(Collection<Node<IBinding>> memento) {
-		String toSave = "";
-		for (Node<IBinding> node : memento)
-			toSave += "  \"" + node.name() + "\"\n";
-		for (Node<IBinding> node : memento)
-			for (Node<IBinding> provider : node.providers())
-				toSave += "  \"" + node.name() + "\" -> \"" + provider.name() + "\"\n";
-		return toSave;
-	}
-
-	private String header(IJavaElement element) {
-		return "digraph " + element.getElementName() + " {\n";
+		
+		return null;
 	}
 
 	
 	static private IFile fileForReading(IJavaElement element) throws CoreException, JavaModelException {
 		IFolder cacheFolder = produceCacheFolder(element);
 		final String baseName = baseNameFor(element);
+		refreshBykeFolder(element);
 		return matchingFile(cacheFolder, baseName + element.getResource().getModificationStamp());
 	}
 
+	
+	private static void refreshBykeFolder(IJavaElement element) {
+		try {
+			bykeFolderFor(element).refreshLocal(IResource.DEPTH_INFINITE, null);
+		} catch (CoreException e) {}
+	}
+	
+	
 	private static IFile matchingFile(IFolder cacheFolder, String baseName) throws CoreException {
 		for (IResource candidate : cacheFolder.members()) {
 			if (!candidate.getName().startsWith(baseName)) continue;
@@ -143,6 +186,7 @@ public class DependencyAnalysisCache {
 		return null;
 	}
 
+	
 	static private IFile createTimestampedFile(IJavaElement element) throws CoreException, JavaModelException {
 		IFolder cacheFolder = produceCacheFolder(element);
 		String baseName = baseNameFor(element);
