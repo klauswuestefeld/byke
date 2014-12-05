@@ -14,10 +14,10 @@ import byke.views.layout.ui.NonMovableGraph;
 
 public class StandAlone {
 
-	private static final int NUMBER_OF_NODES = 11;
-	private static final double DENSITY_OF_DEPENDENCIES = 1.3;
+	private static final int NUMBER_OF_NODES = 70;
+	private static final double DENSITY_OF_DEPENDENCIES = 1.1;
 
-	private final static Random RANDOM = new Random(0);
+	private final static Random RANDOM = new Random();
 
 	
 	public static void main(String args[]) {
@@ -31,7 +31,7 @@ public class StandAlone {
 	private StandAlone() {
 		Shell shell = new Shell(_display);
 		shell.setText("Byke");
-		shell.setSize(600, 600);
+		shell.setSize(1600, 1200);
 
 		FillLayout layout = new FillLayout();
 		shell.setLayout(layout);

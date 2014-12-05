@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.draw2d.SWTEventDispatcher;
+import org.eclipse.gef4.layout.LayoutAlgorithm;
+import org.eclipse.gef4.layout.algorithms.RadialLayoutAlgorithm;
 import org.eclipse.gef4.zest.core.widgets.GraphConnection;
 import org.eclipse.gef4.zest.core.widgets.GraphItem;
 import org.eclipse.gef4.zest.core.widgets.GraphNode;
@@ -21,7 +23,7 @@ import org.eclipse.ui.PlatformUI;
 import byke.dependencygraph.SubGraph;
 import byke.views.BykeView;
 import byke.views.cache.NodeFigure;
-import byke.views.layout.algorithm.CircularLayoutAlgorithm;
+import byke.views.layout.algorithm.WuestefeldTomaziniLayoutAlgorithm;
 
 public class NonMovableGraph extends GraphWidget {
 
@@ -51,7 +53,7 @@ public class NonMovableGraph extends GraphWidget {
 		
 		lockNodeMoves();
 
-		CircularLayoutAlgorithm algorithm = new CircularLayoutAlgorithm();
+		LayoutAlgorithm algorithm = new WuestefeldTomaziniLayoutAlgorithm();
   	setLayoutAlgorithm(algorithm, true);
 		
 		initGraphFigures(clusterCycles(graph));
