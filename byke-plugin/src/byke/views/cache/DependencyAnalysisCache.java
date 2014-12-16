@@ -46,11 +46,7 @@ public class DependencyAnalysisCache {
 	synchronized public Collection<NodeFigure> getCacheFor(IJavaElement element) {
 		try {
 			GEXFFile gexf = GEXFHelper.unmarshall(GEXFFile.class, read(element));
-			for(EdgeFigure edge : gexf.graph().edges()) {
-				NodeFigure source = nodeFor(gexf.graph(), edge.source());
-				NodeFigure target = nodeFor(gexf.graph(), edge.target());
-				source.addProvider(target);
-			}
+			fillConnections(gexf);
 			
 			return gexf.graph().nodes();
 		} catch (Exception e) {
@@ -126,6 +122,15 @@ public class DependencyAnalysisCache {
 	}
 
 
+	private void fillConnections(GEXFFile gexf) {
+		for(EdgeFigure edge : gexf.graph().edges()) {
+			NodeFigure source = nodeFor(gexf.graph(), edge.source());
+			NodeFigure target = nodeFor(gexf.graph(), edge.target());
+			source.addProvider(target);
+		}
+	}
+
+
 	private GEXFFile newGEXFFile(Collection<Node<IBinding>> memento) {
 		List<NodeFigure> nodes = createNodes(memento);
 		List<EdgeFigure> edges = createEdges(memento);
@@ -137,6 +142,9 @@ public class DependencyAnalysisCache {
 		
 		GEXFFile gexf = new GEXFFile();
 		gexf.graph(graph);
+		
+		fillConnections(gexf);
+		
 		return gexf;
 	}
 

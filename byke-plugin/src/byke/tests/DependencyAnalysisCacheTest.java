@@ -113,12 +113,23 @@ public class DependencyAnalysisCacheTest extends CodeAnalysisTest {
 		
 		Collection<NodeFigure> nodes = cacheFor(unit);
 		
+		NodeFigure method1 = nodeFor(nodes, "method1()");
+		NodeFigure method2 = nodeFor(nodes, "method2()");
+		
 		assertEquals(2, nodes.size());
-//		NodeFigure node = nodes.iterator().next();
-//		assertEquals("Test", node.name());
-//		assertTrue(node.providers().isEmpty());
+		assertEquals(0, method1.providers().size());
+		assertEquals(1, method2.providers().size());
+		assertTrue(method1.providers().isEmpty());
+		assertTrue(method2.providers().contains(method1));
 	}
 	
+	private NodeFigure nodeFor(Collection<NodeFigure> nodes, String name) {
+		for(NodeFigure node : nodes)
+			if(node.name().equals(name))
+				return node;
+		return null;
+	}
+
 	@Test
 	public void cacheNotFound() throws Exception {
 		ICompilationUnit unit = createCompilationUnit(
