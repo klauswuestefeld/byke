@@ -8,13 +8,14 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
+import ui.NonMovableGraphTest;
 import byke.views.cache.NodeFigure;
 import byke.views.layout.ui.NonMovableGraph;
 
 
 public class StandAlone {
 
-	private static final int NUMBER_OF_NODES = 70;
+	private static final int NUMBER_OF_NODES = 200;
 	private static final double DENSITY_OF_DEPENDENCIES = 1.1;
 
 	private final static Random RANDOM = new Random();
@@ -66,26 +67,26 @@ public class StandAlone {
 	
 	protected Collection<NodeFigure> window() {
 		
-		NodeFigure tela = new NodeFigure("Window(XXXX)");
-		NodeFigure outraTela = new NodeFigure("AnotherWindow(XXXX)");
+		NodeFigure window = new NodeFigure("Window(XXXX)");
+		NodeFigure anotherWindow = new NodeFigure("AnotherWindow(XXXX)");
 		NodeFigure addItems = new NodeFigure("addItems(XXXX)");
 		NodeFigure addHandlers = new NodeFigure("addHandlers(XXXX)()");
 		NodeFigure addSomething = new NodeFigure("addSomething(XXXX)()");
 		NodeFigure doSomething = new NodeFigure("doSomething(XXXX)");
 		NodeFigure toolbar = new NodeFigure("toolbar");
 		NodeFigure tabSet = new NodeFigure("tabSet");
-		NodeFigure aba1 = new NodeFigure("tab1");
-		NodeFigure aba2 = new NodeFigure("tab2");
-		NodeFigure aba3 = new NodeFigure("tab3");
-		NodeFigure aba4 = new NodeFigure("tab4");
-		NodeFigure aba5 = new NodeFigure("tab5");
-		NodeFigure aba6 = new NodeFigure("tab6");
+		NodeFigure tab1 = new NodeFigure("tab1");
+		NodeFigure tab2 = new NodeFigure("tab2");
+		NodeFigure tab3 = new NodeFigure("tab3");
+		NodeFigure tab4 = new NodeFigure("tab4");
+		NodeFigure tab5 = new NodeFigure("tab5");
+		NodeFigure tab6 = new NodeFigure("tab6");
 		
-		tela.addProvider(addItems);
-		tela.addProvider(addSomething);
-		tela.addProvider(addHandlers);
+		window.addProvider(addItems);
+		window.addProvider(addSomething);
+		window.addProvider(addHandlers);
 		
-		outraTela.addProvider(addItems);
+		anotherWindow.addProvider(addItems);
 		
 		addItems.addProvider(tabSet);
 		addItems.addProvider(toolbar);
@@ -94,21 +95,22 @@ public class StandAlone {
 		
 		doSomething.addProvider(tabSet);
 		
-		tabSet.addProvider(aba1);
-		tabSet.addProvider(aba2);
-		tabSet.addProvider(aba6);
-		tabSet.addProvider(aba3);
-		tabSet.addProvider(aba4);
-		tabSet.addProvider(aba5);
+		tabSet.addProvider(tab1);
+		tabSet.addProvider(tab2);
+		tabSet.addProvider(tab6);
+		tabSet.addProvider(tab3);
+		tabSet.addProvider(tab4);
+		tabSet.addProvider(tab5);
 		
 		//cyclic dependencies
-		aba1.addProvider(tabSet);
-//		aba3.addProvider(tabSet);
-//		aba1.addProvider(addItems);
-//		aba3.addProvider(addItems);
-//		toolbar.addProvider(addItems);
+//		tab1.addProvider(tabSet);
+//		tab3.addProvider(tabSet);
+//		tab1.addProvider(addItems);
+//		tab3.addProvider(addItems);
+		toolbar.addProvider(addItems);
+		toolbar.addProvider(anotherWindow);
 		
-		return Arrays.asList(tela, outraTela, addSomething, addItems, addHandlers, doSomething, toolbar, tabSet, aba1, aba2, aba3, aba4, aba5, aba6);
+		return Arrays.asList(window, anotherWindow, addSomething, addItems, addHandlers, doSomething, toolbar, tabSet, tab1, tab2, tab3, tab4, tab5, tab6);
 	}
 	
 	

@@ -17,7 +17,7 @@ public class WuestefeldTomaziniLayoutAlgorithm implements LayoutAlgorithm {
 
 	private static final int TOP_MARGIN = 50;
 	private static final int LAYER_HEIGHT = 80;
-	private static final int MAX_SWEEPS = 30;
+	private static final int MAX_SWEEPS = 1;
 	private static final double MINIMUM_DISTANCE = 10;
 	private LayoutContext _context;
 	private Map<Integer, List<EntityLayout>> entitiesByLayer = new HashMap<Integer, List<EntityLayout>>();
@@ -45,8 +45,9 @@ public class WuestefeldTomaziniLayoutAlgorithm implements LayoutAlgorithm {
 	private void spreadOut(int layer) {
 		List<EntityLayout> entities = getEntitiesByLayer().get(layer);
 		sortByXPosition(entities);
-		System.out.println(entities);
+		long start = System.currentTimeMillis();
 		while (spreadOutALittle(entities)) {}
+		System.out.println(String.format("Spread out time: %s ms", System.currentTimeMillis() - start));
 	}
 
 	private boolean spreadOutALittle(List<EntityLayout> layerEntities) {
@@ -67,9 +68,6 @@ public class WuestefeldTomaziniLayoutAlgorithm implements LayoutAlgorithm {
 	}
 
 	private boolean spreadOut(EntityLayout e1, EntityLayout e2) {
-		System.out.println();
-		System.out.println("" + e1 + e1.getLocation().x + " :: " + e2 + e2.getLocation().x);
-
 		double e1Right = e1.getLocation().x + (e1.getSize().width/2);
 		double e2Left  = e2.getLocation().x - (e2.getSize().width/2);
 		double distance = e2Left - e1Right - MINIMUM_DISTANCE;
@@ -77,7 +75,7 @@ public class WuestefeldTomaziniLayoutAlgorithm implements LayoutAlgorithm {
 		if (distance >= 0) return false;
 		
 		e1.setLocation(e1.getLocation().x + (distance / 2)       , 0);
-	  e2.setLocation(e2.getLocation().x - (distance / 2) + 1, 0); // +0.01 to avoid infinitesimal approximation to zero
+	  e2.setLocation(e2.getLocation().x - (distance / 2) + 1, 0); // +1 to avoid infinitesimal approximation to zero
 	  return true;
 	}
 
