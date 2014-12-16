@@ -20,14 +20,12 @@ public class WuestefeldTomaziniLayoutAlgorithm implements LayoutAlgorithm {
 	private static final int MAX_SWEEPS = 30;
 	private static final double MINIMUM_DISTANCE = 10;
 	private LayoutContext _context;
-	Map<Integer, List<EntityLayout>> entitiesByLayer = new HashMap<Integer, List<EntityLayout>>();
+	private Map<Integer, List<EntityLayout>> entitiesByLayer = new HashMap<Integer, List<EntityLayout>>();
 
 
 	@Override
 	public void applyLayout(boolean arg0) {
-		splitIntoLayers();
 		reduceCrossings();
-
 		spreadLayers();
 	}
 
@@ -38,14 +36,14 @@ public class WuestefeldTomaziniLayoutAlgorithm implements LayoutAlgorithm {
 
 	private void reduceCrossings() {
 		for (int round = 0; round < MAX_SWEEPS; round++)
-			for (int l = 0; l < entitiesByLayer.size(); l++) {
+			for (int l = 0; l < getEntitiesByLayer().size(); l++) {
 				positionAtEdgeBarycenters(l);
 				spreadOut(l);
 			}
 	}
 
 	private void spreadOut(int layer) {
-		List<EntityLayout> entities = entitiesByLayer.get(layer);
+		List<EntityLayout> entities = getEntitiesByLayer().get(layer);
 		sortByXPosition(entities);
 		System.out.println(entities);
 		while (spreadOutALittle(entities)) {}
@@ -85,7 +83,7 @@ public class WuestefeldTomaziniLayoutAlgorithm implements LayoutAlgorithm {
 
 
 	private void positionAtEdgeBarycenters(int layer) {
-		List<EntityLayout> entities = entitiesByLayer.get(layer);
+		List<EntityLayout> entities = getEntitiesByLayer().get(layer);
 		for (EntityLayout e : entities)
 			positionAtEdgeBarycenters(e);
 	}
@@ -104,20 +102,6 @@ public class WuestefeldTomaziniLayoutAlgorithm implements LayoutAlgorithm {
 		barycenter /= connections.size();
 		
 		e.setLocation(barycenter, 0);
-	}
-
-	void splitIntoLayers() {
-		for (EntityLayout entity : _context.getEntities()) {
-			int layer = layer(entity);
-
-			List<EntityLayout> list = entitiesByLayer.get(layer);
-			if (list == null) {
-				list = new ArrayList<EntityLayout>();
-				entitiesByLayer.put(layer, list);
-			}
-
-			list.add(entity);
-		}
 	}
 
 	private int layer(EntityLayout entity) {
@@ -140,5 +124,26 @@ public class WuestefeldTomaziniLayoutAlgorithm implements LayoutAlgorithm {
 	public void setLayoutContext(LayoutContext context) {
 		_context = context;
 	}
+
+	Map<Integer, List<EntityLayout>> getEntitiesByLayer() {
+		if (entitiesByLayer.isEmpty())
+			splitIntoLayers();
+		return entitiesByLayer;
+	}
+
+	void splitIntoLayers() {
+		for (EntityLayout entity : _context.getEntities()) {
+			int layer = layer(entity);
+
+			List<EntityLayout> list = entitiesByLayer.get(layer);
+			if (list == null) {
+				list = new ArrayList<EntityLayout>();
+				entitiesByLayer.put(layer, list);
+			}
+
+			list.add(entity);
+		}
+	}
+
 
 }
