@@ -52,8 +52,8 @@ public class StandAlone {
 	
 	private Collection<NodeFigure> graph() {
 //		return NonMovableGraphTest.createSimpleCyclicDependencyGraph();
-		return randomGraph();
-//		return window();
+//		return randomGraph();
+		return window();
 	}
 
 

@@ -1,10 +1,12 @@
 package byke.views.layout.ui;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.draw2d.SWTEventDispatcher;
 import org.eclipse.gef4.layout.LayoutAlgorithm;
@@ -43,24 +45,25 @@ public class NonMovableGraph extends GraphWidget {
 	
 	private Map<NodeFigure, NonMovableNode> _nodeFiguresByNode = new HashMap<NodeFigure, NonMovableNode>();
 	
-	private Collection<NodeFigure> _parent = new HashSet<NodeFigure>();
+	protected Collection<NodeFigure> _parent = new HashSet<NodeFigure>();
+	private Collection<NodeFigure> _graph;
 	
 	public NonMovableGraph(Composite parent, final Collection<NodeFigure> graph) {
 		super(parent, ZestStyles.NONE);
 		setAnimationEnabled(true);
 		setBounds(parent.getBounds());
+		_graph = graph;
 		
 		lockNodeMoves();
 
 		LayoutAlgorithm algorithm = new WuestefeldTomaziniLayoutAlgorithm();
   	setLayoutAlgorithm(algorithm, true);
-		
 		initGraphFigures(clusterCycles(graph));
 		
 		addMouseListener(new NonMovableGraphMouseListener());
 	}
-	
-	
+
+
 	protected Collection<? extends NodeFigure> clusterCycles(final Collection<NodeFigure> graph) {
 		DependencyProcessor processor = new DependencyProcessor();
 		Collection<SubGraph> newGraph = processor.clusterCycles(graph);
@@ -105,26 +108,35 @@ public class NonMovableGraph extends GraphWidget {
 	}
 	
 	
-	private void newGraph(List<GraphItem> selection) {
-		if (selection.isEmpty()) {
-			if (!_parent.isEmpty()) {
-				new NonMovableSubGraph(composite(), _parent);
-				dispose();
-			}
+	protected void newGraph(List<GraphItem> selection) {
+		if (selection.isEmpty())
 			return;
-		}
-		if (!(selection.get(0) instanceof NonMovableNode)) return;
 
-		NodeFigure subGraph = ((NonMovableNode)selection.get(0)).subGraph();
-		if (subGraph.subGraph().size() < 2) return;
+		Set<NodeFigure> nodesForNewGraph = nodesForNewGraph(selection.get(0));
+		
+		if (!canCreateNewGraph(nodesForNewGraph))
+			return;
 
-		NonMovableGraph nonMovableGraph = new NonMovableSubGraph(composite(), subGraph.subGraph());
-		nonMovableGraph._parent = _nodeFiguresByNode.keySet();
+		new NonMovableSubGraph(composite(), nodesForNewGraph, _graph);
 		dispose();
 	}
 
 	
-	private Composite composite() {
+	private boolean canCreateNewGraph(Set<NodeFigure> nodesForNewGraph) {
+		return nodesForNewGraph.size() > 1;
+	}
+
+
+	private Set<NodeFigure> nodesForNewGraph(GraphItem graphItem) {
+		try {
+			return ((NonMovableNode)graphItem).subGraph().subGraph();
+		} catch (Exception e) {
+			return Collections.EMPTY_SET;
+		}
+	}
+
+
+	protected Composite composite() {
 		Composite composite;
 		try {
 			BykeView bikeView = (BykeView)PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().showView("byke.views.BykeView");
