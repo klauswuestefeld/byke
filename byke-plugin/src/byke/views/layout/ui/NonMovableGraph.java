@@ -1,5 +1,6 @@
 package byke.views.layout.ui;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,6 +19,8 @@ import org.eclipse.gef4.zest.core.widgets.ZestStyles;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.PlatformUI;
 
@@ -43,6 +46,17 @@ public class NonMovableGraph extends GraphWidget {
 		}
 	}
 	
+	private class NonMovableGraphSelectionListener implements SelectionListener {
+		
+		@Override
+		public void widgetSelected(SelectionEvent arg0) {
+			highlightConnections();
+		}
+
+		@Override
+		public void widgetDefaultSelected(SelectionEvent arg0) {}
+	}
+	
 	private Map<NodeFigure, NonMovableNode> _nodeFiguresByNode = new HashMap<NodeFigure, NonMovableNode>();
 	
 	protected Collection<NodeFigure> _parent = new HashSet<NodeFigure>();
@@ -61,6 +75,7 @@ public class NonMovableGraph extends GraphWidget {
 		initGraphFigures(clusterCycles(graph));
 		
 		addMouseListener(new NonMovableGraphMouseListener());
+		addSelectionListener(new NonMovableGraphSelectionListener());
 	}
 
 
@@ -145,6 +160,41 @@ public class NonMovableGraph extends GraphWidget {
 			composite = getShell();
 		}
 		return composite;
+	}
+
+	private void highlightConnections() {
+		List<GraphItem> connectionsToSelect = connectionsToSelect();
+
+		List<GraphItem> newSelection = new ArrayList<GraphItem>(getSelection());
+		newSelection.addAll(connectionsToSelect);
+		NonMovableGraph.this.setSelection((GraphItem[])newSelection.toArray(new GraphItem[newSelection.size()]));
+	}
+
+
+	private List<GraphItem> connectionsToSelect() {
+		List<GraphItem> connectionsToSelect = new ArrayList<GraphItem>();
+		
+		for(GraphItem item : getSelection()) {
+			if(!(item instanceof NonMovableNode))
+				continue;
+			
+			List<GraphConnection> sourceConnections = ((NonMovableNode)item).getSourceConnections();
+			connectionsToSelect.addAll(sourceConnections);
+			connectionsToSelect.addAll(cyclicConnections(item, sourceConnections));
+		}
+		
+		return connectionsToSelect;
+	}
+	
+	private List<GraphItem> cyclicConnections(GraphItem item, List<GraphConnection> sourceConnections) {
+		List<GraphItem> connectionsToSelect = new ArrayList<GraphItem>();
+		
+		for(GraphConnection connection : sourceConnections)
+			for(GraphConnection c : connection.getDestination().getSourceConnections())
+				if(c.getDestination().equals(item))
+					connectionsToSelect.add(c);
+		
+		return connectionsToSelect;
 	}
 
 }

@@ -127,4 +127,8 @@ public class NodeFigure {
 	public int hashCode() {
 		return name().hashCode();
 	}
+
+	public boolean hasCycle() {
+		return _subGraph.size() > 1;
+	}
 }
