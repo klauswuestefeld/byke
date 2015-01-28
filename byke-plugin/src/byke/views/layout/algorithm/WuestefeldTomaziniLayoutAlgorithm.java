@@ -15,7 +15,6 @@ import org.eclipse.gef4.layout.interfaces.LayoutContext;
 
 public class WuestefeldTomaziniLayoutAlgorithm implements LayoutAlgorithm {
 
-	private static final int TOP_MARGIN = 50;
 	private static final int LAYER_HEIGHT = 80;
 	private static final int MAX_SWEEPS = 1;
 	private static final double MINIMUM_DISTANCE = 10;
@@ -27,13 +26,16 @@ public class WuestefeldTomaziniLayoutAlgorithm implements LayoutAlgorithm {
 	public void applyLayout(boolean arg0) {
 		reduceCrossings();
 		spreadLayers();
+		AlgorithmUtils.moveToTheBeginning(_context.getEntities());
 	}
 
+	
 	private void spreadLayers() {
 		for (EntityLayout entity : _context.getEntities())
-			entity.setLocation(entity.getLocation().x, layer(entity) * LAYER_HEIGHT + TOP_MARGIN);
+			entity.setLocation(entity.getLocation().x, layer(entity) * LAYER_HEIGHT);
 	}
 
+	
 	private void reduceCrossings() {
 		for (int round = 0; round < MAX_SWEEPS; round++)
 			for (int l = 0; l < getEntitiesByLayer().size(); l++) {

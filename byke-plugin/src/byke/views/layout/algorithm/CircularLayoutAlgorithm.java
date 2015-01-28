@@ -3,7 +3,6 @@ package byke.views.layout.algorithm;
 import org.eclipse.gef4.geometry.planar.Point;
 import org.eclipse.gef4.geometry.planar.Rectangle;
 import org.eclipse.gef4.layout.LayoutAlgorithm;
-import org.eclipse.gef4.layout.algorithms.AlgorithmHelper;
 import org.eclipse.gef4.layout.interfaces.EntityLayout;
 import org.eclipse.gef4.layout.interfaces.LayoutContext;
 
@@ -25,15 +24,9 @@ public class CircularLayoutAlgorithm implements LayoutAlgorithm {
 			radius *= EXPAND_RATIO;
 		}
 		
-		moveToTheBeginningOfTheView(entities);
+		AlgorithmUtils.moveToTheBeginning(entities);
 	}
 
-	private void moveToTheBeginningOfTheView(EntityLayout[] entities) {
-		Rectangle layoutBounds = AlgorithmHelper.getLayoutBounds(entities, true);
-		layoutBounds.setX(0);
-		layoutBounds.setY(0);
-		AlgorithmHelper.fitWithinBounds(entities, layoutBounds, false);
-	}
 
 	private boolean existsOverlapping(EntityLayout[] entities) {
 		for (EntityLayout entity : entities)
