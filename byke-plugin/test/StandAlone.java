@@ -8,9 +8,9 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
-import ui.NonMovableGraphTest;
 import byke.views.cache.NodeFigure;
 import byke.views.layout.ui.NonMovableGraph;
+import byke.views.layout.ui.MnemonicColorsTest;
 
 
 public class StandAlone {
@@ -51,9 +51,7 @@ public class StandAlone {
 
 	
 	private Collection<NodeFigure> graph() {
-//		return NonMovableGraphTest.createSimpleCyclicDependencyGraph();
-//		return randomGraph();
-		return window();
+		return MnemonicColorsTest.cyclesIsRedGraph();
 	}
 
 

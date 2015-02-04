@@ -9,13 +9,8 @@ public class NonMovableNode extends GraphNode {
 
 	public NonMovableNode(IContainer graphModel, int style, Object data, String name) {
 		super(graphModel, style);
-		setForegroundColor(Color.BLACK);
+		setForegroundColor(BykeColors.BLACK);
 		setData(data);
-		setBackgroundColor(Color.nextLightColor());
-		
-		if(subGraph().hasCycle())
-			setBackgroundColor(Color.RED);
-		
 		setText(insert(name, "\n", 40));
 	}
 

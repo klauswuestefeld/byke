@@ -1,4 +1,4 @@
-package ui;
+package byke.views.layout.ui;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -12,8 +12,6 @@ import org.junit.Test;
 
 import byke.dependencygraph.SubGraph;
 import byke.views.cache.NodeFigure;
-import byke.views.layout.ui.DependencyProcessor;
-import byke.views.layout.ui.NonMovableGraph;
 
 
 public class NonMovableGraphTest extends Assert {
@@ -66,6 +64,7 @@ public class NonMovableGraphTest extends Assert {
 		assertNotNull(getNode("a, b, c", processedGraph));
 	}
 
+
 	private SubGraph getNode(String name, Collection<SubGraph> graph) {
 		for (SubGraph node : graph)
 			if (node.name().equals(name)) 
@@ -74,6 +73,7 @@ public class NonMovableGraphTest extends Assert {
 		Assert.fail(String.format("Node '%s' not found", name));
 		return null;
 	}
+	
 
 	public static Collection<NodeFigure> createSimpleCyclicDependencyGraph() {
 		NodeFigure n1 = new NodeFigure("n 1");

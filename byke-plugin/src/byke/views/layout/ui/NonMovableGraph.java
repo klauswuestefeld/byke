@@ -97,6 +97,7 @@ public class NonMovableGraph extends GraphWidget {
 	private void initGraphFigures(Collection<? extends NodeFigure> nodeGraph) {
 		for(NodeFigure node : nodeGraph)
 			createNodeFigures(node);
+		MnemonicColors.colorFor(_nodeFiguresByNode.values());
 	}
 
 
