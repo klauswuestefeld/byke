@@ -12,13 +12,13 @@ public class GEXFFileTest {
 			+ "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
 			+ "<ns2:gexf xmlns:ns2=\"http://www.gexf.net/1.2draft\">\n"
 			+ "    <graph defaultedgetype=\"directed\">\n"
-			+ "        <nodes>\n"
-			+ "            <node label=\"source\" id=\"source\"/>\n"
-			+ "            <node label=\"target\" id=\"target\"/>\n"
-			+ "        </nodes>\n"
 			+ "        <edges>\n"
-			+ "            <edge target=\"target\" source=\"source\"/>\n"
+			+ "            <edge source=\"source\" target=\"target\"/>\n"
 			+ "        </edges>\n"
+			+ "        <nodes>\n"
+			+ "            <node id=\"source\" label=\"source\"/>\n"
+			+ "            <node id=\"target\" label=\"target\"/>\n"
+			+ "        </nodes>\n"
 			+ "    </graph>\n"
 			+ "</ns2:gexf>\n";
 

@@ -10,7 +10,7 @@ public class EdgeTest {
 
 	private String _xml = ""
 			+ "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
-			+ "<edge target=\"target\" source=\"source\"/>\n";
+			+ "<edge source=\"source\" target=\"target\"/>\n";
 
 
 	@Test

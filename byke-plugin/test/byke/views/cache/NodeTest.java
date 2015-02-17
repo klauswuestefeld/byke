@@ -10,7 +10,7 @@ public class NodeTest {
 
 	private String _xml = ""
 			+ "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
-			+ "<node label=\"label test\" id=\"id test\"/>\n";
+			+ "<node id=\"id test\" label=\"label test\"/>\n";
 
 
 	@Test

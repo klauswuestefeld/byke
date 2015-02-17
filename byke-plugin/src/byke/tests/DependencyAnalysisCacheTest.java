@@ -36,10 +36,10 @@ public class DependencyAnalysisCacheTest extends CodeAnalysisTest {
 				+ "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
 				+ "<ns2:gexf xmlns:ns2=\"http://www.gexf.net/1.2draft\">\n"
 				+ "    <graph defaultedgetype=\"directed\">\n"
-				+ "        <nodes>\n"
-				+ "            <node label=\"Test\" id=\"Test\"/>\n"
-				+ "        </nodes>\n"
 				+ "        <edges/>\n"
+				+ "        <nodes>\n"
+				+ "            <node id=\"Test\" label=\"Test\"/>\n"
+				+ "        </nodes>\n"
 				+ "    </graph>\n"
 				+ "</ns2:gexf>\n",
 				layout);
@@ -56,13 +56,13 @@ public class DependencyAnalysisCacheTest extends CodeAnalysisTest {
 				+ "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
 				+ "<ns2:gexf xmlns:ns2=\"http://www.gexf.net/1.2draft\">\n"
 				+ "    <graph defaultedgetype=\"directed\">\n"
-				+ "        <nodes>\n"
-				+ "            <node label=\"method2()\" id=\"method2()\"/>\n"
-				+ "            <node label=\"method1()\" id=\"method1()\"/>\n"
-				+ "        </nodes>\n"
 				+ "        <edges>\n"
-				+ "            <edge target=\"method1()\" source=\"method2()\"/>\n"
+				+ "            <edge source=\"method2()\" target=\"method1()\"/>\n"
 				+ "        </edges>\n"
+				+ "        <nodes>\n"
+				+ "            <node id=\"method1()\" label=\"method1()\"/>\n"
+				+ "            <node id=\"method2()\" label=\"method2()\"/>\n"
+				+ "        </nodes>\n"
 				+ "    </graph>\n"
 				+ "</ns2:gexf>\n",
 				layout);

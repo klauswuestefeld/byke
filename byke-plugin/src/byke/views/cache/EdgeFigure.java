@@ -1,9 +1,12 @@
 package byke.views.cache;
 
+import javax.xml.bind.annotation.XmlAccessOrder;
+import javax.xml.bind.annotation.XmlAccessorOrder;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "edge")
+@XmlAccessorOrder(XmlAccessOrder.ALPHABETICAL)
 public class EdgeFigure {
 
 	@XmlAttribute(name = "source")
