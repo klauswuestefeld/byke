@@ -86,7 +86,7 @@ public class NonMovableGraphTest extends Assert {
 	}
 
 	private void newGraph(Collection<NodeFigure> nodes) {
-		_graph = new NonMovableGraph(new Shell(new Display()), nodes);
+		_graph = new NonMovableGraph(new Shell(Display.findDisplay(Thread.currentThread())), nodes);
 	}
 
 	private void hasNode(String name) {

@@ -1,5 +1,6 @@
 package byke.views.layout.ui;
 
+import org.eclipse.draw2d.ColorConstants;
 import org.eclipse.gef4.zest.core.widgets.GraphNode;
 import org.eclipse.gef4.zest.core.widgets.IContainer;
 
@@ -9,7 +10,7 @@ public class NonMovableNode extends GraphNode {
 
 	public NonMovableNode(IContainer graphModel, int style, Object data, String name) {
 		super(graphModel, style);
-		setForegroundColor(BykeColors.BLACK);
+		setForegroundColor(ColorConstants.black);
 		setData(data);
 		setText(insert(name, "\n", 40));
 	}

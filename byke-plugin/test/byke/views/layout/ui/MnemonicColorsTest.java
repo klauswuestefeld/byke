@@ -7,30 +7,24 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.eclipse.draw2d.ColorConstants;
 import org.eclipse.gef4.zest.core.widgets.GraphNode;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import byke.views.cache.NodeFigure;
 
 public class MnemonicColorsTest {
 
-	private static Shell PARENT;
 	private NonMovableGraph _graph;
 	
 	
-	@BeforeClass
-	public static void setUp() {
-		PARENT = new Shell(new Display());
-	}
-
-	
 	private void newGraph(Collection<NodeFigure> nodes) {
-		_graph = new NonMovableGraph(PARENT, nodes);
+		Shell shell = new Shell(Display.findDisplay(Thread.currentThread()));
+		_graph = new NonMovableGraph(shell, nodes);
 	}
 
 	
@@ -67,7 +61,7 @@ public class MnemonicColorsTest {
 	public void cycleIsRed() {
 		newGraph(cyclesIsRedGraph());
 		
-		Assert.assertThat(getNode("a, b").getBackgroundColor(), equalTo(byke.views.layout.ui.BykeColors.RED));
+		Assert.assertThat(getNode("a, b").getBackgroundColor(), equalTo(ColorConstants.red));
 	}
 
 	
